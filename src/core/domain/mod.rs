@@ -11,4 +11,6 @@ pub use entities::{
     StepOrder, UseCase, UseCaseReference,
 };
 pub use repositories::{ActorRepository, PersonaRepository};
-pub use services::{ScenarioReferenceValidator, UseCaseService};
+pub use services::{
+    ExtensionPointUpdater, ScenarioFlowValidator, ScenarioReferenceValidator, UseCaseService,
+};
