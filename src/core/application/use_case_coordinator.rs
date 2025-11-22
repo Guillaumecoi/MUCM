@@ -735,6 +735,138 @@ impl UseCaseCoordinator {
         scenario_service.unassign_persona_from_scenario(use_case_id, scenario_id)
     }
 
+    // ========== Extension Scenarios and Advanced Operations ==========
+
+    /// Create an extension scenario that diverges from a main scenario
+    pub fn create_extension_scenario(
+        &mut self,
+        use_case_id: &str,
+        parent_scenario_id: &str,
+        extends_at_step: String,
+        returns_at_step: Option<String>,
+        title: String,
+        description: String,
+        primary_actor: crate::core::Actor,
+    ) -> Result<String> {
+        let mut scenario_service = services::ScenarioManagementService::new(
+            &self.repository,
+            &mut self.use_cases,
+            &self.scenario_creator,
+        );
+        scenario_service.create_extension_scenario(
+            use_case_id,
+            parent_scenario_id,
+            extends_at_step,
+            returns_at_step,
+            title,
+            description,
+            primary_actor,
+        )
+    }
+
+    /// Add a repeat block to a scenario
+    pub fn add_repeat_block(
+        &mut self,
+        use_case_id: &str,
+        scenario_id: &str,
+        from_step: String,
+        to_step: String,
+        condition: String,
+    ) -> Result<()> {
+        let mut scenario_service = services::ScenarioManagementService::new(
+            &self.repository,
+            &mut self.use_cases,
+            &self.scenario_creator,
+        );
+        scenario_service.add_repeat_block(use_case_id, scenario_id, from_step, to_step, condition)
+    }
+
+    /// Remove a repeat block from a scenario
+    pub fn remove_repeat_block(
+        &mut self,
+        use_case_id: &str,
+        scenario_id: &str,
+        from_step: &str,
+        to_step: &str,
+    ) -> Result<()> {
+        let mut scenario_service = services::ScenarioManagementService::new(
+            &self.repository,
+            &mut self.use_cases,
+            &self.scenario_creator,
+        );
+        scenario_service.remove_repeat_block(use_case_id, scenario_id, from_step, to_step)
+    }
+
+    /// Insert a step into a main scenario with automatic extension update
+    /// Returns the new step order
+    pub fn insert_step_with_extension_update(
+        &mut self,
+        use_case_id: &str,
+        scenario_id: &str,
+        after_step: &str,
+        actor: String,
+        receiver: Option<String>,
+        action: String,
+        expected_result: Option<String>,
+    ) -> Result<String> {
+        let mut scenario_service = services::ScenarioManagementService::new(
+            &self.repository,
+            &mut self.use_cases,
+            &self.scenario_creator,
+        );
+        scenario_service.insert_step_with_extension_update(
+            use_case_id,
+            scenario_id,
+            after_step,
+            actor,
+            receiver,
+            action,
+            expected_result,
+        )
+    }
+
+    /// Delete a step from a main scenario with extension validation
+    /// Returns list of extension scenarios that became invalid
+    pub fn delete_step_with_extension_update(
+        &mut self,
+        use_case_id: &str,
+        scenario_id: &str,
+        step_order: &str,
+    ) -> Result<Vec<String>> {
+        let mut scenario_service = services::ScenarioManagementService::new(
+            &self.repository,
+            &mut self.use_cases,
+            &self.scenario_creator,
+        );
+        scenario_service.delete_step_with_extension_update(use_case_id, scenario_id, step_order)
+    }
+
+    /// Renumber steps in a scenario starting from a specific step
+    pub fn renumber_steps_from(
+        &mut self,
+        use_case_id: &str,
+        scenario_id: &str,
+        from_step: &str,
+        increment: i32,
+    ) -> Result<()> {
+        let mut scenario_service = services::ScenarioManagementService::new(
+            &self.repository,
+            &mut self.use_cases,
+            &self.scenario_creator,
+        );
+        scenario_service.renumber_steps_from(use_case_id, scenario_id, from_step, increment)
+    }
+
+    /// Validate all scenarios in a use case
+    pub fn validate_use_case_scenarios(&mut self, use_case_id: &str) -> Result<()> {
+        let scenario_service = services::ScenarioManagementService::new(
+            &self.repository,
+            &mut self.use_cases,
+            &self.scenario_creator,
+        );
+        scenario_service.validate_use_case_scenarios(use_case_id)
+    }
+
     // ========== Private Helpers (Delegation) ==========
 
     /// Helper to find a use case index by ID

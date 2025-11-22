@@ -643,6 +643,260 @@ impl ScenarioController {
 
         Ok(ids)
     }
+
+    // ========== Extension Scenarios and Advanced Operations ==========
+
+    /// Create an extension scenario that diverges from a main scenario
+    ///
+    /// # Arguments
+    /// * `use_case_id` - The ID of the use case
+    /// * `parent_scenario_id` - The ID of the main scenario to extend
+    /// * `extends_at_step` - The step number where the extension diverges
+    /// * `returns_at_step` - Optional step number where the extension returns
+    /// * `title` - Title of the extension scenario
+    /// * `description` - Description of the extension
+    /// * `primary_actor` - The primary actor for this extension
+    ///
+    /// # Returns
+    /// DisplayResult with the new extension scenario ID
+    pub fn create_extension_scenario(
+        &mut self,
+        use_case_id: String,
+        parent_scenario_id: String,
+        extends_at_step: String,
+        returns_at_step: Option<String>,
+        title: String,
+        description: String,
+        primary_actor: String,
+    ) -> Result<DisplayResult> {
+        let actor = primary_actor.parse().map_err(|_| {
+            anyhow::anyhow!("Invalid actor: {}. Use System, User, or a persona ID", primary_actor)
+        })?;
+
+        let scenario_id = self.app_service.create_extension_scenario(
+            &use_case_id,
+            &parent_scenario_id,
+            extends_at_step.clone(),
+            returns_at_step.clone(),
+            title.clone(),
+            description,
+            actor,
+        )?;
+
+        let return_info = returns_at_step
+            .map(|r| format!(" and returns at step {}", r))
+            .unwrap_or_default();
+
+        Ok(DisplayResult::success(format!(
+            "✅ Created extension scenario: {} - {}\n   Extends {} at step {}{}",
+            scenario_id, title, parent_scenario_id, extends_at_step, return_info
+        )))
+    }
+
+    /// Add a repeat block to a scenario
+    ///
+    /// # Arguments
+    /// * `use_case_id` - The ID of the use case
+    /// * `scenario_id` - The ID of the scenario
+    /// * `from_step` - Starting step of the repeat block
+    /// * `to_step` - Ending step of the repeat block
+    /// * `condition` - Condition describing when to repeat
+    ///
+    /// # Returns
+    /// DisplayResult indicating success
+    pub fn add_repeat_block(
+        &mut self,
+        use_case_id: String,
+        scenario_id: String,
+        from_step: String,
+        to_step: String,
+        condition: String,
+    ) -> Result<DisplayResult> {
+        self.app_service.add_repeat_block(
+            &use_case_id,
+            &scenario_id,
+            from_step.clone(),
+            to_step.clone(),
+            condition.clone(),
+        )?;
+
+        Ok(DisplayResult::success(format!(
+            "✅ Added repeat block to scenario {}: steps {} to {}\n   Condition: {}",
+            scenario_id, from_step, to_step, condition
+        )))
+    }
+
+    /// Remove a repeat block from a scenario
+    ///
+    /// # Arguments
+    /// * `use_case_id` - The ID of the use case
+    /// * `scenario_id` - The ID of the scenario
+    /// * `from_step` - Starting step of the repeat block to remove
+    /// * `to_step` - Ending step of the repeat block to remove
+    ///
+    /// # Returns
+    /// DisplayResult indicating success
+    pub fn remove_repeat_block(
+        &mut self,
+        use_case_id: String,
+        scenario_id: String,
+        from_step: String,
+        to_step: String,
+    ) -> Result<DisplayResult> {
+        self.app_service.remove_repeat_block(
+            &use_case_id,
+            &scenario_id,
+            &from_step,
+            &to_step,
+        )?;
+
+        Ok(DisplayResult::success(format!(
+            "✅ Removed repeat block from scenario {}: steps {} to {}",
+            scenario_id, from_step, to_step
+        )))
+    }
+
+    /// Insert a step into a main scenario with automatic extension updates
+    /// This is smarter than add_step as it handles letter suffixes and extension updates
+    ///
+    /// # Arguments
+    /// * `use_case_id` - The ID of the use case
+    /// * `scenario_id` - The ID of the main scenario
+    /// * `after_step` - Insert after this step (e.g., "3" to insert between 3 and 4)
+    /// * `actor` - Actor performing the action
+    /// * `receiver` - Optional receiving actor
+    /// * `action` - Description of the action
+    /// * `expected_result` - Optional expected result
+    ///
+    /// # Returns
+    /// DisplayResult with the new step order
+    pub fn insert_step_smart(
+        &mut self,
+        use_case_id: String,
+        scenario_id: String,
+        after_step: String,
+        actor: String,
+        receiver: Option<String>,
+        action: String,
+        expected_result: Option<String>,
+    ) -> Result<DisplayResult> {
+        let new_step_order = self.app_service.insert_step_with_extension_update(
+            &use_case_id,
+            &scenario_id,
+            &after_step,
+            actor.clone(),
+            receiver.clone(),
+            action.clone(),
+            expected_result,
+        )?;
+
+        let receiver_info = receiver
+            .map(|r| format!(" → {}", r))
+            .unwrap_or_default();
+
+        Ok(DisplayResult::success(format!(
+            "✅ Inserted step {} in scenario {} (after step {})\n   {} {}{}: {}",
+            new_step_order, scenario_id, after_step, new_step_order, actor, receiver_info, action
+        )))
+    }
+
+    /// Delete a step from a main scenario with extension validation
+    /// Warns if any extension scenarios become invalid
+    ///
+    /// # Arguments
+    /// * `use_case_id` - The ID of the use case
+    /// * `scenario_id` - The ID of the main scenario
+    /// * `step_order` - The step to delete
+    ///
+    /// # Returns
+    /// DisplayResult with warning if extensions are affected
+    pub fn delete_step_smart(
+        &mut self,
+        use_case_id: String,
+        scenario_id: String,
+        step_order: String,
+    ) -> Result<DisplayResult> {
+        let invalid_extensions = self.app_service.delete_step_with_extension_update(
+            &use_case_id,
+            &scenario_id,
+            &step_order,
+        )?;
+
+        let mut message = format!(
+            "✅ Deleted step {} from scenario {}",
+            step_order, scenario_id
+        );
+
+        if !invalid_extensions.is_empty() {
+            message.push_str(&format!(
+                "\n⚠️  Warning: {} extension scenario(s) became invalid:\n",
+                invalid_extensions.len()
+            ));
+            for ext in &invalid_extensions {
+                message.push_str(&format!("   - {}\n", ext));
+            }
+            message.push_str("   These extensions reference the deleted step and need to be updated.");
+        }
+
+        Ok(DisplayResult::success(message))
+    }
+
+    /// Renumber steps in a scenario starting from a specific step
+    ///
+    /// # Arguments
+    /// * `use_case_id` - The ID of the use case
+    /// * `scenario_id` - The ID of the scenario
+    /// * `from_step` - Start renumbering from this step
+    /// * `increment` - Amount to shift (can be negative)
+    ///
+    /// # Returns
+    /// DisplayResult indicating success
+    pub fn renumber_steps(
+        &mut self,
+        use_case_id: String,
+        scenario_id: String,
+        from_step: String,
+        increment: i32,
+    ) -> Result<DisplayResult> {
+        self.app_service.renumber_steps_from(
+            &use_case_id,
+            &scenario_id,
+            &from_step,
+            increment,
+        )?;
+
+        let direction = if increment > 0 { "forward" } else { "backward" };
+        Ok(DisplayResult::success(format!(
+            "✅ Renumbered steps in scenario {} from step {} {} by {}",
+            scenario_id,
+            from_step,
+            direction,
+            increment.abs()
+        )))
+    }
+
+    /// Validate all scenarios in a use case
+    ///
+    /// # Arguments
+    /// * `use_case_id` - The ID of the use case
+    ///
+    /// # Returns
+    /// DisplayResult with validation result
+    pub fn validate_scenarios(
+        &mut self,
+        use_case_id: String,
+    ) -> Result<DisplayResult> {
+        match self.app_service.validate_use_case_scenarios(&use_case_id) {
+            Ok(_) => Ok(DisplayResult::success(format!(
+                "✅ All scenarios in {} are valid",
+                use_case_id
+            ))),
+            Err(e) => Ok(DisplayResult::error(format!(
+                "❌ Validation failed for {}: {}",
+                use_case_id, e
+            ))),
+        }
+    }
 }
 
 #[cfg(test)]
