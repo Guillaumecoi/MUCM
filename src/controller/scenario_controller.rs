@@ -232,12 +232,13 @@ impl ScenarioController {
                 .unwrap_or(1)
         });
 
+        let order_str = order.to_string();
         let actor_name = actor.unwrap_or_else(|| "Actor".to_string());
 
         self.app_service.add_scenario_step(
             &use_case_id,
             &scenario_id,
-            order,
+            order_str,
             actor_name.clone(),
             receiver.clone(),
             step_description.clone(),
@@ -304,8 +305,9 @@ impl ScenarioController {
         scenario_id: String,
         step_order: u32,
     ) -> Result<DisplayResult> {
+        let step_order_str = step_order.to_string();
         self.app_service
-            .remove_scenario_step(&use_case_id, &scenario_id, step_order)?;
+            .remove_scenario_step(&use_case_id, &scenario_id, &step_order_str)?;
 
         Ok(DisplayResult::success(format!(
             "✅ Removed step {} from scenario {}",
@@ -326,7 +328,7 @@ impl ScenarioController {
         &mut self,
         use_case_id: String,
         scenario_id: String,
-        reorderings: HashMap<u32, u32>,
+        reorderings: HashMap<String, String>,
     ) -> Result<DisplayResult> {
         self.app_service
             .reorder_scenario_steps(&use_case_id, &scenario_id, reorderings)?;

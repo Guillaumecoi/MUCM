@@ -700,28 +700,28 @@ impl ScenarioWorkflow {
                         continue;
                     }
 
-                    // Build reordering map
+                    // Build reordering map (using String keys and values)
                     let mut reorderings = std::collections::HashMap::new();
 
                     // Simple swap or shift logic
                     if (new_order as i32 - step_order as i32).abs() == 1 {
                         // Simple adjacent swap
-                        reorderings.insert(step_order, new_order);
-                        reorderings.insert(new_order, step_order);
+                        reorderings.insert(step_order.to_string(), new_order.to_string());
+                        reorderings.insert(new_order.to_string(), step_order.to_string());
                     } else {
                         // Complex reordering - move step and shift others
                         if new_order < step_order {
                             // Moving up
                             for i in new_order..step_order {
-                                reorderings.insert(i, i + 1);
+                                reorderings.insert(i.to_string(), (i + 1).to_string());
                             }
-                            reorderings.insert(step_order, new_order);
+                            reorderings.insert(step_order.to_string(), new_order.to_string());
                         } else {
                             // Moving down
                             for i in (step_order + 1)..=new_order {
-                                reorderings.insert(i, i - 1);
+                                reorderings.insert(i.to_string(), (i - 1).to_string());
                             }
-                            reorderings.insert(step_order, new_order);
+                            reorderings.insert(step_order.to_string(), new_order.to_string());
                         }
                     }
 

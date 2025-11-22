@@ -219,7 +219,7 @@ impl UseCase {
     pub fn remove_step_from_scenario(
         &mut self,
         scenario_id: &str,
-        step_order: u32,
+        step_order: &str,
     ) -> anyhow::Result<()> {
         if let Some(scenario) = self.scenarios.iter_mut().find(|s| s.id == scenario_id) {
             scenario.remove_step(step_order);

@@ -15,6 +15,7 @@ impl ScenarioCreator {
         title: String,
         scenario_type: ScenarioType,
         description: Option<String>,
+        primary_actor: Actor,
         preconditions: Vec<String>,
         postconditions: Vec<String>,
         _actors: Vec<String>,
@@ -26,6 +27,7 @@ impl ScenarioCreator {
             title,
             description.unwrap_or_default(),
             scenario_type,
+            primary_actor,
         );
 
         // Add preconditions and postconditions
@@ -42,7 +44,7 @@ impl ScenarioCreator {
     /// Create a scenario step with optional receiver
     pub fn create_scenario_step(
         &self,
-        order: u32,
+        order: String,
         actor: String,
         receiver: Option<String>,
         action: String,
@@ -59,7 +61,7 @@ impl ScenarioCreator {
             }
         });
 
-        let mut step = ScenarioStep::new(order as usize, actor_enum, action, description);
+        let mut step = ScenarioStep::new(order, actor_enum, action, description);
         if let Some(recv) = receiver_enum {
             step.set_receiver(recv);
         }

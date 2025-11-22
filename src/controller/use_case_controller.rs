@@ -768,7 +768,7 @@ impl UseCaseController {
     ) -> Result<DisplayResult> {
         // For now, we'll use default values for the required parameters
         // In a real implementation, we'd need to get these from the user
-        let order_val = order.unwrap_or(0); // 0 means append
+        let order_val = order.unwrap_or(0).to_string(); // Convert to String
         let actor = "User".to_string(); // Default actor
         let receiver = None; // No receiver by default
         let action = step; // Use the step as the action
@@ -897,9 +897,10 @@ impl UseCaseController {
         scenario_title: String,
         order: u32,
     ) -> Result<DisplayResult> {
+        let order_str = order.to_string();
         match self
             .app_service
-            .remove_scenario_step(&use_case_id, &scenario_title, order)
+            .remove_scenario_step(&use_case_id, &scenario_title, &order_str)
         {
             Ok(_) => Ok(DisplayResult::success(format!(
                 "Removed step {} from scenario '{}' in use case: {}",

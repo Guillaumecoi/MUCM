@@ -525,7 +525,7 @@ impl UseCaseCoordinator {
         &mut self,
         use_case_id: &str,
         scenario_id: &str,
-        order: u32,
+        order: String,
         actor: String,
         receiver: Option<String>,
         action: String,
@@ -573,7 +573,7 @@ impl UseCaseCoordinator {
         &mut self,
         use_case_id: &str,
         scenario_id: &str,
-        step_order: u32,
+        step_order: &str,
     ) -> Result<()> {
         let mut scenario_service = services::ScenarioManagementService::new(
             &self.repository,
@@ -696,7 +696,7 @@ impl UseCaseCoordinator {
         &mut self,
         use_case_id: &str,
         scenario_id: &str,
-        reorderings: HashMap<u32, u32>,
+        reorderings: HashMap<String, String>,
     ) -> Result<()> {
         let mut scenario_service = services::ScenarioManagementService::new(
             &self.repository,

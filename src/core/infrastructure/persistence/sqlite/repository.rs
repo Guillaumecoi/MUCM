@@ -211,14 +211,26 @@ impl SqliteUseCaseRepository {
             })?;
             let references: Vec<ScenarioReference> = ref_rows.collect::<Result<Vec<_>, _>>()?;
 
+            // For backward compatibility, derive primary_actor from first step or default to User
+            let primary_actor = steps
+                .first()
+                .map(|s| s.actor.clone())
+                .unwrap_or(crate::core::domain::Actor::User);
+
             scenarios.push(Scenario {
                 id: scenario_id,
                 title,
                 description,
                 scenario_type,
                 status,
+                is_main: true, // Default to main for existing scenarios
+                primary_actor,
                 persona,
+                extends_scenario_id: None,
+                extends_at_step: None,
+                returns_at_step: None,
                 steps,
+                repeat_blocks: Vec::new(), // Empty for existing scenarios
                 preconditions,
                 postconditions,
                 references,

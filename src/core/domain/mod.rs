@@ -7,8 +7,8 @@ mod services;
 // Re-exports
 pub use entities::{
     Actor, ActorEntity, ActorType, Condition, Metadata, MethodologyView, Persona, Priority,
-    ReferenceType, Scenario, ScenarioReference, ScenarioStep, ScenarioType, Status, UseCase,
-    UseCaseReference,
+    ReferenceType, RepeatBlock, Scenario, ScenarioReference, ScenarioStep, ScenarioType, Status,
+    StepOrder, UseCase, UseCaseReference,
 };
 pub use repositories::{ActorRepository, PersonaRepository};
 pub use services::{ScenarioReferenceValidator, UseCaseService};

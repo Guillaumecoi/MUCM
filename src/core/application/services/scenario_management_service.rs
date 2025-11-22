@@ -43,11 +43,19 @@ impl<'a> ScenarioManagementService<'a> {
         let index = self.find_use_case_index(use_case_id)?;
         let use_case = &self.use_cases[index];
 
+        // Use first actor as primary actor, default to User if none provided
+        let primary_actor = if let Some(first_actor) = actors.first() {
+            first_actor.clone().into()
+        } else {
+            crate::core::domain::Actor::User
+        };
+
         let scenario = self.scenario_creator.create_scenario(
             use_case,
             title,
             scenario_type,
             description,
+            primary_actor,
             preconditions,
             postconditions,
             actors,
@@ -83,7 +91,7 @@ impl<'a> ScenarioManagementService<'a> {
         &mut self,
         use_case_id: &str,
         scenario_id: &str,
-        order: u32,
+        order: String,
         actor: String,
         receiver: Option<String>,
         action: String,
@@ -112,7 +120,7 @@ impl<'a> ScenarioManagementService<'a> {
         &mut self,
         use_case_id: &str,
         scenario_id: &str,
-        step_order: u32,
+        step_order: &str,
     ) -> Result<()> {
         let index = self.find_use_case_index(use_case_id)?;
         let mut use_case = self.use_cases[index].clone();
@@ -208,10 +216,11 @@ impl<'a> ScenarioManagementService<'a> {
             .position(|s| s.id == scenario_id)
             .ok_or_else(|| anyhow::anyhow!("Scenario with ID '{}' not found", scenario_id))?;
 
+        let step_order_str = step_order.to_string();
         let step = use_case.scenarios[scenario_index]
             .steps
             .iter_mut()
-            .find(|s| s.order == step_order as usize)
+            .find(|s| s.order == step_order_str)
             .ok_or_else(|| {
                 anyhow::anyhow!("Step {} not found in scenario {}", step_order, scenario_id)
             })?;
@@ -230,7 +239,7 @@ impl<'a> ScenarioManagementService<'a> {
         &mut self,
         use_case_id: &str,
         scenario_id: &str,
-        reorderings: std::collections::HashMap<u32, u32>,
+        reorderings: std::collections::HashMap<String, String>,
     ) -> Result<()> {
         let index = self.find_use_case_index(use_case_id)?;
         let mut use_case = self.use_cases[index].clone();
@@ -243,15 +252,16 @@ impl<'a> ScenarioManagementService<'a> {
 
         // Apply reorderings
         for step in &mut use_case.scenarios[scenario_index].steps {
-            if let Some(&new_order) = reorderings.get(&(step.order as u32)) {
-                step.order = new_order as usize;
+            if let Some(new_order) = reorderings.get(&step.order) {
+                step.order = new_order.clone();
             }
         }
 
-        // Re-sort steps
-        use_case.scenarios[scenario_index]
-            .steps
-            .sort_by_key(|s| s.order);
+        // Re-sort steps using StepOrder comparison
+        use_case.scenarios[scenario_index].steps.sort_by(|a, b| {
+            use crate::core::domain::StepOrder;
+            StepOrder::compare(&a.order, &b.order)
+        });
         use_case.metadata.touch(); // Update use case metadata when scenario changes
 
         self.repository.save(&use_case)?;
