@@ -1,0 +1,73 @@
+{{#if scenarios}}
+## Scenario Flow Diagram
+
+```mermaid
+graph TD
+    Start([Start])
+    
+{{#each scenarios}}
+{{#if is_main}}
+    %% Main Scenario: {{title}}
+    Start --> S{{@index}}_1[Step 1: {{steps.[0].description}}]
+    {{#each steps}}
+    {{#unless @first}}
+    S{{../@index}}_{{../steps.[../@index].order}} --> S{{../@index}}_{{order}}[Step {{order}}: {{description}}]
+    {{/unless}}
+    {{/each}}
+    {{#if steps}}
+    S{{@index}}_{{steps.[steps.length-1].order}} --> End{{@index}}([End])
+    {{/if}}
+    
+{{else}}
+    %% Extension Scenario: {{title}}
+    %% Extends {{extends_scenario_id}} at step {{extends_at_step}}
+    {{#if extends_at_step}}
+    S_{{extends_at_step}} -.->|Extension: {{title}}| E{{@index}}_1[{{steps.[0].description}}]
+    {{#each steps}}
+    {{#unless @first}}
+    E{{../@index}}_{{@index}} --> E{{../@index}}_{{inc @index}}[{{description}}]
+    {{/unless}}
+    {{/each}}
+    {{#if returns_at_step}}
+    E{{@index}}_{{steps.length}} -.->|Return| S_{{returns_at_step}}
+    {{else}}
+    E{{@index}}_{{steps.length}} --> EndExt{{@index}}([End Extension])
+    {{/if}}
+    {{/if}}
+    
+{{/if}}
+{{/each}}
+
+    classDef mainScenario fill:#e1f5ff,stroke:#0066cc,stroke-width:2px
+    classDef extension fill:#fff4e1,stroke:#ff9900,stroke-width:2px,stroke-dasharray: 5 5
+    classDef repeat fill:#f0f0f0,stroke:#666,stroke-width:2px
+    
+{{#each scenarios}}
+{{#if is_main}}
+    {{#each steps}}
+    class S{{../@index}}_{{order}} mainScenario
+    {{/each}}
+{{else}}
+    {{#each steps}}
+    class E{{../@index}}_{{@index}} extension
+    {{/each}}
+{{/if}}
+{{/each}}
+```
+
+### Flow Legend
+- **Solid lines** → Main scenario flow
+- **Dashed lines** → Extension points and returns
+- **Blue boxes** → Main scenario steps
+- **Orange boxes** → Extension scenario steps
+
+{{#each scenarios}}
+{{#if repeat_blocks}}
+#### Repeat Blocks in {{title}}
+{{#each repeat_blocks}}
+- **Steps {{from_step}} to {{to_step}}**: Repeats while *{{condition}}*
+{{/each}}
+
+{{/if}}
+{{/each}}
+{{/if}}
