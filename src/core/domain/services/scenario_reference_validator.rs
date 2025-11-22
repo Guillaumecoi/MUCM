@@ -1,4 +1,4 @@
-use crate::core::domain::entities::{ReferenceType, UseCase};
+use crate::core::domain::entities::{Actor, ReferenceType, UseCase};
 use anyhow::Result;
 use std::collections::{HashMap, HashSet};
 
@@ -101,6 +101,7 @@ mod tests {
             "Scenario 1".to_string(),
             "First scenario".to_string(),
             ScenarioType::HappyPath,
+            Actor::User,
         ));
 
         uc.add_scenario(Scenario::new(
@@ -108,6 +109,7 @@ mod tests {
             "Scenario 2".to_string(),
             "Second scenario".to_string(),
             ScenarioType::AlternativeFlow,
+            Actor::User,
         ));
 
         uc.add_scenario(Scenario::new(
@@ -115,6 +117,7 @@ mod tests {
             "Scenario 3".to_string(),
             "Third scenario".to_string(),
             ScenarioType::ExceptionFlow,
+            Actor::System,
         ));
 
         uc

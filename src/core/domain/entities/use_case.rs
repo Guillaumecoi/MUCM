@@ -451,7 +451,7 @@ mod priority_tests {
 #[cfg(test)]
 mod use_case_tests {
     use super::*;
-    use crate::core::domain::entities::{Scenario, ScenarioType};
+    use crate::core::domain::entities::{Actor, Scenario, ScenarioType};
     use serde_json::json;
 
     /// Test UseCase::new with valid priority strings
@@ -866,6 +866,7 @@ mod use_case_tests {
             "Happy Path".to_string(),
             "Main success scenario".to_string(),
             ScenarioType::HappyPath,
+            Actor::User,
         );
         // scenario1 status is Planned by default
 
@@ -874,6 +875,7 @@ mod use_case_tests {
             "Error Case".to_string(),
             "Error handling scenario".to_string(),
             ScenarioType::ExceptionFlow,
+            Actor::User,
         );
         scenario2.set_status(Status::Implemented);
 
@@ -909,6 +911,7 @@ mod use_case_tests {
             "First Scenario".to_string(),
             "Description".to_string(),
             ScenarioType::HappyPath,
+            Actor::User,
         ));
 
         assert_eq!(use_case.next_scenario_id(), "UC-TEST-001-S02");
@@ -918,6 +921,7 @@ mod use_case_tests {
             "Second Scenario".to_string(),
             "Description".to_string(),
             ScenarioType::AlternativeFlow,
+            Actor::User,
         ));
 
         assert_eq!(use_case.next_scenario_id(), "UC-TEST-001-S03");
@@ -940,6 +944,7 @@ mod use_case_tests {
             "Test Scenario".to_string(),
             "A test scenario".to_string(),
             ScenarioType::HappyPath,
+            Actor::User,
         );
 
         use_case.add_scenario(scenario);
