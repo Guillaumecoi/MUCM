@@ -3,8 +3,8 @@
 //! Tests scenario references functionality across both TOML and SQLite backends
 
 use markdown_use_case_manager::core::{
-    ReferenceType, Scenario, ScenarioReference, ScenarioType, SqliteUseCaseRepository, UseCase,
-    UseCaseRepository,
+    Actor, ReferenceType, Scenario, ScenarioReference, ScenarioType, SqliteUseCaseRepository,
+    UseCase, UseCaseRepository,
 };
 use serial_test::serial;
 use std::env;
@@ -27,6 +27,7 @@ fn create_test_use_case_with_scenarios() -> UseCase {
         "Happy Path".to_string(),
         "Main success scenario".to_string(),
         ScenarioType::HappyPath,
+        Actor::User,
     );
 
     let scenario2 = Scenario::new(
@@ -34,6 +35,7 @@ fn create_test_use_case_with_scenarios() -> UseCase {
         "Alternative Flow".to_string(),
         "Alternative path scenario".to_string(),
         ScenarioType::AlternativeFlow,
+        Actor::User,
     );
 
     let scenario3 = Scenario::new(
@@ -41,6 +43,7 @@ fn create_test_use_case_with_scenarios() -> UseCase {
         "Exception Flow".to_string(),
         "Error handling scenario".to_string(),
         ScenarioType::ExceptionFlow,
+        Actor::User,
     );
 
     use_case.add_scenario(scenario1);

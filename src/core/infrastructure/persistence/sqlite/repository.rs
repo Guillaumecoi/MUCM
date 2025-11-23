@@ -340,8 +340,8 @@ impl SqliteUseCaseRepository {
                 .context("Failed to serialize scenario extra fields")?;
 
             tx.execute(
-                "INSERT INTO scenarios (id, use_case_id, title, description, scenario_type, status, persona, extra_json)
-                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                "INSERT INTO scenarios (id, use_case_id, title, description, scenario_type, status, persona, created_at, updated_at, extra_json)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'), ?)",
                 params![
                     scenario.id,
                     use_case.id,

@@ -1,4 +1,6 @@
-use crate::core::domain::entities::{Actor, ReferenceType, UseCase};
+#[cfg(test)]
+use crate::core::domain::entities::Actor;
+use crate::core::domain::entities::{ReferenceType, UseCase};
 use anyhow::Result;
 use std::collections::{HashMap, HashSet};
 

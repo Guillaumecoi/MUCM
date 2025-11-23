@@ -1,4 +1,6 @@
-use crate::core::domain::{RepeatBlock, Scenario, StepOrder, UseCase};
+#[cfg(test)]
+use crate::core::domain::RepeatBlock;
+use crate::core::domain::{Scenario, StepOrder, UseCase};
 use anyhow::{Context, Result};
 use std::cmp::Ordering;
 
