@@ -7,7 +7,7 @@ use anyhow::Result;
 use inquire::{Confirm, Select, Text};
 
 use crate::cli::interactive::{runner::InteractiveRunner, ui::UI};
-use crate::controller::ScenarioController;
+use crate::controller::{ScenarioController, UseCaseController};
 
 /// Scenario workflow handler
 pub struct ScenarioWorkflow;
@@ -102,24 +102,113 @@ impl ScenarioWorkflow {
             .prompt()
             .ok();
 
+        // Check if this is an extension scenario (alternative or exception)
+        let is_extension = scenario_type != "main";
+
+        let mut controller = ScenarioController::new()?;
+
+        // If extension, ask if it should extend from a main scenario
+        let (extends_scenario_id, extends_at_step, returns_at_step) = if is_extension {
+            let should_extend = Confirm::new(&format!(
+                "Does this {} scenario diverge from a main scenario?",
+                scenario_type
+            ))
+            .with_default(true)
+            .with_help_message("Alternative/exception scenarios typically branch off from a specific step in the main flow")
+            .prompt()?;
+
+            if should_extend {
+                // Get list of main scenarios
+                let uc_controller = UseCaseController::new()?;
+                let use_case = uc_controller.get_use_case(use_case_id)?;
+                
+                let main_scenarios: Vec<_> = use_case
+                    .scenarios
+                    .iter()
+                    .filter(|s| s.is_main)
+                    .map(|s| format!("{} - {}", s.id, s.title))
+                    .collect();
+
+                if main_scenarios.is_empty() {
+                    println!("\n  No main scenarios found. Creating as independent scenario.\n");
+                    (None, None, None)
+                } else {
+                    let selected = Select::new("Select parent main scenario:", main_scenarios).prompt()?;
+                    let parent_id = selected.split(" - ").next().unwrap().to_string();
+
+                    // Get steps from parent scenario
+                    let parent_scenario = use_case.scenarios.iter().find(|s| s.id == parent_id);
+                    
+                    let parent_steps: Vec<_> = parent_scenario
+                        .map(|s| {
+                            s.steps
+                                .iter()
+                                .map(|step| format!("Step {}: {}", step.order, step.action))
+                                .collect()
+                        })
+                        .unwrap_or_default();
+
+                    if parent_steps.is_empty() {
+                        println!("\n  Selected scenario has no steps. Creating as independent scenario.\n");
+                        (None, None, None)
+                    } else {
+                        let extends_step = Select::new("At which step does this scenario diverge?", parent_steps.clone()).prompt()?;
+                        let extends_at = extends_step.split(':').next().unwrap().replace("Step ", "").trim().to_string();
+
+                        let should_return = Confirm::new("Does this scenario return to the main flow?")
+                            .with_default(false)
+                            .with_help_message("Some alternatives rejoin the main flow, exceptions typically don't")
+                            .prompt()?;
+
+                        let returns_at = if should_return {
+                            let return_step = Select::new("At which step does it return?", parent_steps).prompt()?;
+                            Some(return_step.split(':').next().unwrap().replace("Step ", "").trim().to_string())
+                        } else {
+                            None
+                        };
+
+                        (Some(parent_id), Some(extends_at), returns_at)
+                    }
+                }
+            } else {
+                (None, None, None)
+            }
+        } else {
+            (None, None, None)
+        };
+
         // Collect preconditions
         let preconditions = Self::collect_conditions("preconditions", use_case_id)?;
 
         // Collect postconditions
         let postconditions = Self::collect_conditions("postconditions", use_case_id)?;
 
-        // Note: Actors are automatically derived from scenario steps, not manually assigned
-        // Create the scenario
-        let mut controller = ScenarioController::new()?;
-        let result = controller.create_scenario(
-            use_case_id.to_string(),
-            title.clone(),
-            scenario_type.to_string(),
-            description,
-            None, // persona_id removed from interactive workflow
-            preconditions,
-            postconditions,
-        )?;
+        // Create the scenario - use extension creator if it's an extension with parent
+        let result = if let (Some(parent_id), Some(extends_at)) = (&extends_scenario_id, &extends_at_step) {
+            // Select primary actor
+            let primary_actor = Self::select_actor_for_step()?
+                .unwrap_or_else(|| "User".to_string());
+
+            controller.create_extension_scenario(
+                use_case_id.to_string(),
+                parent_id.clone(),
+                extends_at.clone(),
+                returns_at_step.clone(),
+                title.clone(),
+                description.clone().unwrap_or_default(),
+                primary_actor,
+            )?
+        } else {
+            controller.create_scenario(
+                use_case_id.to_string(),
+                title.clone(),
+                scenario_type.to_string(),
+                description,
+                None, // persona_id removed from interactive workflow
+                preconditions,
+                postconditions,
+            )?
+        };
 
         UI::show_success(&result.message)?;
 
