@@ -59,9 +59,8 @@ impl ExtensionPointUpdater {
             );
         }
 
-        let inserted_order = StepOrder::parse(inserted_at).map_err(|e| {
-            anyhow::anyhow!("Invalid step order '{}': {}", inserted_at, e)
-        })?;
+        let inserted_order = StepOrder::parse(inserted_at)
+            .map_err(|e| anyhow::anyhow!("Invalid step order '{}': {}", inserted_at, e))?;
 
         // Find all extensions of this main scenario
         for scenario in &mut use_case.scenarios {
@@ -107,9 +106,8 @@ impl ExtensionPointUpdater {
             );
         }
 
-        let deleted_order = StepOrder::parse(deleted_step).map_err(|e| {
-            anyhow::anyhow!("Invalid step order '{}': {}", deleted_step, e)
-        })?;
+        let deleted_order = StepOrder::parse(deleted_step)
+            .map_err(|e| anyhow::anyhow!("Invalid step order '{}': {}", deleted_step, e))?;
 
         let mut invalid_extensions = Vec::new();
 
@@ -178,13 +176,11 @@ impl ExtensionPointUpdater {
             );
         }
 
-        let old_step = StepOrder::parse(old_order).map_err(|e| {
-            anyhow::anyhow!("Invalid old step order '{}': {}", old_order, e)
-        })?;
+        let old_step = StepOrder::parse(old_order)
+            .map_err(|e| anyhow::anyhow!("Invalid old step order '{}': {}", old_order, e))?;
 
-        let new_step = StepOrder::parse(new_order).map_err(|e| {
-            anyhow::anyhow!("Invalid new step order '{}': {}", new_order, e)
-        })?;
+        let new_step = StepOrder::parse(new_order)
+            .map_err(|e| anyhow::anyhow!("Invalid new step order '{}': {}", new_order, e))?;
 
         let mut affected_extensions = Vec::new();
 
@@ -201,20 +197,16 @@ impl ExtensionPointUpdater {
 
                     if let Some(ref extends_at) = scenario.extends_at_step {
                         if extends_at == old_order {
-                            affected_extensions.push(format!(
-                                "{} (extends at step {})",
-                                scenario.id, extends_at
-                            ));
+                            affected_extensions
+                                .push(format!("{} (extends at step {})", scenario.id, extends_at));
                             is_affected = true;
                         }
                     }
 
                     if let Some(ref returns_at) = scenario.returns_at_step {
                         if returns_at == old_order && !is_affected {
-                            affected_extensions.push(format!(
-                                "{} (returns at step {})",
-                                scenario.id, returns_at
-                            ));
+                            affected_extensions
+                                .push(format!("{} (returns at step {})", scenario.id, returns_at));
                         }
                     }
                 }
@@ -395,8 +387,7 @@ mod tests {
 
         // Delete step 1 (before extension point)
         let invalid =
-            ExtensionPointUpdater::update_after_delete(&main_scenario, "1", &mut use_case)
-                .unwrap();
+            ExtensionPointUpdater::update_after_delete(&main_scenario, "1", &mut use_case).unwrap();
 
         assert!(invalid.is_empty());
 
@@ -423,8 +414,7 @@ mod tests {
 
         // Delete step 2 (extension divergence point)
         let invalid =
-            ExtensionPointUpdater::update_after_delete(&main_scenario, "2", &mut use_case)
-                .unwrap();
+            ExtensionPointUpdater::update_after_delete(&main_scenario, "2", &mut use_case).unwrap();
 
         assert_eq!(invalid.len(), 1);
         assert_eq!(invalid[0], "UC-TEST-001-S02");
@@ -440,13 +430,9 @@ mod tests {
             .unwrap();
 
         // Changing step 2 should affect the extension
-        let affected = ExtensionPointUpdater::validate_step_change(
-            main_scenario,
-            "2",
-            "6",
-            &use_case,
-        )
-        .unwrap();
+        let affected =
+            ExtensionPointUpdater::validate_step_change(main_scenario, "2", "6", &use_case)
+                .unwrap();
 
         assert_eq!(affected.len(), 1);
         assert!(affected[0].contains("UC-TEST-001-S02"));

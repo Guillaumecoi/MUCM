@@ -142,7 +142,8 @@ impl ScenarioCreator {
                         if let Some(last_char) = new_suffix.chars().last() {
                             if last_char.is_ascii_lowercase() {
                                 new_suffix.pop();
-                                new_suffix.push(char::from_u32(last_char as u32 + 1).unwrap_or('a'));
+                                new_suffix
+                                    .push(char::from_u32(last_char as u32 + 1).unwrap_or('a'));
                                 format!("{}{}", order.base, new_suffix)
                             } else {
                                 format!("{}a1", after_step)
@@ -195,7 +196,8 @@ impl ScenarioCreator {
             // Update repeat blocks to reflect new step numbers
             for block in &mut scenario.repeat_blocks {
                 if let Ok(from_block_order) = StepOrder::parse(&block.from_step) {
-                    if from_block_order.suffix.is_none() && from_block_order.base >= from_order.base {
+                    if from_block_order.suffix.is_none() && from_block_order.base >= from_order.base
+                    {
                         let new_order = (from_block_order.base as i32 + increment) as u32;
                         block.from_step = new_order.to_string();
                     }
@@ -209,7 +211,9 @@ impl ScenarioCreator {
             }
 
             // Re-sort steps
-            scenario.steps.sort_by(|a, b| StepOrder::compare(&a.order, &b.order));
+            scenario
+                .steps
+                .sort_by(|a, b| StepOrder::compare(&a.order, &b.order));
 
             Ok(())
         } else {

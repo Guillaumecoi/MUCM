@@ -372,23 +372,31 @@ mod tests {
         }
 
         // Valid nested blocks: 2-8 contains 5-6
-        scenario
-            .repeat_blocks
-            .push(RepeatBlock::new("2".to_string(), "8".to_string(), "outer".to_string()));
-        scenario
-            .repeat_blocks
-            .push(RepeatBlock::new("5".to_string(), "6".to_string(), "inner".to_string()));
+        scenario.repeat_blocks.push(RepeatBlock::new(
+            "2".to_string(),
+            "8".to_string(),
+            "outer".to_string(),
+        ));
+        scenario.repeat_blocks.push(RepeatBlock::new(
+            "5".to_string(),
+            "6".to_string(),
+            "inner".to_string(),
+        ));
 
         assert!(ScenarioFlowValidator::validate_repeat_blocks(&scenario).is_ok());
 
         // Invalid overlapping blocks: 2-5 and 4-7
         scenario.repeat_blocks.clear();
-        scenario
-            .repeat_blocks
-            .push(RepeatBlock::new("2".to_string(), "5".to_string(), "first".to_string()));
-        scenario
-            .repeat_blocks
-            .push(RepeatBlock::new("4".to_string(), "7".to_string(), "second".to_string()));
+        scenario.repeat_blocks.push(RepeatBlock::new(
+            "2".to_string(),
+            "5".to_string(),
+            "first".to_string(),
+        ));
+        scenario.repeat_blocks.push(RepeatBlock::new(
+            "4".to_string(),
+            "7".to_string(),
+            "second".to_string(),
+        ));
 
         assert!(ScenarioFlowValidator::validate_repeat_blocks(&scenario).is_err());
     }

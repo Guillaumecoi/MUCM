@@ -59,7 +59,7 @@ fn create_main_menu_options() -> Vec<MenuOption<CliRunner>> {
         }),
         MenuOption::new("📄 Regenerate All Documentation", |_| {
             use crate::controller::UseCaseController;
-            
+
             let mut controller = match UseCaseController::new() {
                 Ok(c) => c,
                 Err(e) => {
@@ -67,9 +67,9 @@ fn create_main_menu_options() -> Vec<MenuOption<CliRunner>> {
                     return Ok(false);
                 }
             };
-            
+
             UI::show_info("Regenerating all documentation...")?;
-            
+
             match controller.regenerate_all_markdown() {
                 Ok(result) => {
                     UI::show_success(&result.message)?;
@@ -78,7 +78,7 @@ fn create_main_menu_options() -> Vec<MenuOption<CliRunner>> {
                     UI::show_error(&format!("Error regenerating documentation: {}", e))?;
                 }
             }
-            
+
             Ok(false) // Don't exit
         }),
         MenuOption::new("⚙️  Project Settings", |_| {

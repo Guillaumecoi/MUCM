@@ -558,16 +558,16 @@ impl ScenarioController {
     ) -> Result<DisplayResult> {
         // Get the use case, modify scenario, save entire use case
         let mut use_case = self.app_service.get_use_case(&use_case_id)?;
-        
+
         let scenario = use_case
             .scenarios
             .iter_mut()
             .find(|s| s.id == scenario_id)
             .ok_or_else(|| anyhow::anyhow!("Scenario {} not found", scenario_id))?;
-        
+
         scenario.add_precondition(condition.clone().into());
         use_case.metadata.touch();
-        
+
         self.app_service.save_use_case(&use_case)?;
         self.app_service.regenerate_markdown(&use_case_id)?;
 
@@ -597,17 +597,21 @@ impl ScenarioController {
 
         // Get the use case, modify scenario, save entire use case
         let mut use_case = self.app_service.get_use_case(&use_case_id)?;
-        
+
         let scenario = use_case
             .scenarios
             .iter_mut()
             .find(|s| s.id == scenario_id)
             .ok_or_else(|| anyhow::anyhow!("Scenario {} not found", scenario_id))?;
-        
-        let condition = Condition::with_use_case(text.clone(), referenced_use_case_id.clone(), Some(relationship));
+
+        let condition = Condition::with_use_case(
+            text.clone(),
+            referenced_use_case_id.clone(),
+            Some(relationship),
+        );
         scenario.add_precondition(condition);
         use_case.metadata.touch();
-        
+
         self.app_service.save_use_case(&use_case)?;
         self.app_service.regenerate_markdown(&use_case_id)?;
 
@@ -637,17 +641,21 @@ impl ScenarioController {
 
         // Get the use case, modify scenario, save entire use case
         let mut use_case = self.app_service.get_use_case(&use_case_id)?;
-        
+
         let scenario = use_case
             .scenarios
             .iter_mut()
             .find(|s| s.id == scenario_id)
             .ok_or_else(|| anyhow::anyhow!("Scenario {} not found", scenario_id))?;
-        
-        let condition = Condition::with_use_case(text.clone(), referenced_use_case_id.clone(), Some(relationship));
+
+        let condition = Condition::with_use_case(
+            text.clone(),
+            referenced_use_case_id.clone(),
+            Some(relationship),
+        );
         scenario.add_postcondition(condition);
         use_case.metadata.touch();
-        
+
         self.app_service.save_use_case(&use_case)?;
         self.app_service.regenerate_markdown(&use_case_id)?;
 
@@ -674,16 +682,16 @@ impl ScenarioController {
     ) -> Result<DisplayResult> {
         // Get the use case, modify scenario, save entire use case
         let mut use_case = self.app_service.get_use_case(&use_case_id)?;
-        
+
         let scenario = use_case
             .scenarios
             .iter_mut()
             .find(|s| s.id == scenario_id)
             .ok_or_else(|| anyhow::anyhow!("Scenario {} not found", scenario_id))?;
-        
+
         scenario.add_postcondition(condition.clone().into());
         use_case.metadata.touch();
-        
+
         self.app_service.save_use_case(&use_case)?;
         self.app_service.regenerate_markdown(&use_case_id)?;
 
@@ -710,16 +718,16 @@ impl ScenarioController {
     ) -> Result<DisplayResult> {
         // Get the use case, modify scenario, save entire use case
         let mut use_case = self.app_service.get_use_case(&use_case_id)?;
-        
+
         let scenario = use_case
             .scenarios
             .iter_mut()
             .find(|s| s.id == scenario_id)
             .ok_or_else(|| anyhow::anyhow!("Scenario {} not found", scenario_id))?;
-        
+
         scenario.remove_precondition(&condition);
         use_case.metadata.touch();
-        
+
         self.app_service.save_use_case(&use_case)?;
         self.app_service.regenerate_markdown(&use_case_id)?;
 
@@ -746,16 +754,16 @@ impl ScenarioController {
     ) -> Result<DisplayResult> {
         // Get the use case, modify scenario, save entire use case
         let mut use_case = self.app_service.get_use_case(&use_case_id)?;
-        
+
         let scenario = use_case
             .scenarios
             .iter_mut()
             .find(|s| s.id == scenario_id)
             .ok_or_else(|| anyhow::anyhow!("Scenario {} not found", scenario_id))?;
-        
+
         scenario.remove_postcondition(&condition);
         use_case.metadata.touch();
-        
+
         self.app_service.save_use_case(&use_case)?;
         self.app_service.regenerate_markdown(&use_case_id)?;
 
@@ -843,7 +851,10 @@ impl ScenarioController {
         primary_actor: String,
     ) -> Result<DisplayResult> {
         let actor = primary_actor.parse().map_err(|_| {
-            anyhow::anyhow!("Invalid actor: {}. Use System, User, or a persona ID", primary_actor)
+            anyhow::anyhow!(
+                "Invalid actor: {}. Use System, User, or a persona ID",
+                primary_actor
+            )
         })?;
 
         let scenario_id = self.app_service.create_extension_scenario(
@@ -922,12 +933,8 @@ impl ScenarioController {
         from_step: String,
         to_step: String,
     ) -> Result<DisplayResult> {
-        self.app_service.remove_repeat_block(
-            &use_case_id,
-            &scenario_id,
-            &from_step,
-            &to_step,
-        )?;
+        self.app_service
+            .remove_repeat_block(&use_case_id, &scenario_id, &from_step, &to_step)?;
 
         // Regenerate markdown to reflect repeat block removal
         self.app_service.regenerate_markdown(&use_case_id)?;
@@ -972,9 +979,7 @@ impl ScenarioController {
             expected_result,
         )?;
 
-        let receiver_info = receiver
-            .map(|r| format!(" → {}", r))
-            .unwrap_or_default();
+        let receiver_info = receiver.map(|r| format!(" → {}", r)).unwrap_or_default();
 
         // Regenerate markdown to reflect smart insertion
         self.app_service.regenerate_markdown(&use_case_id)?;
@@ -1020,7 +1025,8 @@ impl ScenarioController {
             for ext in &invalid_extensions {
                 message.push_str(&format!("   - {}\n", ext));
             }
-            message.push_str("   These extensions reference the deleted step and need to be updated.");
+            message
+                .push_str("   These extensions reference the deleted step and need to be updated.");
         }
 
         // Regenerate markdown to reflect smart deletion
@@ -1046,18 +1052,14 @@ impl ScenarioController {
         from_step: String,
         increment: i32,
     ) -> Result<DisplayResult> {
-        self.app_service.renumber_steps_from(
-            &use_case_id,
-            &scenario_id,
-            &from_step,
-            increment,
-        )?;
+        self.app_service
+            .renumber_steps_from(&use_case_id, &scenario_id, &from_step, increment)?;
 
         let direction = if increment > 0 { "forward" } else { "backward" };
-        
+
         // Regenerate markdown to reflect renumbering
         self.app_service.regenerate_markdown(&use_case_id)?;
-        
+
         Ok(DisplayResult::success(format!(
             "✅ Renumbered steps in scenario {} from step {} {} by {}",
             scenario_id,
@@ -1074,10 +1076,7 @@ impl ScenarioController {
     ///
     /// # Returns
     /// DisplayResult with validation result
-    pub fn validate_scenarios(
-        &mut self,
-        use_case_id: String,
-    ) -> Result<DisplayResult> {
+    pub fn validate_scenarios(&mut self, use_case_id: String) -> Result<DisplayResult> {
         match self.app_service.validate_use_case_scenarios(&use_case_id) {
             Ok(_) => Ok(DisplayResult::success(format!(
                 "✅ All scenarios in {} are valid",
@@ -1429,7 +1428,10 @@ mod tests {
         // Verify precondition was saved with reference
         let scenario = controller.get_scenario(&use_case_id, &scenario_id).unwrap();
         assert_eq!(scenario.preconditions.len(), 1);
-        assert_eq!(scenario.preconditions[0].text, "Authentication must be completed");
+        assert_eq!(
+            scenario.preconditions[0].text,
+            "Authentication must be completed"
+        );
         assert_eq!(scenario.preconditions[0].target_id, Some(auth_use_case_id));
     }
 
@@ -1708,11 +1710,7 @@ mod tests {
             "includes".to_string(),
         );
         let result = controller
-            .add_reference(
-                use_case_id.clone(),
-                scenario_id.clone(),
-                reference,
-            )
+            .add_reference(use_case_id.clone(), scenario_id.clone(), reference)
             .unwrap();
 
         assert!(result.is_success());
@@ -1753,11 +1751,7 @@ mod tests {
             "includes".to_string(),
         );
         controller
-            .add_reference(
-                use_case_id.clone(),
-                scenario_id.clone(),
-                reference,
-            )
+            .add_reference(use_case_id.clone(), scenario_id.clone(), reference)
             .unwrap();
 
         // Verify reference exists
@@ -1893,7 +1887,7 @@ mod tests {
         reorderings.insert("1".to_string(), "2".to_string()); // step 1 goes to position 2
         reorderings.insert("2".to_string(), "3".to_string()); // step 2 goes to position 3
         reorderings.insert("3".to_string(), "1".to_string()); // step 3 goes to position 1
-        
+
         let result = controller
             .reorder_steps(use_case_id.clone(), scenario_id.clone(), reorderings)
             .unwrap();
@@ -2239,11 +2233,7 @@ mod tests {
 
         // Delete step smartly
         let result = controller
-            .delete_step_smart(
-                use_case_id.clone(),
-                scenario_id.clone(),
-                "2".to_string(),
-            )
+            .delete_step_smart(use_case_id.clone(), scenario_id.clone(), "2".to_string())
             .unwrap();
 
         assert!(result.is_success());

@@ -23,35 +23,63 @@ fn actor_emoji_helper(
     _rc: &mut RenderContext,
     out: &mut dyn Output,
 ) -> HelperResult {
-    let actor_name = h.param(0)
-        .and_then(|v| v.value().as_str())
-        .unwrap_or("");
-    
+    let actor_name = h.param(0).and_then(|v| v.value().as_str()).unwrap_or("");
+
     let actor_lower = actor_name.to_lowercase();
-    let emoji = if actor_lower.contains("user") || actor_lower.contains("customer") || actor_lower.contains("admin") {
+    let emoji = if actor_lower.contains("user")
+        || actor_lower.contains("customer")
+        || actor_lower.contains("admin")
+    {
         "👤"
-    } else if actor_lower.contains("system") || actor_lower.contains("server") || actor_lower.contains("application") {
+    } else if actor_lower.contains("system")
+        || actor_lower.contains("server")
+        || actor_lower.contains("application")
+    {
         "⚙️"
-    } else if actor_lower.contains("database") || actor_lower.contains("db") || actor_lower.contains("storage") {
+    } else if actor_lower.contains("database")
+        || actor_lower.contains("db")
+        || actor_lower.contains("storage")
+    {
         "💾"
-    } else if actor_lower.contains("api") || actor_lower.contains("service") || actor_lower.contains("gateway") {
+    } else if actor_lower.contains("api")
+        || actor_lower.contains("service")
+        || actor_lower.contains("gateway")
+    {
         "🔌"
-    } else if actor_lower.contains("email") || actor_lower.contains("mail") || actor_lower.contains("notification") {
+    } else if actor_lower.contains("email")
+        || actor_lower.contains("mail")
+        || actor_lower.contains("notification")
+    {
         "📧"
-    } else if actor_lower.contains("payment") || actor_lower.contains("transaction") || actor_lower.contains("billing") {
+    } else if actor_lower.contains("payment")
+        || actor_lower.contains("transaction")
+        || actor_lower.contains("billing")
+    {
         "💳"
-    } else if actor_lower.contains("auth") || actor_lower.contains("security") || actor_lower.contains("login") {
+    } else if actor_lower.contains("auth")
+        || actor_lower.contains("security")
+        || actor_lower.contains("login")
+    {
         "🔐"
-    } else if actor_lower.contains("cache") || actor_lower.contains("redis") || actor_lower.contains("memcache") {
+    } else if actor_lower.contains("cache")
+        || actor_lower.contains("redis")
+        || actor_lower.contains("memcache")
+    {
         "🗃️"
-    } else if actor_lower.contains("queue") || actor_lower.contains("message") || actor_lower.contains("broker") {
+    } else if actor_lower.contains("queue")
+        || actor_lower.contains("message")
+        || actor_lower.contains("broker")
+    {
         "📮"
-    } else if actor_lower.contains("file") || actor_lower.contains("document") || actor_lower.contains("upload") {
+    } else if actor_lower.contains("file")
+        || actor_lower.contains("document")
+        || actor_lower.contains("upload")
+    {
         "📄"
     } else {
         "🔷" // Generic component
     };
-    
+
     out.write(emoji)?;
     Ok(())
 }

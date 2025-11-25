@@ -38,10 +38,16 @@ impl ScenarioWorkflow {
                             scenario.steps.len()
                         );
                     } else {
-                        let extension_info = if let Some(ref parent) = scenario.extends_scenario_id {
-                            format!(" → extends {} at step {}", 
+                        let extension_info = if let Some(ref parent) = scenario.extends_scenario_id
+                        {
+                            format!(
+                                " → extends {} at step {}",
                                 parent,
-                                scenario.extends_at_step.as_ref().unwrap_or(&"?".to_string()))
+                                scenario
+                                    .extends_at_step
+                                    .as_ref()
+                                    .unwrap_or(&"?".to_string())
+                            )
                         } else {
                             String::new()
                         };
@@ -329,17 +335,31 @@ impl ScenarioWorkflow {
 
             println!("\n  Current values:");
             println!("    Title: {}", scenario.title);
-            println!("    Kind: {}", if scenario.is_main { "Main scenario" } else { "Extension scenario" });
+            println!(
+                "    Kind: {}",
+                if scenario.is_main {
+                    "Main scenario"
+                } else {
+                    "Extension scenario"
+                }
+            );
             println!("    Type: {}", scenario.scenario_type);
             println!("    Description: {}", scenario.description);
             println!("    Status: {}", scenario.status);
             println!("    Primary Actor: {}", scenario.primary_actor);
             println!("    Steps: {}", scenario.steps.len());
-            
+
             // Show extension information
             if !scenario.is_main {
                 if let Some(ref parent) = scenario.extends_scenario_id {
-                    println!("    Extends: {} at step {}", parent, scenario.extends_at_step.as_ref().unwrap_or(&"?".to_string()));
+                    println!(
+                        "    Extends: {} at step {}",
+                        parent,
+                        scenario
+                            .extends_at_step
+                            .as_ref()
+                            .unwrap_or(&"?".to_string())
+                    );
                     if let Some(ref returns) = scenario.returns_at_step {
                         println!("    Returns at: step {}", returns);
                     } else {
@@ -347,7 +367,7 @@ impl ScenarioWorkflow {
                     }
                 }
             }
-            
+
             println!("    Preconditions: {}", scenario.preconditions.len());
             println!("    Postconditions: {}", scenario.postconditions.len());
             if let Some(ref p) = scenario.persona {
@@ -419,7 +439,12 @@ impl ScenarioWorkflow {
                     Self::manage_steps_inline(use_case_id, scenario_id, &mut controller)?;
                 }
                 "Manage conditions" => {
-                    Self::manage_all_conditions_inline(use_case_id, scenario_id, &mut controller, &runner)?;
+                    Self::manage_all_conditions_inline(
+                        use_case_id,
+                        scenario_id,
+                        &mut controller,
+                        &runner,
+                    )?;
                 }
                 "Done editing" => break,
                 _ => {}
@@ -514,14 +539,14 @@ impl ScenarioWorkflow {
                 "Remove step",
                 "Reorder step",
             ];
-            
+
             // Only allow adding extensions from main scenarios
             if scenario.is_main {
                 actions.push("Add extension (alternative/exception) from step");
             }
-            
+
             actions.push("Back");
-            
+
             let choice = Select::new("What would you like to do?", actions).prompt()?;
 
             match choice {
@@ -788,7 +813,7 @@ impl ScenarioWorkflow {
                         step_choices.clone(),
                     )
                     .prompt()?;
-                    
+
                     let extends_at_step = selected_step
                         .split(':')
                         .next()
@@ -806,19 +831,20 @@ impl ScenarioWorkflow {
                         .with_help_message("E.g., 'Invalid password', 'Network error'")
                         .prompt()?;
 
-                    let description = Text::new("Description (optional):")
-                        .prompt()
-                        .ok();
+                    let description = Text::new("Description (optional):").prompt().ok();
 
                     // Ask about return point
-                    let should_return = Confirm::new("Does this extension return to the main flow?")
-                        .with_default(false)
-                        .with_help_message("Alternatives may return, exceptions typically don't")
-                        .prompt()?;
+                    let should_return =
+                        Confirm::new("Does this extension return to the main flow?")
+                            .with_default(false)
+                            .with_help_message(
+                                "Alternatives may return, exceptions typically don't",
+                            )
+                            .prompt()?;
 
                     let returns_at_step = if should_return {
-                        let return_step = Select::new("At which step does it return?", step_choices)
-                            .prompt()?;
+                        let return_step =
+                            Select::new("At which step does it return?", step_choices).prompt()?;
                         Some(
                             return_step
                                 .split(':')
@@ -833,8 +859,8 @@ impl ScenarioWorkflow {
                     };
 
                     // Select primary actor
-                    let primary_actor = Self::select_actor_for_step()?
-                        .unwrap_or_else(|| "User".to_string());
+                    let primary_actor =
+                        Self::select_actor_for_step()?.unwrap_or_else(|| "User".to_string());
 
                     // Create the extension scenario
                     let result = controller.create_extension_scenario(
@@ -848,7 +874,9 @@ impl ScenarioWorkflow {
                     )?;
 
                     UI::show_success(&result.message)?;
-                    println!("\n  💡 Tip: Use 'Edit scenario' to add steps to the new extension.\n");
+                    println!(
+                        "\n  💡 Tip: Use 'Edit scenario' to add steps to the new extension.\n"
+                    );
                     UI::pause_for_input()?;
                 }
                 "Back" => break,
@@ -906,15 +934,14 @@ impl ScenarioWorkflow {
 
             match choice {
                 "Add Precondition" => {
-                    let condition_types = vec![
-                        "Text description",
-                        "Reference to use case",
-                    ];
+                    let condition_types = vec!["Text description", "Reference to use case"];
                     let cond_type = Select::new("Precondition type:", condition_types).prompt()?;
 
                     if cond_type == "Text description" {
                         let condition = Text::new("Enter precondition:")
-                            .with_help_message("Describe what must be true before this scenario starts")
+                            .with_help_message(
+                                "Describe what must be true before this scenario starts",
+                            )
                             .prompt()?;
 
                         let result = controller.add_precondition(
@@ -928,7 +955,7 @@ impl ScenarioWorkflow {
                         // Reference to use case
                         let runner = InteractiveRunner::new();
                         let all_use_cases = runner.get_available_use_cases()?;
-                        
+
                         if all_use_cases.is_empty() {
                             println!("\n  No use cases available to reference.\n");
                             UI::pause_for_input()?;
@@ -940,7 +967,8 @@ impl ScenarioWorkflow {
                             .map(|uc| format!("{} - {}", uc.id, uc.title))
                             .collect();
 
-                        let selected = Select::new("Select use case to reference:", uc_options).prompt()?;
+                        let selected =
+                            Select::new("Select use case to reference:", uc_options).prompt()?;
                         let referenced_uc_id = selected.split(" - ").next().unwrap();
 
                         let relationships = vec![
@@ -952,7 +980,10 @@ impl ScenarioWorkflow {
                         let relationship = Select::new("Relationship:", relationships).prompt()?;
 
                         let text = Text::new("Precondition description:")
-                            .with_help_message(&format!("E.g., 'User must complete {}'", referenced_uc_id))
+                            .with_help_message(&format!(
+                                "E.g., 'User must complete {}'",
+                                referenced_uc_id
+                            ))
                             .with_default(&format!("{} {}", referenced_uc_id, relationship))
                             .prompt()?;
 
@@ -1046,11 +1077,14 @@ impl ScenarioWorkflow {
                             .prompt()?;
 
                             // Extract the use case ID
-                            let target_use_case_id = selected.split(" - ").next().unwrap().to_string();
+                            let target_use_case_id =
+                                selected.split(" - ").next().unwrap().to_string();
 
                             // Ask for relationship
                             let relationship = Text::new("Describe the relationship:")
-                                .with_help_message("e.g., 'must be completed', 'triggers', 'creates'")
+                                .with_help_message(
+                                    "e.g., 'must be completed', 'triggers', 'creates'",
+                                )
                                 .prompt()?;
 
                             // Ask for description text
@@ -1123,10 +1157,7 @@ impl ScenarioWorkflow {
         let scenarios = controller.get_scenarios(use_case_id)?;
 
         // Filter to show only main scenarios
-        let main_scenarios: Vec<_> = scenarios
-            .iter()
-            .filter(|s| s.is_main)
-            .collect();
+        let main_scenarios: Vec<_> = scenarios.iter().filter(|s| s.is_main).collect();
 
         if main_scenarios.is_empty() {
             println!("\n  No main scenarios found. Create a main scenario first.\n");
@@ -1158,7 +1189,8 @@ impl ScenarioWorkflow {
             .map(|s| format!("Step {}: {}", s.order, s.action))
             .collect();
 
-        let extends_step = Select::new("Extension diverges at which step?", step_options).prompt()?;
+        let extends_step =
+            Select::new("Extension diverges at which step?", step_options).prompt()?;
         let extends_at_step = extends_step
             .split(':')
             .next()
@@ -1185,7 +1217,8 @@ impl ScenarioWorkflow {
                 println!("\n  No steps after divergence point. Extension cannot return.\n");
                 None
             } else {
-                let return_step = Select::new("Extension returns at which step?", return_options).prompt()?;
+                let return_step =
+                    Select::new("Extension returns at which step?", return_options).prompt()?;
                 Some(
                     return_step
                         .split(':')
@@ -1210,8 +1243,7 @@ impl ScenarioWorkflow {
             .prompt()?;
 
         // Select primary actor
-        let actor = Self::select_actor_for_step()?
-            .unwrap_or_else(|| "User".to_string());
+        let actor = Self::select_actor_for_step()?.unwrap_or_else(|| "User".to_string());
 
         // Create extension
         let result = controller.create_extension_scenario(
@@ -1678,7 +1710,9 @@ impl ScenarioWorkflow {
 
         // Get increment
         let increment_str = Text::new("Increment amount:")
-            .with_help_message("Positive to shift forward, negative to shift backward (e.g., 1, -1, 2)")
+            .with_help_message(
+                "Positive to shift forward, negative to shift backward (e.g., 1, -1, 2)",
+            )
             .with_default("1")
             .prompt()?;
 

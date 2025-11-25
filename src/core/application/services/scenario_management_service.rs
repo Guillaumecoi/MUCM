@@ -436,9 +436,11 @@ impl<'a> ScenarioManagementService<'a> {
             .ok_or_else(|| anyhow::anyhow!("Scenario with ID '{}' not found", scenario_id))?;
 
         let repeat_block = RepeatBlock::new(from_step, to_step, condition);
-        
+
         // Validate the block before adding
-        repeat_block.validate().map_err(|e| anyhow::anyhow!("Invalid repeat block: {}", e))?;
+        repeat_block
+            .validate()
+            .map_err(|e| anyhow::anyhow!("Invalid repeat block: {}", e))?;
 
         use_case.scenarios[scenario_index]
             .repeat_blocks
@@ -533,7 +535,11 @@ impl<'a> ScenarioManagementService<'a> {
         use_case.add_step_to_scenario(scenario_id, step)?;
 
         // Update extension points
-        ExtensionPointUpdater::update_after_insert(&scenario_for_update, &new_step_order, &mut use_case)?;
+        ExtensionPointUpdater::update_after_insert(
+            &scenario_for_update,
+            &new_step_order,
+            &mut use_case,
+        )?;
 
         use_case.metadata.touch();
         self.repository.save(&use_case)?;
@@ -576,8 +582,11 @@ impl<'a> ScenarioManagementService<'a> {
         use_case.remove_step_from_scenario(scenario_id, step_order)?;
 
         // Update extension points and get list of invalid extensions
-        let invalid_extensions =
-            ExtensionPointUpdater::update_after_delete(&scenario_for_update, step_order, &mut use_case)?;
+        let invalid_extensions = ExtensionPointUpdater::update_after_delete(
+            &scenario_for_update,
+            step_order,
+            &mut use_case,
+        )?;
 
         use_case.metadata.touch();
         self.repository.save(&use_case)?;
