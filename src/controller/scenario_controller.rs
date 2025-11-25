@@ -35,6 +35,55 @@ impl ScenarioController {
     ///
     /// # Returns
     /// DisplayResult with the scenario ID
+    /// Create a main scenario (always creates as main/happy path type)
+    ///
+    /// # Arguments
+    /// * `use_case_id` - The ID of the use case
+    /// * `title` - Scenario title
+    /// * `description` - Optional description
+    /// * `preconditions` - Optional preconditions
+    /// * `postconditions` - Optional postconditions
+    ///
+    /// # Returns
+    /// DisplayResult with scenario ID
+    pub fn create_main_scenario(
+        &mut self,
+        use_case_id: String,
+        title: String,
+        description: Option<String>,
+        preconditions: Option<Vec<String>>,
+        postconditions: Option<Vec<String>>,
+    ) -> Result<DisplayResult> {
+        // Always create as main scenario with HappyPath type
+        let scenario_id = self.app_service.add_scenario(
+            &use_case_id,
+            title.clone(),
+            ScenarioType::HappyPath,
+            description,
+            preconditions.unwrap_or_default(),
+            postconditions.unwrap_or_default(),
+            Vec::new(), // actors will be derived from steps
+        )?;
+
+        Ok(DisplayResult::success(format!(
+            "✅ Created main scenario: {} - {}",
+            scenario_id, title
+        )))
+    }
+
+    /// Create a scenario with specific type (legacy - prefer create_main_scenario or create_extension_scenario)
+    ///
+    /// # Arguments
+    /// * `use_case_id` - The ID of the use case
+    /// * `title` - Scenario title
+    /// * `scenario_type` - Type string ("main", "alternative", "exception")
+    /// * `description` - Optional description
+    /// * `persona_id` - Optional persona assignment
+    /// * `preconditions` - Optional preconditions
+    /// * `postconditions` - Optional postconditions
+    ///
+    /// # Returns
+    /// DisplayResult with scenario ID
     pub fn create_scenario(
         &mut self,
         use_case_id: String,
