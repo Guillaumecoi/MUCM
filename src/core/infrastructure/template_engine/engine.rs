@@ -367,11 +367,19 @@ Generated at: {{generated_at}}
             }
         };
 
-        // Determine scenario template path
+        // Determine scenario template path with fallback hierarchy:
+        // 1. Level-specific override from methodology.toml
+        // 2. Global default from mucm.toml config
+        // 3. Hard-coded default "scenarios/scenario.hbs"
+        let default_from_config = crate::config::Config::load()
+            .ok()
+            .map(|c| c.templates.default_scenario_template);
+
         let scenario_template_path = level_config
             .scenario_template
             .as_deref()
-            .unwrap_or("scenarios/scenario.hbs"); // Default
+            .or(default_from_config.as_deref())
+            .unwrap_or("scenarios/scenario.hbs");
 
         // Resolve full path
         let full_path = Self::resolve_scenario_template_path(
