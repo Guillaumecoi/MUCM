@@ -403,6 +403,9 @@ impl ScenarioController {
         self.app_service
             .reorder_scenario_steps(&use_case_id, &scenario_id, reorderings)?;
 
+        // Regenerate markdown to reflect reordering
+        self.app_service.regenerate_markdown(&use_case_id)?;
+
         Ok(DisplayResult::success(format!(
             "✅ Reordered steps in scenario {}",
             scenario_id
@@ -427,6 +430,9 @@ impl ScenarioController {
         self.app_service
             .assign_persona_to_scenario(&use_case_id, &scenario_id, &persona_id)?;
 
+        // Regenerate markdown to reflect persona assignment
+        self.app_service.regenerate_markdown(&use_case_id)?;
+
         Ok(DisplayResult::success(format!(
             "✅ Assigned persona {} to scenario {}",
             persona_id, scenario_id
@@ -448,6 +454,9 @@ impl ScenarioController {
     ) -> Result<DisplayResult> {
         self.app_service
             .unassign_persona_from_scenario(&use_case_id, &scenario_id)?;
+
+        // Regenerate markdown to reflect persona change
+        self.app_service.regenerate_markdown(&use_case_id)?;
 
         Ok(DisplayResult::success(format!(
             "✅ Unassigned persona from scenario {}",
@@ -472,6 +481,9 @@ impl ScenarioController {
     ) -> Result<DisplayResult> {
         self.app_service
             .add_scenario_reference(&use_case_id, &scenario_id, reference)?;
+
+        // Regenerate markdown to reflect new reference
+        self.app_service.regenerate_markdown(&use_case_id)?;
 
         Ok(DisplayResult::success(format!(
             "✅ Added reference to scenario {}",
@@ -502,6 +514,9 @@ impl ScenarioController {
             &target_id,
             &relationship,
         )?;
+
+        // Regenerate markdown to reflect reference removal
+        self.app_service.regenerate_markdown(&use_case_id)?;
 
         Ok(DisplayResult::success(format!(
             "✅ Removed reference from scenario {}",
@@ -881,6 +896,9 @@ impl ScenarioController {
             condition.clone(),
         )?;
 
+        // Regenerate markdown to reflect new repeat block
+        self.app_service.regenerate_markdown(&use_case_id)?;
+
         Ok(DisplayResult::success(format!(
             "✅ Added repeat block to scenario {}: steps {} to {}\n   Condition: {}",
             scenario_id, from_step, to_step, condition
@@ -910,6 +928,9 @@ impl ScenarioController {
             &from_step,
             &to_step,
         )?;
+
+        // Regenerate markdown to reflect repeat block removal
+        self.app_service.regenerate_markdown(&use_case_id)?;
 
         Ok(DisplayResult::success(format!(
             "✅ Removed repeat block from scenario {}: steps {} to {}",
@@ -955,6 +976,9 @@ impl ScenarioController {
             .map(|r| format!(" → {}", r))
             .unwrap_or_default();
 
+        // Regenerate markdown to reflect smart insertion
+        self.app_service.regenerate_markdown(&use_case_id)?;
+
         Ok(DisplayResult::success(format!(
             "✅ Inserted step {} in scenario {} (after step {})\n   {} {}{}: {}",
             new_step_order, scenario_id, after_step, new_step_order, actor, receiver_info, action
@@ -999,6 +1023,9 @@ impl ScenarioController {
             message.push_str("   These extensions reference the deleted step and need to be updated.");
         }
 
+        // Regenerate markdown to reflect smart deletion
+        self.app_service.regenerate_markdown(&use_case_id)?;
+
         Ok(DisplayResult::success(message))
     }
 
@@ -1027,6 +1054,10 @@ impl ScenarioController {
         )?;
 
         let direction = if increment > 0 { "forward" } else { "backward" };
+        
+        // Regenerate markdown to reflect renumbering
+        self.app_service.regenerate_markdown(&use_case_id)?;
+        
         Ok(DisplayResult::success(format!(
             "✅ Renumbered steps in scenario {} from step {} {} by {}",
             scenario_id,
