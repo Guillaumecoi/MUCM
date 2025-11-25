@@ -116,6 +116,7 @@ impl InteractiveRunner {
         test_dir: String,
         persona_dir: String,
         data_dir: String,
+        scenario_template: Option<String>,
     ) -> Result<String> {
         // Sanitize inputs: trim whitespace and filter out empty strings
         let sanitized_language = Self::sanitize_optional_string(language);
@@ -140,7 +141,7 @@ impl InteractiveRunner {
             Some(test_dir),
             Some(persona_dir),
             Some(data_dir),
-            None, // TODO: Add scenario template selection
+            scenario_template,
         )?;
 
         Ok(result.message)

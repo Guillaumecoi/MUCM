@@ -186,6 +186,30 @@ impl Initialization {
             "sqlite"
         };
 
+        // Step 6: Select scenario template
+        UI::show_step(
+            6,
+            "Scenario Template",
+            "Choose how scenarios will be rendered in your use case documentation.\n\
+            Standard: Traditional text-based scenario descriptions\n\
+            Mermaid: Visual sequence diagrams showing actor interactions",
+        )?;
+
+        let template_options = vec![
+            "scenarios/scenario.hbs - Standard text-based scenarios",
+            "scenarios/scenario_mermaid.hbs - Mermaid sequence diagrams",
+        ];
+
+        let template_selection = Select::new("Default scenario template:", template_options)
+            .with_help_message("You can override this per-methodology in methodology.toml")
+            .prompt()?;
+
+        let scenario_template = if template_selection.starts_with("scenarios/scenario_mermaid") {
+            Some("scenarios/scenario_mermaid.hbs".to_string())
+        } else {
+            Some("scenarios/scenario.hbs".to_string())
+        };
+
         // Show summary
         show_configuration_summary(
             &language,
@@ -230,6 +254,7 @@ impl Initialization {
             test_dir.clone(),
             persona_dir.clone(),
             data_dir.clone(),
+            scenario_template,
             create_actors,
         )?;
 
@@ -273,6 +298,7 @@ fn create_config_with_directories(
     test_dir: String,
     persona_dir: String,
     data_dir: String,
+    scenario_template: Option<String>,
     create_standard_actors: bool,
 ) -> Result<()> {
     match runner.initialize_project(
@@ -283,6 +309,7 @@ fn create_config_with_directories(
         test_dir,
         persona_dir,
         data_dir,
+        scenario_template,
     ) {
         Ok(message) => {
             UI::show_success(&message)?;
