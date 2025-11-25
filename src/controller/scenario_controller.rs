@@ -541,18 +541,20 @@ impl ScenarioController {
         scenario_id: String,
         condition: String,
     ) -> Result<DisplayResult> {
-        let mut scenario = self.get_scenario(&use_case_id, &scenario_id)?;
+        // Get the use case, modify scenario, save entire use case
+        let mut use_case = self.app_service.get_use_case(&use_case_id)?;
+        
+        let scenario = use_case
+            .scenarios
+            .iter_mut()
+            .find(|s| s.id == scenario_id)
+            .ok_or_else(|| anyhow::anyhow!("Scenario {} not found", scenario_id))?;
+        
         scenario.add_precondition(condition.clone().into());
-
-        // Save via coordinator
-        self.app_service.edit_scenario(
-            &use_case_id,
-            &scenario_id,
-            Some(scenario.title),
-            Some(scenario.description),
-            Some(scenario.scenario_type),
-            Some(scenario.status),
-        )?;
+        use_case.metadata.touch();
+        
+        self.app_service.save_use_case(&use_case)?;
+        self.app_service.regenerate_markdown(&use_case_id)?;
 
         Ok(DisplayResult::success(format!(
             "✅ Added precondition to scenario {}",
@@ -578,19 +580,21 @@ impl ScenarioController {
     ) -> Result<DisplayResult> {
         use crate::core::Condition;
 
-        let mut scenario = self.get_scenario(&use_case_id, &scenario_id)?;
+        // Get the use case, modify scenario, save entire use case
+        let mut use_case = self.app_service.get_use_case(&use_case_id)?;
+        
+        let scenario = use_case
+            .scenarios
+            .iter_mut()
+            .find(|s| s.id == scenario_id)
+            .ok_or_else(|| anyhow::anyhow!("Scenario {} not found", scenario_id))?;
+        
         let condition = Condition::with_use_case(text.clone(), referenced_use_case_id.clone(), Some(relationship));
         scenario.add_precondition(condition);
-
-        // Save via coordinator
-        self.app_service.edit_scenario(
-            &use_case_id,
-            &scenario_id,
-            Some(scenario.title),
-            Some(scenario.description),
-            Some(scenario.scenario_type),
-            Some(scenario.status),
-        )?;
+        use_case.metadata.touch();
+        
+        self.app_service.save_use_case(&use_case)?;
+        self.app_service.regenerate_markdown(&use_case_id)?;
 
         Ok(DisplayResult::success(format!(
             "✅ Added precondition with use case reference '{}' to scenario {}",
@@ -616,19 +620,21 @@ impl ScenarioController {
     ) -> Result<DisplayResult> {
         use crate::core::Condition;
 
-        let mut scenario = self.get_scenario(&use_case_id, &scenario_id)?;
+        // Get the use case, modify scenario, save entire use case
+        let mut use_case = self.app_service.get_use_case(&use_case_id)?;
+        
+        let scenario = use_case
+            .scenarios
+            .iter_mut()
+            .find(|s| s.id == scenario_id)
+            .ok_or_else(|| anyhow::anyhow!("Scenario {} not found", scenario_id))?;
+        
         let condition = Condition::with_use_case(text.clone(), referenced_use_case_id.clone(), Some(relationship));
         scenario.add_postcondition(condition);
-
-        // Save via coordinator
-        self.app_service.edit_scenario(
-            &use_case_id,
-            &scenario_id,
-            Some(scenario.title),
-            Some(scenario.description),
-            Some(scenario.scenario_type),
-            Some(scenario.status),
-        )?;
+        use_case.metadata.touch();
+        
+        self.app_service.save_use_case(&use_case)?;
+        self.app_service.regenerate_markdown(&use_case_id)?;
 
         Ok(DisplayResult::success(format!(
             "✅ Added postcondition with use case reference '{}' to scenario {}",
@@ -651,18 +657,20 @@ impl ScenarioController {
         scenario_id: String,
         condition: String,
     ) -> Result<DisplayResult> {
-        let mut scenario = self.get_scenario(&use_case_id, &scenario_id)?;
+        // Get the use case, modify scenario, save entire use case
+        let mut use_case = self.app_service.get_use_case(&use_case_id)?;
+        
+        let scenario = use_case
+            .scenarios
+            .iter_mut()
+            .find(|s| s.id == scenario_id)
+            .ok_or_else(|| anyhow::anyhow!("Scenario {} not found", scenario_id))?;
+        
         scenario.add_postcondition(condition.clone().into());
-
-        // Save via coordinator
-        self.app_service.edit_scenario(
-            &use_case_id,
-            &scenario_id,
-            Some(scenario.title),
-            Some(scenario.description),
-            Some(scenario.scenario_type),
-            Some(scenario.status),
-        )?;
+        use_case.metadata.touch();
+        
+        self.app_service.save_use_case(&use_case)?;
+        self.app_service.regenerate_markdown(&use_case_id)?;
 
         Ok(DisplayResult::success(format!(
             "✅ Added postcondition to scenario {}",
@@ -685,18 +693,20 @@ impl ScenarioController {
         scenario_id: String,
         condition: String,
     ) -> Result<DisplayResult> {
-        let mut scenario = self.get_scenario(&use_case_id, &scenario_id)?;
+        // Get the use case, modify scenario, save entire use case
+        let mut use_case = self.app_service.get_use_case(&use_case_id)?;
+        
+        let scenario = use_case
+            .scenarios
+            .iter_mut()
+            .find(|s| s.id == scenario_id)
+            .ok_or_else(|| anyhow::anyhow!("Scenario {} not found", scenario_id))?;
+        
         scenario.remove_precondition(&condition);
-
-        // Save via coordinator
-        self.app_service.edit_scenario(
-            &use_case_id,
-            &scenario_id,
-            Some(scenario.title),
-            Some(scenario.description),
-            Some(scenario.scenario_type),
-            Some(scenario.status),
-        )?;
+        use_case.metadata.touch();
+        
+        self.app_service.save_use_case(&use_case)?;
+        self.app_service.regenerate_markdown(&use_case_id)?;
 
         Ok(DisplayResult::success(format!(
             "✅ Removed precondition from scenario {}",
@@ -719,18 +729,20 @@ impl ScenarioController {
         scenario_id: String,
         condition: String,
     ) -> Result<DisplayResult> {
-        let mut scenario = self.get_scenario(&use_case_id, &scenario_id)?;
+        // Get the use case, modify scenario, save entire use case
+        let mut use_case = self.app_service.get_use_case(&use_case_id)?;
+        
+        let scenario = use_case
+            .scenarios
+            .iter_mut()
+            .find(|s| s.id == scenario_id)
+            .ok_or_else(|| anyhow::anyhow!("Scenario {} not found", scenario_id))?;
+        
         scenario.remove_postcondition(&condition);
-
-        // Save via coordinator
-        self.app_service.edit_scenario(
-            &use_case_id,
-            &scenario_id,
-            Some(scenario.title),
-            Some(scenario.description),
-            Some(scenario.scenario_type),
-            Some(scenario.status),
-        )?;
+        use_case.metadata.touch();
+        
+        self.app_service.save_use_case(&use_case)?;
+        self.app_service.regenerate_markdown(&use_case_id)?;
 
         Ok(DisplayResult::success(format!(
             "✅ Removed postcondition from scenario {}",

@@ -888,6 +888,23 @@ impl UseCaseCoordinator {
         Ok(&self.use_cases[index])
     }
 
+    // ========== Public Helpers for Controller Access ==========
+
+    /// Get a mutable copy of a use case for modification
+    /// After modification, call save_use_case to persist changes
+    pub fn get_use_case(&self, use_case_id: &str) -> Result<UseCase> {
+        let index = self.find_use_case_index(use_case_id)?;
+        Ok(self.use_cases[index].clone())
+    }
+
+    /// Save a modified use case back to the repository and update internal state
+    pub fn save_use_case(&mut self, use_case: &UseCase) -> Result<()> {
+        let index = self.find_use_case_index(&use_case.id)?;
+        self.repository.save(use_case)?;
+        self.use_cases[index] = use_case.clone();
+        Ok(())
+    }
+
     // Deleted: create_use_case_internal() - never used (PR #13)
 
     /// Internal helper to create use cases with methodology custom fields
