@@ -76,6 +76,7 @@ impl Config {
             methodologies,
             methodology.or(Some(default_config.templates.default_methodology)),
             "toml".to_string(),
+            None, // Use default scenario template
         )
     }
 
@@ -88,6 +89,7 @@ impl Config {
     /// * `test_language` - The programming language for test templates
     /// * `methodologies` - List of methodologies to enable
     /// * `default_methodology` - Optional default methodology override
+    /// * `default_scenario_template` - Optional default scenario template override
     ///
     /// # Returns
     /// A minimal Config instance suitable for template processing
@@ -96,6 +98,7 @@ impl Config {
         methodologies: Vec<String>,
         default_methodology: Option<String>,
         storage: String,
+        default_scenario_template: Option<String>,
     ) -> Self {
         let mut config = Self::default();
         if let Some(lang) = test_language {
@@ -106,6 +109,9 @@ impl Config {
         }
         if let Some(method) = default_methodology {
             config.templates.default_methodology = method;
+        }
+        if let Some(template) = default_scenario_template {
+            config.templates.default_scenario_template = template;
         }
         // Set storage backend
         use crate::config::types::StorageBackend;
@@ -129,6 +135,7 @@ impl Config {
     /// * `test_dir` - Directory for test files
     /// * `actor_dir` - Directory for actor files (personas and system actors)
     /// * `data_dir` - Directory for data files
+    /// * `default_scenario_template` - Optional default scenario template override
     ///
     /// # Returns
     /// A Config instance with custom directories
@@ -141,12 +148,14 @@ impl Config {
         test_dir: String,
         actor_dir: String,
         data_dir: String,
+        default_scenario_template: Option<String>,
     ) -> Self {
         let mut config = Self::for_template_with_methodologies_and_storage(
             test_language,
             methodologies,
             default_methodology,
             storage,
+            default_scenario_template,
         );
 
         // Update directories
@@ -345,6 +354,7 @@ impl Config {
                             "tester".to_string(),
                         ],
                         default_methodology: "feature".to_string(),
+                        default_scenario_template: "scenarios/scenario.hbs".to_string(),
                     },
                     generation: GenerationConfig {
                         test_language: "none".to_string(),

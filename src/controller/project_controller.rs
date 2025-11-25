@@ -209,6 +209,7 @@ impl ProjectController {
     /// * `test_dir` - Optional directory for test files (default: "tests/use-cases")
     /// * `actor_dir` - Optional directory for actor files (default: "docs/actors")
     /// * `data_dir` - Optional directory for data files (default: "use-cases-data")
+    /// * `default_scenario_template` - Optional default scenario template (default: "scenarios/scenario.hbs")
     ///
     /// # Returns
     /// DisplayResult with completion message and usage guidance
@@ -224,6 +225,7 @@ impl ProjectController {
         test_dir: Option<String>,
         actor_dir: Option<String>,
         data_dir: Option<String>,
+        default_scenario_template: Option<String>,
     ) -> Result<DisplayResult> {
         // Check if already initialized
         if Self::is_initialized() {
@@ -292,6 +294,7 @@ impl ProjectController {
             resolved_test_dir.clone(),
             resolved_actor_dir.clone(),
             resolved_data_dir.clone(),
+            default_scenario_template,
         );
 
         // Save config file
@@ -655,5 +658,100 @@ impl ProjectController {
         message.push_str("\n💡 Template files will be removed when you Save & Exit.\n");
 
         Ok(DisplayResult::success(message))
+    }
+
+    /// Get available scenario templates from the scenarios directory.
+    ///
+    /// Scans for .hbs files in the scenarios directory. During initialization,
+    /// scans source templates. After initialization, scans project templates.
+    ///
+    /// # Returns
+    /// Vector of template paths relative to template root (e.g., "scenarios/scenario.hbs")
+    ///
+    /// # Errors
+    /// Returns error if scenarios directory cannot be accessed or read
+    pub fn get_available_scenario_templates() -> Result<Vec<String>> {
+        use std::fs;
+
+        // Try project templates first, fall back to source templates
+        let templates_dir = match Config::get_project_templates_dir() {
+            Ok(dir) => dir,
+            Err(_) => Config::get_metadata_load_dir()?,
+        };
+
+        let scenarios_dir = templates_dir.join("scenarios");
+        if !scenarios_dir.exists() {
+            return Ok(vec!["scenarios/scenario.hbs".to_string()]);
+        }
+
+        let mut templates = Vec::new();
+        for entry in fs::read_dir(&scenarios_dir)? {
+            let entry = entry?;
+            let path = entry.path();
+            if path.extension().and_then(|s| s.to_str()) == Some("hbs") {
+                if let Some(filename) = path.file_name().and_then(|n| n.to_str()) {
+                    templates.push(format!("scenarios/{}", filename));
+                }
+            }
+        }
+
+        // Sort for consistent ordering
+        templates.sort();
+
+        // Ensure we always have at least the default
+        if templates.is_empty() {
+            templates.push("scenarios/scenario.hbs".to_string());
+        }
+
+        Ok(templates)
+    }
+
+    /// Get the current default scenario template from config.
+    ///
+    /// # Returns
+    /// The default scenario template path
+    ///
+    /// # Errors
+    /// Returns error if config cannot be loaded
+    pub fn get_default_scenario_template() -> Result<String> {
+        let config = Config::load()?;
+        Ok(config.templates.default_scenario_template.clone())
+    }
+
+    /// Set the default scenario template in the config.
+    ///
+    /// Validates that the template exists before setting it as the default.
+    ///
+    /// # Arguments
+    /// * `template` - Template path relative to template root (e.g., "scenarios/scenario.hbs")
+    ///
+    /// # Returns
+    /// DisplayResult with success/error message
+    ///
+    /// # Errors
+    /// Returns error if config cannot be loaded or saved, or if template doesn't exist
+    pub fn set_default_scenario_template(template: String) -> Result<DisplayResult> {
+        // Validate template exists
+        let available = Self::get_available_scenario_templates()?;
+        if !available.contains(&template) {
+            return Ok(DisplayResult::error(format!(
+                "⚠️  Template '{}' not found.\nAvailable templates:\n{}",
+                template,
+                available
+                    .iter()
+                    .map(|t| format!("   • {}", t))
+                    .collect::<Vec<_>>()
+                    .join("\n")
+            )));
+        }
+
+        let mut config = Config::load()?;
+        config.templates.default_scenario_template = template.clone();
+        config.save_in_dir(".")?;
+
+        Ok(DisplayResult::success(format!(
+            "✅ Default scenario template updated to: {}\n\n💡 Methodology levels can still override this by setting scenario_template in methodology.toml",
+            template
+        )))
     }
 }

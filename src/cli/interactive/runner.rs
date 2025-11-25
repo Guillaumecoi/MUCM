@@ -140,6 +140,7 @@ impl InteractiveRunner {
             Some(test_dir),
             Some(persona_dir),
             Some(data_dir),
+            None, // TODO: Add scenario template selection
         )?;
 
         Ok(result.message)

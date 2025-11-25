@@ -109,6 +109,7 @@ impl CliRunner {
             None,
             None,
             None,
+            None, // default_scenario_template
         )?;
         Ok(result)
     }
