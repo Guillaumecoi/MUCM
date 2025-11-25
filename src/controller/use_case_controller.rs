@@ -256,6 +256,25 @@ impl UseCaseController {
         Ok(())
     }
 
+    /// Regenerate markdown for all use cases and return a DisplayResult.
+    ///
+    /// Wrapper around `regenerate_all_use_cases` that returns a DisplayResult
+    /// for use in interactive workflows.
+    ///
+    /// # Returns
+    /// DisplayResult with success message and regeneration count
+    ///
+    /// # Errors
+    /// Returns error if any regeneration fails
+    pub fn regenerate_all_markdown(&mut self) -> Result<DisplayResult> {
+        let count = self.app_service.get_all_use_cases().len();
+        self.app_service.regenerate_all_markdown()?;
+        Ok(DisplayResult::success(format!(
+            "✅ Regenerated documentation for {} use case(s)",
+            count
+        )))
+    }
+
     /// Add a precondition to a use case.
     ///
     /// Adds a new precondition to the specified use case.
