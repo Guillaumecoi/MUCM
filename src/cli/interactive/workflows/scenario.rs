@@ -202,6 +202,7 @@ impl ScenarioWorkflow {
     }
 
     /// Helper to collect preconditions or postconditions interactively
+    /// Returns simple text conditions (use case references handled separately in manage_conditions_inline)
     fn collect_conditions(
         condition_type: &str,
         _current_use_case_id: &str,
@@ -214,6 +215,8 @@ impl ScenarioWorkflow {
             return Ok(None);
         }
 
+        println!("\n  💡 Tip: You can add use case references later via 'Manage conditions'\n");
+
         let mut conditions = Vec::new();
         loop {
             let condition = Text::new(&format!(
@@ -221,8 +224,7 @@ impl ScenarioWorkflow {
                 condition_type.trim_end_matches('s')
             ))
             .with_help_message(&format!(
-                "Enter a text description of the {}",
-                condition_type.trim_end_matches('s')
+                "Enter a text description (e.g., 'User must be logged in')",
             ))
             .prompt()?;
 
@@ -288,6 +290,7 @@ impl ScenarioWorkflow {
         UI::show_section_header("Edit Scenario", "✏️")?;
 
         let mut controller = ScenarioController::new()?;
+        let runner = InteractiveRunner::new();
         let scenarios = controller.get_scenarios(use_case_id)?;
 
         if scenarios.is_empty() {
@@ -416,7 +419,7 @@ impl ScenarioWorkflow {
                     Self::manage_steps_inline(use_case_id, scenario_id, &mut controller)?;
                 }
                 "Manage conditions" => {
-                    Self::manage_all_conditions_inline(use_case_id, scenario_id, &mut controller)?;
+                    Self::manage_all_conditions_inline(use_case_id, scenario_id, &mut controller, &runner)?;
                 }
                 "Done editing" => break,
                 _ => {}
@@ -862,6 +865,7 @@ impl ScenarioWorkflow {
         use_case_id: &str,
         scenario_id: &str,
         controller: &mut ScenarioController,
+        runner: &InteractiveRunner,
     ) -> Result<()> {
         loop {
             let scenario = controller.get_scenario(use_case_id, scenario_id)?;
@@ -902,17 +906,66 @@ impl ScenarioWorkflow {
 
             match choice {
                 "Add Precondition" => {
-                    let condition = Text::new("Enter precondition:")
-                        .with_help_message("Describe what must be true before this scenario starts")
-                        .prompt()?;
+                    let condition_types = vec![
+                        "Text description",
+                        "Reference to use case",
+                    ];
+                    let cond_type = Select::new("Precondition type:", condition_types).prompt()?;
 
-                    let result = controller.add_precondition(
-                        use_case_id.to_string(),
-                        scenario_id.to_string(),
-                        condition,
-                    )?;
+                    if cond_type == "Text description" {
+                        let condition = Text::new("Enter precondition:")
+                            .with_help_message("Describe what must be true before this scenario starts")
+                            .prompt()?;
 
-                    UI::show_success(&result.message)?;
+                        let result = controller.add_precondition(
+                            use_case_id.to_string(),
+                            scenario_id.to_string(),
+                            condition,
+                        )?;
+
+                        UI::show_success(&result.message)?;
+                    } else {
+                        // Reference to use case
+                        let runner = InteractiveRunner::new();
+                        let all_use_cases = runner.get_available_use_cases()?;
+                        
+                        if all_use_cases.is_empty() {
+                            println!("\n  No use cases available to reference.\n");
+                            UI::pause_for_input()?;
+                            continue;
+                        }
+
+                        let uc_options: Vec<String> = all_use_cases
+                            .iter()
+                            .map(|uc| format!("{} - {}", uc.id, uc.title))
+                            .collect();
+
+                        let selected = Select::new("Select use case to reference:", uc_options).prompt()?;
+                        let referenced_uc_id = selected.split(" - ").next().unwrap();
+
+                        let relationships = vec![
+                            "must be completed",
+                            "must be in progress",
+                            "depends on",
+                            "requires",
+                        ];
+                        let relationship = Select::new("Relationship:", relationships).prompt()?;
+
+                        let text = Text::new("Precondition description:")
+                            .with_help_message(&format!("E.g., 'User must complete {}'", referenced_uc_id))
+                            .with_default(&format!("{} {}", referenced_uc_id, relationship))
+                            .prompt()?;
+
+                        let result = controller.add_precondition_with_use_case(
+                            use_case_id.to_string(),
+                            scenario_id.to_string(),
+                            text,
+                            referenced_uc_id.to_string(),
+                            relationship.to_string(),
+                        )?;
+
+                        UI::show_success(&result.message)?;
+                    }
                 }
                 "Remove Precondition" => {
                     if scenario.preconditions.is_empty() {
@@ -951,17 +1004,70 @@ impl ScenarioWorkflow {
                     UI::show_success(&result.message)?;
                 }
                 "Add Postcondition" => {
-                    let condition = Text::new("Enter postcondition:")
-                        .with_help_message(
-                            "Describe what must be true after this scenario completes",
-                        )
-                        .prompt()?;
+                    // Let user choose between text or use case reference
+                    let condition_type = Select::new(
+                        "How would you like to specify the postcondition?",
+                        vec!["Text description", "Reference to use case"],
+                    )
+                    .prompt()?;
 
-                    let result = controller.add_postcondition(
-                        use_case_id.to_string(),
-                        scenario_id.to_string(),
-                        condition,
-                    )?;
+                    let result = match condition_type {
+                        "Text description" => {
+                            let condition = Text::new("Enter postcondition:")
+                                .with_help_message(
+                                    "Describe what must be true after this scenario completes",
+                                )
+                                .prompt()?;
+
+                            controller.add_postcondition(
+                                use_case_id.to_string(),
+                                scenario_id.to_string(),
+                                condition,
+                            )?
+                        }
+                        "Reference to use case" => {
+                            // Get list of available use cases
+                            let available_use_cases = runner.get_available_use_cases()?;
+                            if available_use_cases.is_empty() {
+                                println!("\n  No use cases available to reference.\n");
+                                UI::pause_for_input()?;
+                                continue;
+                            }
+
+                            let use_case_options: Vec<String> = available_use_cases
+                                .iter()
+                                .map(|uc| format!("{} - {}", uc.id, uc.title))
+                                .collect();
+
+                            let selected = Select::new(
+                                "Select use case to reference:",
+                                use_case_options.clone(),
+                            )
+                            .prompt()?;
+
+                            // Extract the use case ID
+                            let target_use_case_id = selected.split(" - ").next().unwrap().to_string();
+
+                            // Ask for relationship
+                            let relationship = Text::new("Describe the relationship:")
+                                .with_help_message("e.g., 'must be completed', 'triggers', 'creates'")
+                                .prompt()?;
+
+                            // Ask for description text
+                            let text = Text::new("Enter postcondition description:")
+                                .with_help_message("Describe what must be true after this scenario")
+                                .prompt()?;
+
+                            controller.add_postcondition_with_use_case(
+                                use_case_id.to_string(),
+                                scenario_id.to_string(),
+                                text,
+                                target_use_case_id,
+                                relationship,
+                            )?
+                        }
+                        _ => unreachable!(),
+                    };
 
                     UI::show_success(&result.message)?;
                 }

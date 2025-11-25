@@ -65,6 +65,9 @@ impl ScenarioController {
             Vec::new(), // actors will be derived from steps
         )?;
 
+        // Regenerate markdown to reflect the new scenario
+        self.app_service.regenerate_markdown(&use_case_id)?;
+
         Ok(DisplayResult::success(format!(
             "✅ Created main scenario: {} - {}",
             scenario_id, title
@@ -114,6 +117,9 @@ impl ScenarioController {
             self.app_service
                 .assign_persona_to_scenario(&use_case_id, &scenario_id, &persona)?;
         }
+
+        // Regenerate markdown to reflect the new scenario
+        self.app_service.regenerate_markdown(&use_case_id)?;
 
         Ok(DisplayResult::success(format!(
             "✅ Created scenario: {} - {}",
@@ -165,6 +171,9 @@ impl ScenarioController {
             parsed_status,
         )?;
 
+        // Regenerate markdown to reflect changes
+        self.app_service.regenerate_markdown(&use_case_id)?;
+
         Ok(DisplayResult::success(format!(
             "✅ Updated scenario: {}",
             scenario_id
@@ -186,6 +195,9 @@ impl ScenarioController {
     ) -> Result<DisplayResult> {
         self.app_service
             .delete_scenario(&use_case_id, &scenario_id)?;
+
+        // Regenerate markdown to reflect the deletion
+        self.app_service.regenerate_markdown(&use_case_id)?;
 
         Ok(DisplayResult::success(format!(
             "✅ Deleted scenario: {}",
@@ -306,6 +318,9 @@ impl ScenarioController {
             )
         };
 
+        // Regenerate markdown to reflect the new step
+        self.app_service.regenerate_markdown(&use_case_id)?;
+
         Ok(DisplayResult::success(message))
     }
 
@@ -333,6 +348,9 @@ impl ScenarioController {
             new_description,
         )?;
 
+        // Regenerate markdown to reflect the edit
+        self.app_service.regenerate_markdown(&use_case_id)?;
+
         Ok(DisplayResult::success(format!(
             "✅ Updated step {} in scenario {}",
             step_order, scenario_id
@@ -357,6 +375,9 @@ impl ScenarioController {
         let step_order_str = step_order.to_string();
         self.app_service
             .remove_scenario_step(&use_case_id, &scenario_id, &step_order_str)?;
+
+        // Regenerate markdown to reflect the removal
+        self.app_service.regenerate_markdown(&use_case_id)?;
 
         Ok(DisplayResult::success(format!(
             "✅ Removed step {} from scenario {}",
@@ -536,6 +557,82 @@ impl ScenarioController {
         Ok(DisplayResult::success(format!(
             "✅ Added precondition to scenario {}",
             scenario_id
+        )))
+    }
+
+    /// Add a precondition with use case reference to a scenario
+    ///
+    /// # Arguments
+    /// * `use_case_id` - The ID of the use case
+    /// * `scenario_id` - The ID of the scenario
+    /// * `text` - The condition description
+    /// * `referenced_use_case_id` - The use case being referenced
+    /// * `relationship` - The relationship type (e.g., "must be completed")
+    pub fn add_precondition_with_use_case(
+        &mut self,
+        use_case_id: String,
+        scenario_id: String,
+        text: String,
+        referenced_use_case_id: String,
+        relationship: String,
+    ) -> Result<DisplayResult> {
+        use crate::core::Condition;
+
+        let mut scenario = self.get_scenario(&use_case_id, &scenario_id)?;
+        let condition = Condition::with_use_case(text.clone(), referenced_use_case_id.clone(), Some(relationship));
+        scenario.add_precondition(condition);
+
+        // Save via coordinator
+        self.app_service.edit_scenario(
+            &use_case_id,
+            &scenario_id,
+            Some(scenario.title),
+            Some(scenario.description),
+            Some(scenario.scenario_type),
+            Some(scenario.status),
+        )?;
+
+        Ok(DisplayResult::success(format!(
+            "✅ Added precondition with use case reference '{}' to scenario {}",
+            referenced_use_case_id, scenario_id
+        )))
+    }
+
+    /// Add a postcondition with use case reference to a scenario
+    ///
+    /// # Arguments
+    /// * `use_case_id` - The ID of the use case
+    /// * `scenario_id` - The ID of the scenario
+    /// * `text` - The condition description
+    /// * `referenced_use_case_id` - The use case being referenced
+    /// * `relationship` - The relationship type (e.g., "must be completed")
+    pub fn add_postcondition_with_use_case(
+        &mut self,
+        use_case_id: String,
+        scenario_id: String,
+        text: String,
+        referenced_use_case_id: String,
+        relationship: String,
+    ) -> Result<DisplayResult> {
+        use crate::core::Condition;
+
+        let mut scenario = self.get_scenario(&use_case_id, &scenario_id)?;
+        let condition = Condition::with_use_case(text.clone(), referenced_use_case_id.clone(), Some(relationship));
+        scenario.add_postcondition(condition);
+
+        // Save via coordinator
+        self.app_service.edit_scenario(
+            &use_case_id,
+            &scenario_id,
+            Some(scenario.title),
+            Some(scenario.description),
+            Some(scenario.scenario_type),
+            Some(scenario.status),
+        )?;
+
+        Ok(DisplayResult::success(format!(
+            "✅ Added postcondition with use case reference '{}' to scenario {}",
+            referenced_use_case_id, scenario_id
         )))
     }
 
@@ -735,6 +832,9 @@ impl ScenarioController {
         let return_info = returns_at_step
             .map(|r| format!(" and returns at step {}", r))
             .unwrap_or_default();
+
+        // Regenerate markdown to reflect the new extension scenario
+        self.app_service.regenerate_markdown(&use_case_id)?;
 
         Ok(DisplayResult::success(format!(
             "✅ Created extension scenario: {} - {}\n   Extends {} at step {}{}",

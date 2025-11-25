@@ -507,6 +507,14 @@ impl InteractiveRunner {
 
         Ok(actors)
     }
+
+    /// Get all available use cases for referencing
+    pub fn get_available_use_cases(&self) -> Result<Vec<crate::core::UseCase>> {
+        use crate::controller::UseCaseController;
+
+        let uc_controller = UseCaseController::new()?;
+        uc_controller.get_all_use_cases()
+    }
 }
 
 // Re-export for convenience
