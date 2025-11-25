@@ -1272,4 +1272,248 @@ mod tests {
         assert!(result.is_success());
         assert!(result.message.contains("Removed step"));
     }
+
+    #[test]
+    #[serial]
+    fn test_add_precondition() {
+        let (_temp_dir, mut controller) = setup_test_env();
+        let use_case_id = create_test_use_case(&mut controller);
+        let mut controller = ScenarioController::new().unwrap();
+
+        // Create scenario
+        controller
+            .create_main_scenario(
+                use_case_id.clone(),
+                "Test Scenario".to_string(),
+                None,
+                None,
+                None,
+            )
+            .unwrap();
+
+        let scenarios = controller.app_service.get_scenarios(&use_case_id).unwrap();
+        let scenario_id = scenarios[0].id.clone();
+
+        // Add precondition
+        let result = controller
+            .add_precondition(
+                use_case_id.clone(),
+                scenario_id.clone(),
+                "User must be logged in".to_string(),
+            )
+            .unwrap();
+
+        assert!(result.is_success());
+        assert!(result.message.contains("Added precondition"));
+
+        // Verify precondition was saved
+        let scenario = controller.get_scenario(&use_case_id, &scenario_id).unwrap();
+        assert_eq!(scenario.preconditions.len(), 1);
+        assert_eq!(scenario.preconditions[0].text, "User must be logged in");
+    }
+
+    #[test]
+    #[serial]
+    fn test_add_postcondition() {
+        let (_temp_dir, mut controller) = setup_test_env();
+        let use_case_id = create_test_use_case(&mut controller);
+        let mut controller = ScenarioController::new().unwrap();
+
+        // Create scenario
+        controller
+            .create_main_scenario(
+                use_case_id.clone(),
+                "Test Scenario".to_string(),
+                None,
+                None,
+                None,
+            )
+            .unwrap();
+
+        let scenarios = controller.app_service.get_scenarios(&use_case_id).unwrap();
+        let scenario_id = scenarios[0].id.clone();
+
+        // Add postcondition
+        let result = controller
+            .add_postcondition(
+                use_case_id.clone(),
+                scenario_id.clone(),
+                "User session is created".to_string(),
+            )
+            .unwrap();
+
+        assert!(result.is_success());
+        assert!(result.message.contains("Added postcondition"));
+
+        // Verify postcondition was saved
+        let scenario = controller.get_scenario(&use_case_id, &scenario_id).unwrap();
+        assert_eq!(scenario.postconditions.len(), 1);
+        assert_eq!(scenario.postconditions[0].text, "User session is created");
+    }
+
+    #[test]
+    #[serial]
+    fn test_add_precondition_with_use_case() {
+        let (_temp_dir, _controller) = setup_test_env();
+
+        // Create first use case
+        let mut uc_controller = crate::controller::UseCaseController::new().unwrap();
+        let result = uc_controller
+            .create_use_case(
+                "Test Use Case".to_string(),
+                "test".to_string(),
+                Some("Testing".to_string()),
+                Some("feature".to_string()),
+                None,
+                None,
+                None,
+            )
+            .unwrap();
+        let use_case_id = result
+            .message
+            .split_whitespace()
+            .find(|s| s.starts_with("UC-"))
+            .unwrap()
+            .to_string();
+
+        // Create a second use case to reference
+        let result = uc_controller
+            .create_use_case(
+                "Authentication".to_string(),
+                "auth".to_string(),
+                Some("Auth use case".to_string()),
+                Some("feature".to_string()),
+                None,
+                None,
+                None,
+            )
+            .unwrap();
+        let auth_use_case_id = result
+            .message
+            .split_whitespace()
+            .find(|s| s.starts_with("UC-"))
+            .unwrap()
+            .to_string();
+
+        // Get scenario controller
+        let mut controller = ScenarioController::new().unwrap();
+
+        // Create scenario
+        controller
+            .create_main_scenario(
+                use_case_id.clone(),
+                "Test Scenario".to_string(),
+                None,
+                None,
+                None,
+            )
+            .unwrap();
+
+        let scenarios = controller.app_service.get_scenarios(&use_case_id).unwrap();
+        let scenario_id = scenarios[0].id.clone();
+
+        // Add precondition with use case reference
+        let result = controller
+            .add_precondition_with_use_case(
+                use_case_id.clone(),
+                scenario_id.clone(),
+                "Authentication must be completed".to_string(),
+                auth_use_case_id.clone(),
+                "must be completed".to_string(),
+            )
+            .unwrap();
+
+        assert!(result.is_success());
+        assert!(result.message.contains("use case reference"));
+
+        // Verify precondition was saved with reference
+        let scenario = controller.get_scenario(&use_case_id, &scenario_id).unwrap();
+        assert_eq!(scenario.preconditions.len(), 1);
+        assert_eq!(scenario.preconditions[0].text, "Authentication must be completed");
+        assert_eq!(scenario.preconditions[0].target_id, Some(auth_use_case_id));
+    }
+
+    #[test]
+    #[serial]
+    fn test_remove_precondition() {
+        let (_temp_dir, mut controller) = setup_test_env();
+        let use_case_id = create_test_use_case(&mut controller);
+        let mut controller = ScenarioController::new().unwrap();
+
+        // Create scenario with precondition
+        controller
+            .create_main_scenario(
+                use_case_id.clone(),
+                "Test Scenario".to_string(),
+                None,
+                Some(vec!["User must be logged in".to_string()]),
+                None,
+            )
+            .unwrap();
+
+        let scenarios = controller.app_service.get_scenarios(&use_case_id).unwrap();
+        let scenario_id = scenarios[0].id.clone();
+
+        // Verify precondition exists
+        let scenario = controller.get_scenario(&use_case_id, &scenario_id).unwrap();
+        assert_eq!(scenario.preconditions.len(), 1);
+
+        // Remove precondition
+        let result = controller
+            .remove_precondition(
+                use_case_id.clone(),
+                scenario_id.clone(),
+                "User must be logged in".to_string(),
+            )
+            .unwrap();
+
+        assert!(result.is_success());
+        assert!(result.message.contains("Removed precondition"));
+
+        // Verify precondition was removed
+        let scenario = controller.get_scenario(&use_case_id, &scenario_id).unwrap();
+        assert_eq!(scenario.preconditions.len(), 0);
+    }
+
+    #[test]
+    #[serial]
+    fn test_remove_postcondition() {
+        let (_temp_dir, mut controller) = setup_test_env();
+        let use_case_id = create_test_use_case(&mut controller);
+        let mut controller = ScenarioController::new().unwrap();
+
+        // Create scenario with postcondition
+        controller
+            .create_main_scenario(
+                use_case_id.clone(),
+                "Test Scenario".to_string(),
+                None,
+                None,
+                Some(vec!["Session is created".to_string()]),
+            )
+            .unwrap();
+
+        let scenarios = controller.app_service.get_scenarios(&use_case_id).unwrap();
+        let scenario_id = scenarios[0].id.clone();
+
+        // Verify postcondition exists
+        let scenario = controller.get_scenario(&use_case_id, &scenario_id).unwrap();
+        assert_eq!(scenario.postconditions.len(), 1);
+
+        // Remove postcondition
+        let result = controller
+            .remove_postcondition(
+                use_case_id.clone(),
+                scenario_id.clone(),
+                "Session is created".to_string(),
+            )
+            .unwrap();
+
+        assert!(result.is_success());
+        assert!(result.message.contains("Removed postcondition"));
+
+        // Verify postcondition was removed
+        let scenario = controller.get_scenario(&use_case_id, &scenario_id).unwrap();
+        assert_eq!(scenario.postconditions.len(), 0);
+    }
 }
