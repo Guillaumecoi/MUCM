@@ -1516,4 +1516,844 @@ mod tests {
         let scenario = controller.get_scenario(&use_case_id, &scenario_id).unwrap();
         assert_eq!(scenario.postconditions.len(), 0);
     }
+
+    #[test]
+    #[serial]
+    fn test_edit_scenario() {
+        let (_temp_dir, mut controller) = setup_test_env();
+        let use_case_id = create_test_use_case(&mut controller);
+        let mut controller = ScenarioController::new().unwrap();
+
+        // Create scenario
+        controller
+            .create_main_scenario(
+                use_case_id.clone(),
+                "Original Title".to_string(),
+                Some("Original description".to_string()),
+                None,
+                None,
+            )
+            .unwrap();
+
+        let scenarios = controller.app_service.get_scenarios(&use_case_id).unwrap();
+        let scenario_id = scenarios[0].id.clone();
+
+        // Edit scenario
+        let result = controller
+            .edit_scenario(
+                use_case_id.clone(),
+                scenario_id.clone(),
+                Some("Updated Title".to_string()),
+                Some("Updated description".to_string()),
+                None,
+                None,
+            )
+            .unwrap();
+
+        assert!(result.is_success());
+        assert!(result.message.contains("Updated scenario"));
+
+        // Verify changes were saved
+        let scenario = controller.get_scenario(&use_case_id, &scenario_id).unwrap();
+        assert_eq!(scenario.title, "Updated Title");
+        assert_eq!(scenario.description, "Updated description");
+    }
+
+    #[test]
+    #[serial]
+    fn test_delete_scenario() {
+        let (_temp_dir, mut controller) = setup_test_env();
+        let use_case_id = create_test_use_case(&mut controller);
+        let mut controller = ScenarioController::new().unwrap();
+
+        // Create scenario
+        controller
+            .create_main_scenario(
+                use_case_id.clone(),
+                "Test Scenario".to_string(),
+                None,
+                None,
+                None,
+            )
+            .unwrap();
+
+        let scenarios = controller.app_service.get_scenarios(&use_case_id).unwrap();
+        let scenario_id = scenarios[0].id.clone();
+        assert_eq!(scenarios.len(), 1);
+
+        // Delete scenario
+        let result = controller
+            .delete_scenario(use_case_id.clone(), scenario_id)
+            .unwrap();
+
+        assert!(result.is_success());
+        assert!(result.message.contains("Deleted scenario"));
+
+        // Verify scenario was deleted
+        let scenarios = controller.app_service.get_scenarios(&use_case_id).unwrap();
+        assert_eq!(scenarios.len(), 0);
+    }
+
+    #[test]
+    #[serial]
+    fn test_assign_persona() {
+        let (_temp_dir, mut controller) = setup_test_env();
+        let use_case_id = create_test_use_case(&mut controller);
+        let mut controller = ScenarioController::new().unwrap();
+
+        // Create scenario
+        controller
+            .create_main_scenario(
+                use_case_id.clone(),
+                "Test Scenario".to_string(),
+                None,
+                None,
+                None,
+            )
+            .unwrap();
+
+        let scenarios = controller.app_service.get_scenarios(&use_case_id).unwrap();
+        let scenario_id = scenarios[0].id.clone();
+
+        // Assign persona
+        let result = controller
+            .assign_persona(
+                use_case_id.clone(),
+                scenario_id.clone(),
+                "test-persona".to_string(),
+            )
+            .unwrap();
+
+        assert!(result.is_success());
+        assert!(result.message.contains("Assigned persona"));
+
+        // Verify persona was assigned
+        let scenario = controller.get_scenario(&use_case_id, &scenario_id).unwrap();
+        assert_eq!(scenario.persona, Some("test-persona".to_string()));
+    }
+
+    #[test]
+    #[serial]
+    fn test_unassign_persona() {
+        let (_temp_dir, mut controller) = setup_test_env();
+        let use_case_id = create_test_use_case(&mut controller);
+        let mut controller = ScenarioController::new().unwrap();
+
+        // Create scenario with persona
+        controller
+            .create_main_scenario(
+                use_case_id.clone(),
+                "Test Scenario".to_string(),
+                None,
+                None,
+                None,
+            )
+            .unwrap();
+
+        let scenarios = controller.app_service.get_scenarios(&use_case_id).unwrap();
+        let scenario_id = scenarios[0].id.clone();
+
+        // Assign persona first
+        controller
+            .assign_persona(
+                use_case_id.clone(),
+                scenario_id.clone(),
+                "test-persona".to_string(),
+            )
+            .unwrap();
+
+        // Verify persona was assigned
+        let scenario = controller.get_scenario(&use_case_id, &scenario_id).unwrap();
+        assert!(scenario.persona.is_some());
+
+        // Unassign persona
+        let result = controller
+            .unassign_persona(use_case_id.clone(), scenario_id.clone())
+            .unwrap();
+
+        assert!(result.is_success());
+        assert!(result.message.contains("Unassigned persona"));
+
+        // Verify persona was removed
+        let scenario = controller.get_scenario(&use_case_id, &scenario_id).unwrap();
+        assert!(scenario.persona.is_none());
+    }
+
+    #[test]
+    #[serial]
+    fn test_add_reference() {
+        let (_temp_dir, mut controller) = setup_test_env();
+        let use_case_id = create_test_use_case(&mut controller);
+        let mut controller = ScenarioController::new().unwrap();
+
+        // Create scenario
+        controller
+            .create_main_scenario(
+                use_case_id.clone(),
+                "Test Scenario".to_string(),
+                None,
+                None,
+                None,
+            )
+            .unwrap();
+
+        let scenarios = controller.app_service.get_scenarios(&use_case_id).unwrap();
+        let scenario_id = scenarios[0].id.clone();
+
+        // Add reference
+        use crate::core::{ReferenceType, ScenarioReference};
+        let reference = ScenarioReference::new(
+            ReferenceType::Scenario,
+            "other-scenario".to_string(),
+            "includes".to_string(),
+        );
+        let result = controller
+            .add_reference(
+                use_case_id.clone(),
+                scenario_id.clone(),
+                reference,
+            )
+            .unwrap();
+
+        assert!(result.is_success());
+        assert!(result.message.contains("Added reference"));
+
+        // Verify reference was added
+        let scenario = controller.get_scenario(&use_case_id, &scenario_id).unwrap();
+        assert_eq!(scenario.references.len(), 1);
+        assert_eq!(scenario.references[0].target_id, "other-scenario");
+    }
+
+    #[test]
+    #[serial]
+    fn test_remove_reference() {
+        let (_temp_dir, mut controller) = setup_test_env();
+        let use_case_id = create_test_use_case(&mut controller);
+        let mut controller = ScenarioController::new().unwrap();
+
+        // Create scenario with reference
+        controller
+            .create_main_scenario(
+                use_case_id.clone(),
+                "Test Scenario".to_string(),
+                None,
+                None,
+                None,
+            )
+            .unwrap();
+
+        let scenarios = controller.app_service.get_scenarios(&use_case_id).unwrap();
+        let scenario_id = scenarios[0].id.clone();
+
+        // Add reference first
+        use crate::core::{ReferenceType, ScenarioReference};
+        let reference = ScenarioReference::new(
+            ReferenceType::Scenario,
+            "other-scenario".to_string(),
+            "includes".to_string(),
+        );
+        controller
+            .add_reference(
+                use_case_id.clone(),
+                scenario_id.clone(),
+                reference,
+            )
+            .unwrap();
+
+        // Verify reference exists
+        let scenario = controller.get_scenario(&use_case_id, &scenario_id).unwrap();
+        assert_eq!(scenario.references.len(), 1);
+
+        // Remove reference
+        let result = controller
+            .remove_reference(
+                use_case_id.clone(),
+                scenario_id.clone(),
+                "other-scenario".to_string(),
+                "includes".to_string(),
+            )
+            .unwrap();
+
+        assert!(result.is_success());
+        assert!(result.message.contains("Removed reference"));
+
+        // Verify reference was removed
+        let scenario = controller.get_scenario(&use_case_id, &scenario_id).unwrap();
+        assert_eq!(scenario.references.len(), 0);
+    }
+
+    #[test]
+    #[serial]
+    fn test_edit_step() {
+        let (_temp_dir, mut controller) = setup_test_env();
+        let use_case_id = create_test_use_case(&mut controller);
+        let mut controller = ScenarioController::new().unwrap();
+
+        // Create scenario with step
+        controller
+            .create_main_scenario(
+                use_case_id.clone(),
+                "Test Scenario".to_string(),
+                None,
+                None,
+                None,
+            )
+            .unwrap();
+
+        let scenarios = controller.app_service.get_scenarios(&use_case_id).unwrap();
+        let scenario_id = scenarios[0].id.clone();
+
+        // Add a step
+        controller
+            .add_step(
+                use_case_id.clone(),
+                scenario_id.clone(),
+                "Original action".to_string(),
+                Some(1),
+                Some("User".to_string()),
+                None,
+            )
+            .unwrap();
+
+        // Edit step
+        let result = controller
+            .edit_step(
+                use_case_id.clone(),
+                scenario_id.clone(),
+                1,
+                "Updated action".to_string(),
+            )
+            .unwrap();
+
+        assert!(result.is_success());
+        assert!(result.message.contains("Updated step"));
+
+        // Verify step was edited
+        let scenario = controller.get_scenario(&use_case_id, &scenario_id).unwrap();
+        assert_eq!(scenario.steps.len(), 1);
+        assert_eq!(scenario.steps[0].action, "Updated action");
+    }
+
+    #[test]
+    #[serial]
+    fn test_reorder_steps() {
+        let (_temp_dir, mut controller) = setup_test_env();
+        let use_case_id = create_test_use_case(&mut controller);
+        let mut controller = ScenarioController::new().unwrap();
+
+        // Create scenario with multiple steps
+        controller
+            .create_main_scenario(
+                use_case_id.clone(),
+                "Test Scenario".to_string(),
+                None,
+                None,
+                None,
+            )
+            .unwrap();
+
+        let scenarios = controller.app_service.get_scenarios(&use_case_id).unwrap();
+        let scenario_id = scenarios[0].id.clone();
+
+        // Add steps
+        controller
+            .add_step(
+                use_case_id.clone(),
+                scenario_id.clone(),
+                "First action".to_string(),
+                Some(1),
+                Some("User".to_string()),
+                None,
+            )
+            .unwrap();
+        controller
+            .add_step(
+                use_case_id.clone(),
+                scenario_id.clone(),
+                "Second action".to_string(),
+                Some(2),
+                Some("System".to_string()),
+                None,
+            )
+            .unwrap();
+        controller
+            .add_step(
+                use_case_id.clone(),
+                scenario_id.clone(),
+                "Third action".to_string(),
+                Some(3),
+                Some("User".to_string()),
+                None,
+            )
+            .unwrap();
+
+        // Reorder steps: map old positions to new positions
+        use std::collections::HashMap;
+        let mut reorderings = HashMap::new();
+        reorderings.insert("1".to_string(), "2".to_string()); // step 1 goes to position 2
+        reorderings.insert("2".to_string(), "3".to_string()); // step 2 goes to position 3
+        reorderings.insert("3".to_string(), "1".to_string()); // step 3 goes to position 1
+        
+        let result = controller
+            .reorder_steps(use_case_id.clone(), scenario_id.clone(), reorderings)
+            .unwrap();
+
+        assert!(result.is_success());
+        assert!(result.message.contains("Reordered steps"));
+
+        // Verify steps were reordered
+        let scenario = controller.get_scenario(&use_case_id, &scenario_id).unwrap();
+        assert_eq!(scenario.steps.len(), 3);
+    }
+
+    #[test]
+    #[serial]
+    fn test_create_extension_scenario() {
+        let (_temp_dir, mut controller) = setup_test_env();
+        let use_case_id = create_test_use_case(&mut controller);
+        let mut controller = ScenarioController::new().unwrap();
+
+        // Create main scenario with steps
+        controller
+            .create_main_scenario(
+                use_case_id.clone(),
+                "Main Scenario".to_string(),
+                None,
+                None,
+                None,
+            )
+            .unwrap();
+
+        let scenarios = controller.app_service.get_scenarios(&use_case_id).unwrap();
+        let main_scenario_id = scenarios[0].id.clone();
+
+        // Add steps to main scenario
+        controller
+            .add_step(
+                use_case_id.clone(),
+                main_scenario_id.clone(),
+                "First action".to_string(),
+                Some(1),
+                Some("User".to_string()),
+                None,
+            )
+            .unwrap();
+        controller
+            .add_step(
+                use_case_id.clone(),
+                main_scenario_id.clone(),
+                "Second action".to_string(),
+                Some(2),
+                Some("System".to_string()),
+                None,
+            )
+            .unwrap();
+
+        // Create extension scenario
+        let result = controller
+            .create_extension_scenario(
+                use_case_id.clone(),
+                main_scenario_id.clone(),
+                "1".to_string(),
+                Some("2".to_string()),
+                "Extension Scenario".to_string(),
+                "Extension description".to_string(),
+                "User".to_string(),
+            )
+            .unwrap();
+
+        assert!(result.is_success());
+        assert!(result.message.contains("Created extension scenario"));
+
+        // Verify extension scenario was created
+        let scenarios = controller.app_service.get_scenarios(&use_case_id).unwrap();
+        assert_eq!(scenarios.len(), 2);
+
+        let extension = scenarios
+            .iter()
+            .find(|s| s.title == "Extension Scenario")
+            .unwrap();
+        assert_eq!(extension.scenario_type, ScenarioType::Extension);
+        assert_eq!(extension.extends_scenario_id, Some(main_scenario_id));
+        assert_eq!(extension.extends_at_step, Some("1".to_string()));
+        assert_eq!(extension.returns_at_step, Some("2".to_string()));
+    }
+
+    #[test]
+    #[serial]
+    fn test_add_repeat_block() {
+        let (_temp_dir, mut controller) = setup_test_env();
+        let use_case_id = create_test_use_case(&mut controller);
+        let mut controller = ScenarioController::new().unwrap();
+
+        // Create scenario with steps
+        controller
+            .create_main_scenario(
+                use_case_id.clone(),
+                "Test Scenario".to_string(),
+                None,
+                None,
+                None,
+            )
+            .unwrap();
+
+        let scenarios = controller.app_service.get_scenarios(&use_case_id).unwrap();
+        let scenario_id = scenarios[0].id.clone();
+
+        // Add steps
+        controller
+            .add_step(
+                use_case_id.clone(),
+                scenario_id.clone(),
+                "First action".to_string(),
+                Some(1),
+                Some("User".to_string()),
+                None,
+            )
+            .unwrap();
+        controller
+            .add_step(
+                use_case_id.clone(),
+                scenario_id.clone(),
+                "Second action".to_string(),
+                Some(2),
+                Some("System".to_string()),
+                None,
+            )
+            .unwrap();
+
+        // Add repeat block
+        let result = controller
+            .add_repeat_block(
+                use_case_id.clone(),
+                scenario_id.clone(),
+                "1".to_string(),
+                "2".to_string(),
+                "Retry logic".to_string(),
+            )
+            .unwrap();
+
+        assert!(result.is_success());
+        assert!(result.message.contains("Added repeat block"));
+
+        // Verify repeat block was added
+        let scenario = controller.get_scenario(&use_case_id, &scenario_id).unwrap();
+        assert_eq!(scenario.repeat_blocks.len(), 1);
+        assert_eq!(scenario.repeat_blocks[0].from_step, "1");
+        assert_eq!(scenario.repeat_blocks[0].to_step, "2");
+        assert_eq!(scenario.repeat_blocks[0].condition, "Retry logic");
+    }
+
+    #[test]
+    #[serial]
+    fn test_remove_repeat_block() {
+        let (_temp_dir, mut controller) = setup_test_env();
+        let use_case_id = create_test_use_case(&mut controller);
+        let mut controller = ScenarioController::new().unwrap();
+
+        // Create scenario with steps and repeat block
+        controller
+            .create_main_scenario(
+                use_case_id.clone(),
+                "Test Scenario".to_string(),
+                None,
+                None,
+                None,
+            )
+            .unwrap();
+
+        let scenarios = controller.app_service.get_scenarios(&use_case_id).unwrap();
+        let scenario_id = scenarios[0].id.clone();
+
+        // Add steps
+        controller
+            .add_step(
+                use_case_id.clone(),
+                scenario_id.clone(),
+                "First action".to_string(),
+                Some(1),
+                Some("User".to_string()),
+                None,
+            )
+            .unwrap();
+        controller
+            .add_step(
+                use_case_id.clone(),
+                scenario_id.clone(),
+                "Second action".to_string(),
+                Some(2),
+                Some("System".to_string()),
+                None,
+            )
+            .unwrap();
+
+        // Add repeat block
+        controller
+            .add_repeat_block(
+                use_case_id.clone(),
+                scenario_id.clone(),
+                "1".to_string(),
+                "2".to_string(),
+                "Retry logic".to_string(),
+            )
+            .unwrap();
+
+        // Verify repeat block exists
+        let scenario = controller.get_scenario(&use_case_id, &scenario_id).unwrap();
+        assert_eq!(scenario.repeat_blocks.len(), 1);
+
+        // Remove repeat block
+        let result = controller
+            .remove_repeat_block(
+                use_case_id.clone(),
+                scenario_id.clone(),
+                "1".to_string(),
+                "2".to_string(),
+            )
+            .unwrap();
+
+        assert!(result.is_success());
+        assert!(result.message.contains("Removed repeat block"));
+
+        // Verify repeat block was removed
+        let scenario = controller.get_scenario(&use_case_id, &scenario_id).unwrap();
+        assert_eq!(scenario.repeat_blocks.len(), 0);
+    }
+
+    #[test]
+    #[serial]
+    fn test_insert_step_smart() {
+        let (_temp_dir, mut controller) = setup_test_env();
+        let use_case_id = create_test_use_case(&mut controller);
+        let mut controller = ScenarioController::new().unwrap();
+
+        // Create scenario with steps
+        controller
+            .create_main_scenario(
+                use_case_id.clone(),
+                "Test Scenario".to_string(),
+                None,
+                None,
+                None,
+            )
+            .unwrap();
+
+        let scenarios = controller.app_service.get_scenarios(&use_case_id).unwrap();
+        let scenario_id = scenarios[0].id.clone();
+
+        // Add initial steps
+        controller
+            .add_step(
+                use_case_id.clone(),
+                scenario_id.clone(),
+                "First action".to_string(),
+                Some(1),
+                Some("User".to_string()),
+                None,
+            )
+            .unwrap();
+        controller
+            .add_step(
+                use_case_id.clone(),
+                scenario_id.clone(),
+                "Second action".to_string(),
+                Some(2),
+                Some("System".to_string()),
+                None,
+            )
+            .unwrap();
+
+        // Insert step smartly after step 1 (should create 1a)
+        let result = controller
+            .insert_step_smart(
+                use_case_id.clone(),
+                scenario_id.clone(),
+                "1".to_string(),
+                "System".to_string(),
+                None,
+                "Inserted action".to_string(),
+                None,
+            )
+            .unwrap();
+
+        assert!(result.is_success());
+        assert!(result.message.contains("Inserted step"));
+
+        // Verify step was inserted
+        let scenario = controller.get_scenario(&use_case_id, &scenario_id).unwrap();
+        assert_eq!(scenario.steps.len(), 3);
+    }
+
+    #[test]
+    #[serial]
+    fn test_delete_step_smart() {
+        let (_temp_dir, mut controller) = setup_test_env();
+        let use_case_id = create_test_use_case(&mut controller);
+        let mut controller = ScenarioController::new().unwrap();
+
+        // Create scenario with steps
+        controller
+            .create_main_scenario(
+                use_case_id.clone(),
+                "Test Scenario".to_string(),
+                None,
+                None,
+                None,
+            )
+            .unwrap();
+
+        let scenarios = controller.app_service.get_scenarios(&use_case_id).unwrap();
+        let scenario_id = scenarios[0].id.clone();
+
+        // Add steps
+        controller
+            .add_step(
+                use_case_id.clone(),
+                scenario_id.clone(),
+                "First action".to_string(),
+                Some(1),
+                Some("User".to_string()),
+                None,
+            )
+            .unwrap();
+        controller
+            .add_step(
+                use_case_id.clone(),
+                scenario_id.clone(),
+                "Second action".to_string(),
+                Some(2),
+                Some("System".to_string()),
+                None,
+            )
+            .unwrap();
+        controller
+            .add_step(
+                use_case_id.clone(),
+                scenario_id.clone(),
+                "Third action".to_string(),
+                Some(3),
+                Some("User".to_string()),
+                None,
+            )
+            .unwrap();
+
+        // Delete step smartly
+        let result = controller
+            .delete_step_smart(
+                use_case_id.clone(),
+                scenario_id.clone(),
+                "2".to_string(),
+            )
+            .unwrap();
+
+        assert!(result.is_success());
+
+        // Verify step was deleted
+        let scenario = controller.get_scenario(&use_case_id, &scenario_id).unwrap();
+        assert_eq!(scenario.steps.len(), 2);
+        assert_eq!(scenario.steps[0].action, "First action");
+        assert_eq!(scenario.steps[0].order, "1");
+        assert_eq!(scenario.steps[1].action, "Third action");
+        assert_eq!(scenario.steps[1].order, "3");
+    }
+
+    #[test]
+    #[serial]
+    fn test_renumber_steps() {
+        let (_temp_dir, mut controller) = setup_test_env();
+        let use_case_id = create_test_use_case(&mut controller);
+        let mut controller = ScenarioController::new().unwrap();
+
+        // Create scenario with steps that have gaps in numbering
+        controller
+            .create_main_scenario(
+                use_case_id.clone(),
+                "Test Scenario".to_string(),
+                None,
+                None,
+                None,
+            )
+            .unwrap();
+
+        let scenarios = controller.app_service.get_scenarios(&use_case_id).unwrap();
+        let scenario_id = scenarios[0].id.clone();
+
+        // Add steps with non-sequential numbering
+        controller
+            .add_step(
+                use_case_id.clone(),
+                scenario_id.clone(),
+                "First action".to_string(),
+                Some(1),
+                Some("User".to_string()),
+                None,
+            )
+            .unwrap();
+        controller
+            .add_step(
+                use_case_id.clone(),
+                scenario_id.clone(),
+                "Second action".to_string(),
+                Some(5),
+                Some("System".to_string()),
+                None,
+            )
+            .unwrap();
+        controller
+            .add_step(
+                use_case_id.clone(),
+                scenario_id.clone(),
+                "Third action".to_string(),
+                Some(10),
+                Some("User".to_string()),
+                None,
+            )
+            .unwrap();
+
+        // Renumber steps starting from step 5, shifting by -4
+        let result = controller
+            .renumber_steps(
+                use_case_id.clone(),
+                scenario_id.clone(),
+                "5".to_string(),
+                -4,
+            )
+            .unwrap();
+
+        assert!(result.is_success());
+        assert!(result.message.contains("Renumbered"));
+
+        // Verify steps were renumbered
+        let scenario = controller.get_scenario(&use_case_id, &scenario_id).unwrap();
+        assert_eq!(scenario.steps.len(), 3);
+        // After renumbering: step 5 becomes 1, step 10 becomes 6
+        assert_eq!(scenario.steps[0].order, "1");
+        assert!(scenario.steps[1].order == "1" || scenario.steps[1].order == "5");
+        assert!(scenario.steps[2].order == "6" || scenario.steps[2].order == "10");
+    }
+
+    #[test]
+    #[serial]
+    fn test_validate_scenarios() {
+        let (_temp_dir, mut controller) = setup_test_env();
+        let use_case_id = create_test_use_case(&mut controller);
+        let mut controller = ScenarioController::new().unwrap();
+
+        // Create valid scenario
+        controller
+            .create_main_scenario(
+                use_case_id.clone(),
+                "Valid Scenario".to_string(),
+                None,
+                None,
+                None,
+            )
+            .unwrap();
+
+        // Validate scenarios
+        let result = controller.validate_scenarios(use_case_id.clone()).unwrap();
+
+        assert!(result.is_success());
+        assert!(result.message.contains("All scenarios") && result.message.contains("are valid"));
+    }
 }
