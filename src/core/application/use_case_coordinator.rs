@@ -681,6 +681,7 @@ impl UseCaseCoordinator {
         use_case_id: &str,
         scenario_id: &str,
         step_order: u32,
+        actor: Option<String>,
         new_description: String,
     ) -> Result<()> {
         let mut scenario_service = services::ScenarioManagementService::new(
@@ -688,7 +689,13 @@ impl UseCaseCoordinator {
             &mut self.use_cases,
             &self.scenario_creator,
         );
-        scenario_service.edit_scenario_step(use_case_id, scenario_id, step_order, new_description)
+        scenario_service.edit_scenario_step(
+            use_case_id,
+            scenario_id,
+            step_order,
+            actor,
+            new_description,
+        )
     }
 
     /// Reorder scenario steps

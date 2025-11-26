@@ -499,8 +499,8 @@ impl InteractiveRunner {
             })
             .collect();
 
-        // Get system actors
-        let system_actors = actor_controller.list_actors(None)?;
+        // Get system actors only (not personas)
+        let system_actors = actor_controller.list_actors(Some(crate::core::ActorType::System))?;
         actors.extend(
             system_actors
                 .iter()

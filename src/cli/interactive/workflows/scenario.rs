@@ -263,17 +263,16 @@ impl ScenarioWorkflow {
     /// Helper to select a single actor for a step
     fn select_actor_for_step() -> Result<Option<String>> {
         let runner = InteractiveRunner::new();
-        let mut available_actors = runner.get_available_actors()?;
+        let available_actors = runner.get_available_actors()?;
 
-        if available_actors.is_empty() {
-            println!("\n  No actors available. Using default 'Actor'.\n");
-            return Ok(None);
-        }
-
-        // Add built-in actors
-        available_actors.insert(0, "User".to_string());
-        available_actors.insert(1, "System".to_string());
-        available_actors.insert(2, "Default (Actor)".to_string());
+        // Always add built-in actors at the top
+        let mut all_options = vec![
+            "User".to_string(),
+            "System".to_string(),
+            "Default (Actor)".to_string(),
+        ];
+        all_options.extend(available_actors);
+        let available_actors = all_options;
 
         let choice = Select::new("Select actor for this step:", available_actors).prompt()?;
 
@@ -598,12 +597,14 @@ impl ScenarioWorkflow {
                     let step_order: u32 =
                         selected_step.split('.').next().unwrap().trim().parse()?;
 
-                    let new_description = Text::new("New description:").prompt()?;
+                    let actor = Self::select_actor_for_step()?;
+                    let new_description = Text::new("Step description:").prompt()?;
 
                     let result = controller.edit_step(
                         use_case_id.to_string(),
                         scenario_id.to_string(),
                         step_order,
+                        actor,
                         new_description,
                     )?;
 

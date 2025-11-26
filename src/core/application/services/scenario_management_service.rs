@@ -206,6 +206,7 @@ impl<'a> ScenarioManagementService<'a> {
         use_case_id: &str,
         scenario_id: &str,
         step_order: u32,
+        actor: Option<String>,
         new_description: String,
     ) -> Result<()> {
         let index = self.find_use_case_index(use_case_id)?;
@@ -226,6 +227,11 @@ impl<'a> ScenarioManagementService<'a> {
                 anyhow::anyhow!("Step {} not found in scenario {}", step_order, scenario_id)
             })?;
 
+        if let Some(actor_str) = actor {
+            use crate::core::Actor;
+            use std::str::FromStr;
+            step.actor = Actor::from_str(&actor_str).unwrap_or_else(|_| Actor::Custom(actor_str));
+        }
         step.action = new_description;
         use_case.metadata.touch(); // Update use case metadata when scenario changes
 

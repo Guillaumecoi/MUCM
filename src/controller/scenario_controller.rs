@@ -339,12 +339,14 @@ impl ScenarioController {
         use_case_id: String,
         scenario_id: String,
         step_order: u32,
+        actor: Option<String>,
         new_description: String,
     ) -> Result<DisplayResult> {
         self.app_service.edit_scenario_step(
             &use_case_id,
             &scenario_id,
             step_order,
+            actor,
             new_description,
         )?;
 
@@ -796,8 +798,8 @@ impl ScenarioController {
             })
             .collect();
 
-        // Get system actors
-        let system_actors = actor_controller.list_actors(None)?;
+        // Get system actors only (not personas)
+        let system_actors = actor_controller.list_actors(Some(crate::core::ActorType::System))?;
         actors.extend(
             system_actors
                 .iter()
@@ -1815,6 +1817,7 @@ mod tests {
                 use_case_id.clone(),
                 scenario_id.clone(),
                 1,
+                None,
                 "Updated action".to_string(),
             )
             .unwrap();
