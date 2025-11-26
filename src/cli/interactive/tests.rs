@@ -207,6 +207,7 @@ mod workflow_tests {
             "tests/my-tests".to_string(),
             "docs/my-personas".to_string(),
             "my-data".to_string(),
+            None,
         );
         assert!(result.is_ok());
         let message = result.unwrap();
