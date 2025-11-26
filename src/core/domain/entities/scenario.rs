@@ -264,7 +264,7 @@ mod tests {
         );
         assert_eq!(scenario.scenario_type, ScenarioType::HappyPath);
         assert_eq!(scenario.status, Status::Planned);
-        assert_eq!(scenario.is_main, true);
+        assert!(scenario.is_main);
         assert_eq!(scenario.primary_actor, Actor::User);
         assert!(scenario.persona.is_none());
         assert!(scenario.extends_scenario_id.is_none());

@@ -230,7 +230,7 @@ impl<'a> ScenarioManagementService<'a> {
         if let Some(actor_str) = actor {
             use crate::core::Actor;
             use std::str::FromStr;
-            step.actor = Actor::from_str(&actor_str).unwrap_or_else(|_| Actor::Custom(actor_str));
+            step.actor = Actor::from_str(&actor_str).unwrap_or(Actor::Custom(actor_str));
         }
         step.action = new_description;
         use_case.metadata.touch(); // Update use case metadata when scenario changes

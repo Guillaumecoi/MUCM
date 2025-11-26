@@ -77,6 +77,7 @@ impl UseCaseController {
         &mut self,
         title: String,
         category: String,
+        category_abbreviation: String,
         description: Option<String>,
         methodology: Option<String>,
         views: Option<String>,
@@ -99,10 +100,11 @@ impl UseCaseController {
         // All use cases now use the views-based API
         let result = if priority.is_some() || extra_fields.is_some() {
             let prio = priority.unwrap_or_else(|| "medium".to_string());
-            let fields = extra_fields.unwrap_or_else(|| std::collections::HashMap::new());
+            let fields = extra_fields.unwrap_or_default();
             self.app_service.create_use_case_with_views_and_fields(
                 title,
                 category,
+                category_abbreviation,
                 description,
                 prio,
                 &views_str,

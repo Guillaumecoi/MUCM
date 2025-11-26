@@ -141,10 +141,7 @@ impl ActorRepository for TomlActorRepository {
 
     fn load_all_personas(&self) -> Result<Vec<Persona>> {
         let actors = self.load_all_actors()?;
-        let personas = actors
-            .iter()
-            .filter_map(|actor| Persona::from_actor(actor))
-            .collect();
+        let personas = actors.iter().filter_map(Persona::from_actor).collect();
         Ok(personas)
     }
 

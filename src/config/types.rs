@@ -33,17 +33,13 @@ use std::str::FromStr;
 /// Storage backend for use cases
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
+#[derive(Default)]
 pub enum StorageBackend {
     /// TOML files (default, simple, git-friendly)
+    #[default]
     Toml,
     /// SQLite database (for advanced querying)
     Sqlite,
-}
-
-impl Default for StorageBackend {
-    fn default() -> Self {
-        StorageBackend::Toml
-    }
 }
 
 impl std::fmt::Display for StorageBackend {

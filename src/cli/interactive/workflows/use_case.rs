@@ -182,7 +182,7 @@ impl UseCaseWorkflow {
             for methodology in &field.methodologies {
                 fields_by_methodology
                     .entry(methodology.clone())
-                    .or_insert_with(Vec::new)
+                    .or_default()
                     .push(field);
             }
         }
@@ -246,10 +246,8 @@ impl UseCaseWorkflow {
                                 }
                             }
 
-                            if items.is_empty() && field.required {
+                            if items.is_empty() {
                                 None // Will be handled by required field logic below
-                            } else if items.is_empty() {
-                                None
                             } else {
                                 // Join items with newlines for array storage
                                 Some(items.join("\n"))
@@ -306,14 +304,10 @@ impl UseCaseWorkflow {
         runner: &mut InteractiveRunner,
         title: String,
         category: String,
-        _category_abbreviation: String, // TODO: Pass to runner once creator API updated
+        category_abbreviation: String,
         description: Option<String>,
         views: Vec<(String, String)>,
     ) -> Result<()> {
-        // NOTE: category_abbreviation is collected but not yet used because the
-        // use_case_creator currently auto-generates it from category name.
-        // This will be updated in a future commit to pass abbreviation explicitly.
-
         // Ask if user wants to fill additional fields
         let fill_additional = Confirm::new("Fill in additional fields now?")
             .with_default(false)
@@ -325,6 +319,7 @@ impl UseCaseWorkflow {
             let (use_case_id, message) = runner.create_use_case_with_views_and_fields(
                 title,
                 category,
+                category_abbreviation.clone(),
                 description,
                 "Medium".to_string(), // Default priority
                 views.clone(),
@@ -500,6 +495,7 @@ impl UseCaseWorkflow {
         let (use_case_id, message) = runner.create_use_case_with_views_and_fields(
             title,
             category,
+            category_abbreviation,
             final_description,
             priority.to_string(),
             views.clone(),

@@ -10,10 +10,11 @@ use tempfile::TempDir;
 
 /// Test helper: Create a test use case
 fn create_test_use_case() -> UseCase {
-    UseCase::new_with_auto_abbreviation(
+    UseCase::new(
         "UC-TEST-001".to_string(),
         "Test Use Case".to_string(),
         "test".to_string(),
+        "TES".to_string(),
         "A test use case for persistence testing".to_string(),
         "medium".to_string(),
     )
@@ -145,18 +146,20 @@ fn test_save_with_extra_fields(repo: &dyn UseCaseRepository) {
 
 fn test_load_all(repo: &dyn UseCaseRepository) {
     let use_cases = vec![
-        UseCase::new_with_auto_abbreviation(
+        UseCase::new(
             "UC-ALL-001".to_string(),
             "Load All Test 1".to_string(),
             "load".to_string(),
+            "LOA".to_string(),
             "".to_string(),
             "medium".to_string(),
         )
         .unwrap(),
-        UseCase::new_with_auto_abbreviation(
+        UseCase::new(
             "UC-ALL-002".to_string(),
             "Load All Test 2".to_string(),
             "load".to_string(),
+            "LOA".to_string(),
             "".to_string(),
             "medium".to_string(),
         )

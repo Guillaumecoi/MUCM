@@ -185,7 +185,7 @@ impl TemplateManager {
         let local_templates = Path::new("source-templates");
         if local_templates.exists() {
             // Found in dev location - install to user config for future use
-            Self::install_templates_to_user_config(&local_templates)?;
+            Self::install_templates_to_user_config(local_templates)?;
 
             // Return user config path if installation succeeded
             if let Some(proj_dirs) = ProjectDirs::from("", "", "mucm") {

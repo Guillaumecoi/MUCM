@@ -269,7 +269,7 @@ fn test_toml_reference_with_all_relationship_types() {
     let mut use_case = create_test_use_case_with_scenarios();
 
     // Test all relationship types
-    let relationships = vec![
+    let relationships = [
         "includes",
         "extends",
         "depends_on",
@@ -307,7 +307,7 @@ fn test_sqlite_reference_with_all_relationship_types() {
     let mut use_case = create_test_use_case_with_scenarios();
 
     // Test all relationship types
-    let relationships = vec![
+    let relationships = [
         "includes",
         "extends",
         "depends_on",

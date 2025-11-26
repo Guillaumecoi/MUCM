@@ -165,9 +165,16 @@ impl InteractiveRunner {
             .collect::<Vec<_>>()
             .join(",");
 
+        let category_abbreviation = category
+            .chars()
+            .filter(|c| c.is_alphabetic())
+            .take(3)
+            .collect::<String>()
+            .to_uppercase();
         let result = controller.create_use_case(
             title,
             category,
+            category_abbreviation,
             description,
             None,
             Some(views_string),
@@ -183,6 +190,7 @@ impl InteractiveRunner {
         &mut self,
         title: String,
         category: String,
+        category_abbreviation: String,
         description: Option<String>,
         priority: String,
         views: Vec<(String, String)>, // Vec of (methodology, level) pairs
@@ -200,8 +208,9 @@ impl InteractiveRunner {
         let result = controller.create_use_case(
             title.clone(),
             category,
+            category_abbreviation, // Pass the abbreviation
             description,
-            None,
+            None, // methodology
             Some(views_string),
             Some(priority),
             Some(extra_fields),
@@ -253,21 +262,6 @@ impl InteractiveRunner {
         let result = controller.create_system_actor(id, name, actor_type, emoji)?;
         Ok(result.message)
     }
-
-    /// Create a persona with additional fields
-    // pub fn create_persona_with_fields(
-    //     &mut self,
-    //     id: String,
-    //     name: String,
-    //     extra_fields: std::collections::HashMap<String, String>,
-    // ) -> Result<String> {
-    //     use crate::cli::standard::create_persona_with_fields;
-    //     use crate::config::Config;
-
-    //     let config = Config::load()?;
-    //     create_persona_with_fields(&config, id.clone(), name.clone(), extra_fields)?;
-    //     Ok(format!("Created persona with custom fields: {} ({})", name, id))
-    // }
 
     /// List all actors
     pub fn list_actors(&self) -> Result<()> {

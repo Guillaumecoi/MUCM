@@ -128,7 +128,7 @@ pub fn run() -> Result<()> {
             Ok(())
         }
         Commands::Languages => {
-            execute_command(|| handle_languages_command());
+            execute_command(handle_languages_command);
             Ok(())
         }
         Commands::Methodologies => {

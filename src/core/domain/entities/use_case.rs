@@ -626,6 +626,7 @@ mod use_case_tests {
             "id": "UC-TEST-001",
             "title": "Test Use Case",
             "category": "Test",
+            "category_abbreviation": "TES",
             "description": "A test use case",
             "priority": "Critical",
             "metadata": {

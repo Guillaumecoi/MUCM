@@ -59,9 +59,9 @@ impl<'a> MarkdownRegenerationService<'a> {
 
         // Regenerate markdown for all enabled views
         for view in use_case.enabled_views() {
-            let markdown_content =
-                self.markdown_generator
-                    .generate(&use_case, None, Some(&view))?;
+            let markdown_content = self
+                .markdown_generator
+                .generate(&use_case, None, Some(view))?;
             let filename = format!("{}-{}-{}.md", use_case.id, view.methodology, view.level);
             self.repository
                 .save_markdown_with_filename(&use_case, &filename, &markdown_content)?;
@@ -86,9 +86,9 @@ impl<'a> MarkdownRegenerationService<'a> {
 
         // Generate markdown for each enabled view
         for view in use_case.enabled_views() {
-            let markdown_content =
-                self.markdown_generator
-                    .generate(&use_case, None, Some(&view))?;
+            let markdown_content = self
+                .markdown_generator
+                .generate(&use_case, None, Some(view))?;
             let filename = format!("{}-{}-{}.md", use_case.id, view.methodology, view.level);
             self.repository
                 .save_markdown_with_filename(&use_case, &filename, &markdown_content)?;

@@ -54,6 +54,7 @@ mod use_case_controller_tests {
         let result = controller.create_use_case(
             "Test Use Case".to_string(),
             "test".to_string(),
+            "TES".to_string(),
             Some("Test description".to_string()),
             Some("business".to_string()),
             None,
@@ -77,6 +78,7 @@ mod use_case_controller_tests {
             .create_use_case(
                 "Test UC 1".to_string(),
                 "test".to_string(),
+                "TES".to_string(),
                 None,
                 Some("business".to_string()),
                 None,
@@ -100,6 +102,7 @@ mod use_case_controller_tests {
             .create_use_case(
                 "Test UC".to_string(),
                 "test".to_string(),
+                "TES".to_string(),
                 None,
                 Some("business".to_string()),
                 None,
@@ -129,6 +132,7 @@ mod use_case_controller_tests {
             .create_use_case(
                 "Test UC".to_string(),
                 "test".to_string(),
+                "TES".to_string(),
                 None,
                 Some("business".to_string()),
                 None,
@@ -168,6 +172,7 @@ mod use_case_controller_tests {
             .create_use_case(
                 "Test UC".to_string(),
                 "test".to_string(),
+                "TES".to_string(),
                 None,
                 Some("business".to_string()),
                 None,
@@ -195,6 +200,7 @@ mod use_case_controller_tests {
             .create_use_case(
                 "Test UC 1".to_string(),
                 "test".to_string(),
+                "TES".to_string(),
                 None,
                 Some("business".to_string()),
                 None,
@@ -208,6 +214,7 @@ mod use_case_controller_tests {
             .create_use_case(
                 "Test UC 2".to_string(),
                 "test".to_string(),
+                "TES".to_string(),
                 None,
                 Some("business".to_string()),
                 None,
@@ -240,6 +247,7 @@ mod use_case_controller_tests {
             .create_use_case(
                 "Test UC 1".to_string(),
                 "test".to_string(),
+                "TES".to_string(),
                 None,
                 Some("business".to_string()),
                 None,
@@ -253,6 +261,7 @@ mod use_case_controller_tests {
             .create_use_case(
                 "Test UC 2".to_string(),
                 "test".to_string(),
+                "TES".to_string(),
                 None,
                 Some("business".to_string()),
                 None,
@@ -292,6 +301,7 @@ mod use_case_controller_tests {
             .create_use_case(
                 "Test UC".to_string(),
                 "test".to_string(),
+                "TES".to_string(),
                 None,
                 Some("business".to_string()),
                 None,
@@ -325,6 +335,7 @@ mod use_case_controller_tests {
             .create_use_case(
                 "Test UC".to_string(),
                 "test".to_string(),
+                "TES".to_string(),
                 None,
                 Some("business".to_string()),
                 None,
@@ -373,6 +384,7 @@ mod use_case_controller_tests {
             .create_use_case(
                 "Test UC".to_string(),
                 "test".to_string(),
+                "TES".to_string(),
                 None,
                 Some("business".to_string()),
                 None,
@@ -419,6 +431,7 @@ mod use_case_controller_tests {
             .create_use_case(
                 "Test UC".to_string(),
                 "test".to_string(),
+                "TES".to_string(),
                 None,
                 Some("business".to_string()),
                 None,
@@ -465,6 +478,7 @@ mod use_case_controller_tests {
             .create_use_case(
                 "Test UC".to_string(),
                 "test".to_string(),
+                "TES".to_string(),
                 None,
                 Some("business".to_string()),
                 None,
@@ -528,6 +542,7 @@ mod use_case_controller_tests {
             .create_use_case(
                 "Test UC".to_string(),
                 "test".to_string(),
+                "TES".to_string(),
                 None,
                 Some("business".to_string()),
                 None,
@@ -561,6 +576,7 @@ mod use_case_controller_tests {
             .create_use_case(
                 "Test UC".to_string(),
                 "test".to_string(),
+                "TES".to_string(),
                 None,
                 Some("business".to_string()),
                 None,
@@ -612,6 +628,7 @@ mod use_case_controller_tests {
             .create_use_case(
                 "Original Title".to_string(),
                 "test".to_string(),
+                "TES".to_string(),
                 Some("Original description".to_string()),
                 Some("business".to_string()),
                 None,
@@ -650,6 +667,7 @@ mod use_case_controller_tests {
             .create_use_case(
                 "Original Title".to_string(),
                 "test".to_string(),
+                "TES".to_string(),
                 Some("Original description".to_string()),
                 Some("business".to_string()),
                 None,
@@ -687,6 +705,7 @@ mod use_case_controller_tests {
             .create_use_case(
                 "Test UC".to_string(),
                 "test".to_string(),
+                "TES".to_string(),
                 None,
                 Some("business".to_string()),
                 None,
@@ -724,6 +743,7 @@ mod use_case_controller_tests {
             .create_use_case(
                 "Test UC".to_string(),
                 "test".to_string(),
+                "TES".to_string(),
                 None,
                 Some("business".to_string()),
                 None,
@@ -761,6 +781,7 @@ mod use_case_controller_tests {
             .create_use_case(
                 "Test UC".to_string(),
                 "test".to_string(),
+                "TES".to_string(),
                 None,
                 Some("business".to_string()),
                 None,
@@ -800,6 +821,7 @@ mod use_case_controller_tests {
             .create_use_case(
                 "Test UC".to_string(),
                 "test".to_string(),
+                "TES".to_string(),
                 None,
                 Some("business".to_string()),
                 None,
@@ -1648,7 +1670,7 @@ mod project_controller_tests {
         assert!(
             lang_names
                 .iter()
-                .any(|&&ref l| l == "rust" || l == "python" || l == "javascript"),
+                .any(|l| *l == "rust" || *l == "python" || *l == "javascript"),
             "Should contain at least one common language"
         );
     }

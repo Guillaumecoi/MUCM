@@ -71,7 +71,7 @@ impl MethodologyFieldCollector {
         let mut collection = FieldCollection::default();
 
         // Standard extra field names (these have priority over methodology fields)
-        let standard_fields = vec!["author", "reviewer", "description"];
+        let standard_fields = ["author", "reviewer", "description"];
 
         // Collect fields from each view
         for (methodology, level) in views {

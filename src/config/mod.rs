@@ -472,7 +472,7 @@ mod tests {
 
         let config_dir = Path::new(".config/.mucm");
         if !config_dir.exists() {
-            fs::create_dir_all(&config_dir).context("Failed to create .config/.mucm directory")?;
+            fs::create_dir_all(config_dir).context("Failed to create .config/.mucm directory")?;
         }
 
         let mut config = Config::default();

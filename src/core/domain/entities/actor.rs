@@ -94,13 +94,32 @@ impl FromStr for Actor {
 // Migration helper: Allow converting from String for backward compatibility
 impl From<String> for Actor {
     fn from(s: String) -> Self {
-        Actor::from_str(&s).unwrap_or_else(|_| Actor::Custom(s))
+        Actor::from_str(&s).unwrap_or(Actor::Custom(s))
     }
 }
 
 impl From<&str> for Actor {
     fn from(s: &str) -> Self {
         Actor::from_str(s).unwrap_or_else(|_| Actor::Custom(s.to_string()))
+    }
+}
+
+// SQL conversion implementations for SQLite persistence
+impl ToSql for Actor {
+    fn to_sql(&self) -> rusqlite::Result<ToSqlOutput<'_>> {
+        Ok(ToSqlOutput::from(self.name().to_string()))
+    }
+}
+
+impl FromSql for Actor {
+    fn column_result(value: ValueRef<'_>) -> FromSqlResult<Self> {
+        let s = value.as_str()?;
+        Actor::from_str(s).map_err(|e| {
+            FromSqlError::Other(Box::new(std::io::Error::new(
+                std::io::ErrorKind::InvalidData,
+                e,
+            )))
+        })
     }
 }
 
@@ -202,24 +221,5 @@ mod tests {
         assert_eq!(set.len(), 2);
         assert!(set.contains(&Actor::User));
         assert!(set.contains(&Actor::System));
-    }
-}
-
-// SQL conversion implementations for SQLite persistence
-impl ToSql for Actor {
-    fn to_sql(&self) -> rusqlite::Result<ToSqlOutput<'_>> {
-        Ok(ToSqlOutput::from(self.name().to_string()))
-    }
-}
-
-impl FromSql for Actor {
-    fn column_result(value: ValueRef<'_>) -> FromSqlResult<Self> {
-        let s = value.as_str()?;
-        Actor::from_str(s).map_err(|e| {
-            FromSqlError::Other(Box::new(std::io::Error::new(
-                std::io::ErrorKind::InvalidData,
-                e,
-            )))
-        })
     }
 }

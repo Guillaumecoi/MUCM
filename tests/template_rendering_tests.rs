@@ -383,7 +383,7 @@ fn test_all_templates_with_minimal_data() {
     let data = create_minimal_test_data();
 
     let methodologies = vec!["business", "developer", "feature", "tester"];
-    let levels = vec!["normal", "advanced"];
+    let levels = ["normal", "advanced"];
 
     for methodology in methodologies {
         for level in levels.iter() {

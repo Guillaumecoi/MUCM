@@ -1119,6 +1119,7 @@ mod tests {
             .create_use_case(
                 "Test Use Case".to_string(),
                 "test".to_string(),
+                "TES".to_string(),
                 Some("Testing scenarios".to_string()),
                 Some("feature".to_string()),
                 None,
@@ -1363,6 +1364,7 @@ mod tests {
             .create_use_case(
                 "Test Use Case".to_string(),
                 "test".to_string(),
+                "TES".to_string(),
                 Some("Testing".to_string()),
                 Some("feature".to_string()),
                 None,
@@ -1382,6 +1384,7 @@ mod tests {
             .create_use_case(
                 "Authentication".to_string(),
                 "auth".to_string(),
+                "AUT".to_string(),
                 Some("Auth use case".to_string()),
                 Some("feature".to_string()),
                 None,

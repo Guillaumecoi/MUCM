@@ -349,7 +349,7 @@ impl ActorWorkflow {
             // Use FieldHelpers to handle different field types automatically
             if let Some(new_value) = FieldHelpers::edit_by_type(
                 &field_def.field_type,
-                &field_name,
+                field_name,
                 current_json,
                 &help_msg,
             )? {

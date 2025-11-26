@@ -83,6 +83,7 @@ fn test_complete_use_case_edit_workflow() {
         .create_use_case(
             "Original Title".to_string(),
             "authentication".to_string(),
+            "AUT".to_string(),
             Some("User login workflow".to_string()),
             Some("business".to_string()),
             None,
@@ -160,6 +161,7 @@ fn test_multi_view_management() {
         .create_use_case(
             "Multi-View Test".to_string(),
             "test".to_string(),
+            "TES".to_string(),
             Some("Testing multi-view support".to_string()),
             Some("business".to_string()),
             None,
@@ -242,6 +244,7 @@ fn test_partial_field_updates() {
         .create_use_case(
             "Partial Update Test".to_string(),
             "original_category".to_string(),
+            "ORI".to_string(),
             Some("Original description".to_string()),
             Some("business".to_string()),
             None,
@@ -314,6 +317,7 @@ fn test_methodology_fields_per_view() {
         .create_use_case(
             "Methodology Fields Test".to_string(),
             "test".to_string(),
+            "TES".to_string(),
             None,
             Some("business".to_string()),
             None,
@@ -389,6 +393,7 @@ fn test_error_handling_invalid_operations() {
         .create_use_case(
             "Error Test".to_string(),
             "test".to_string(),
+            "TES".to_string(),
             None,
             Some("business".to_string()),
             None,
@@ -442,6 +447,7 @@ fn test_edit_workflow_with_regeneration() {
         .create_use_case(
             "Regeneration Test".to_string(),
             "test".to_string(),
+            "TES".to_string(),
             Some("Testing markdown regeneration".to_string()),
             Some("business".to_string()),
             None,

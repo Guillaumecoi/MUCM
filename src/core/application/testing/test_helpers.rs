@@ -35,7 +35,7 @@ use std::path::Path;
 pub fn init_test_project(language: Option<String>) -> Result<Config> {
     let config_dir = Path::new(".config/.mucm");
     if !config_dir.exists() {
-        fs::create_dir_all(&config_dir)?;
+        fs::create_dir_all(config_dir)?;
     }
 
     let mut config = Config::default();
@@ -66,10 +66,8 @@ pub fn init_test_project(language: Option<String>) -> Result<Config> {
         if crate::config::TemplateManager::find_source_templates_dir().is_ok() {
             Config::copy_templates_to_config_with_language(language)?;
         }
-    } else {
-        if crate::config::TemplateManager::find_source_templates_dir().is_ok() {
-            Config::copy_templates_to_config_with_language(None)?;
-        }
+    } else if crate::config::TemplateManager::find_source_templates_dir().is_ok() {
+        Config::copy_templates_to_config_with_language(None)?;
     }
 
     Ok(config)

@@ -177,9 +177,16 @@ impl UseCaseCoordinator {
         }
 
         // Use the new create_use_case_with_views method with empty user fields
+        let category_abbreviation = category
+            .chars()
+            .filter(|c| c.is_alphabetic())
+            .take(3)
+            .collect::<String>()
+            .to_uppercase();
         let use_case = self.use_case_creator.create_use_case_with_views(
             title,
             category,
+            category_abbreviation,
             description,
             "Medium".to_string(), // Default priority for create_use_case_with_views
             view_list,
@@ -213,6 +220,7 @@ impl UseCaseCoordinator {
         &mut self,
         title: String,
         category: String,
+        category_abbreviation: String,
         description: Option<String>,
         priority: String,
         views: &str,
@@ -246,6 +254,7 @@ impl UseCaseCoordinator {
         let use_case = self.use_case_creator.create_use_case_with_views(
             title,
             category,
+            category_abbreviation,
             description,
             priority,
             view_list,
@@ -339,7 +348,7 @@ impl UseCaseCoordinator {
             for view in use_case.enabled_views() {
                 let markdown_content =
                     self.markdown_generator
-                        .generate(use_case, None, Some(&view))?;
+                        .generate(use_case, None, Some(view))?;
                 let filename = format!("{}-{}-{}.md", use_case.id, view.methodology, view.level);
                 self.repository.save_markdown_with_filename(
                     use_case,
@@ -922,9 +931,16 @@ impl UseCaseCoordinator {
         description: Option<String>,
         methodology: &str,
     ) -> Result<UseCase> {
+        let category_abbreviation = category
+            .chars()
+            .filter(|c| c.is_alphabetic())
+            .take(3)
+            .collect::<String>()
+            .to_uppercase();
         let use_case = self.use_case_creator.create_use_case_with_methodology(
             title,
             category,
+            category_abbreviation,
             description,
             "Medium".to_string(), // Default priority for internal helper
             methodology,
@@ -948,9 +964,16 @@ impl UseCaseCoordinator {
         methodology: &str,
         extra_fields: std::collections::HashMap<String, String>,
     ) -> Result<UseCase> {
+        let category_abbreviation = category
+            .chars()
+            .filter(|c| c.is_alphabetic())
+            .take(3)
+            .collect::<String>()
+            .to_uppercase();
         let use_case = self.use_case_creator.create_use_case_with_custom_fields(
             title,
             category,
+            category_abbreviation,
             description,
             "Medium".to_string(), // Default priority for internal helper
             methodology,
