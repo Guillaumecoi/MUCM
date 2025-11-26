@@ -5,7 +5,9 @@
 //! git-friendly and human-readable.
 
 mod actor_repository;
+mod category_repository;
 mod repository;
 
 pub use actor_repository::TomlActorRepository;
+pub use category_repository::TomlCategoryRepository;
 pub use repository::TomlUseCaseRepository;

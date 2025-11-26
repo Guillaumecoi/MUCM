@@ -3,6 +3,7 @@
 // Private modules
 mod actor;
 mod actor_entity;
+mod category;
 mod condition;
 mod metadata;
 mod methodology_view;
@@ -19,6 +20,7 @@ mod use_case_reference;
 // Explicit public exports (visible to parent modules)
 pub use actor::Actor;
 pub use actor_entity::{ActorEntity, ActorType};
+pub use category::Category;
 pub use condition::Condition;
 pub use metadata::Metadata;
 pub use methodology_view::MethodologyView;
