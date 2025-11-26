@@ -7,7 +7,10 @@ use anyhow::{Context, Result};
 use inquire::{Confirm, Select, Text};
 use std::collections::HashMap;
 
-use crate::cli::interactive::{field_helpers::FieldHelpers, runner::InteractiveRunner, ui::UI};
+use crate::cli::interactive::{
+    field_helpers::FieldHelpers, prompts, runner::InteractiveRunner, ui::UI,
+    workflows::operations::use_case_operations,
+};
 
 /// Use case workflow handler
 pub struct UseCaseWorkflow;
@@ -36,97 +39,17 @@ impl UseCaseWorkflow {
             .prompt()?;
 
         // Get category with abbreviation using the new workflow
-        let (category, category_abbreviation) = Self::prompt_for_category()?;
+        let (category, category_abbreviation) = use_case_operations::create_or_select_category()?;
 
         // Step 2: Collect views
-        UI::show_section_header("Select Views", "👁️")?;
-        UI::show_info("Add methodology views. Each view will generate a separate markdown file.")?;
-        let mut views: Vec<(String, String)> = Vec::new();
-
-        loop {
-            // Display methodologies with their descriptions
-            let methodology_options: Vec<String> = methodologies
-                .iter()
-                .map(|m| format!("{} - {}", m.display_name, m.description))
-                .collect();
-
-            let selected_idx = Select::new(
-                &format!("Select methodology (view #{}):", views.len() + 1),
-                methodology_options.clone(),
-            )
-            .with_help_message("Choose how you want to structure this view")
-            .prompt()?;
-
-            // Find the selected methodology
-            let selected_methodology = &methodologies[methodologies
-                .iter()
-                .position(|m| format!("{} - {}", m.display_name, m.description) == selected_idx)
-                .context("Selected methodology not found")?];
-
-            let methodology_name = selected_methodology.name.clone();
-
-            // Get available levels for this methodology
-            let available_levels = runner.get_methodology_levels(&methodology_name)?;
-
-            if available_levels.is_empty() {
-                UI::show_error(&format!(
-                    "No levels available for methodology '{}'",
-                    methodology_name
-                ))?;
-                continue;
+        let views = match use_case_operations::collect_methodology_views(&runner) {
+            Ok(views) => views,
+            Err(e) => {
+                UI::show_error(&format!("Failed to collect views: {}", e))?;
+                UI::pause_for_input()?;
+                return Ok(());
             }
-
-            // Display levels with their descriptions
-            let level_options: Vec<String> = available_levels
-                .iter()
-                .map(|level| {
-                    let display_name = level
-                        .name
-                        .chars()
-                        .enumerate()
-                        .map(|(i, c)| {
-                            if i == 0 {
-                                c.to_uppercase().next().unwrap()
-                            } else {
-                                c
-                            }
-                        })
-                        .collect::<String>();
-                    format!("{} - {}", display_name, level.description)
-                })
-                .collect();
-
-            let selected_level_display = Select::new("Select level:", level_options)
-                .with_help_message("Choose the detail level for this view")
-                .prompt()?;
-
-            // Extract just the level name and convert to lowercase
-            let level = selected_level_display
-                .split(" - ")
-                .next()
-                .context("Failed to parse level name")?
-                .to_lowercase();
-
-            views.push((methodology_name.clone(), level.clone()));
-
-            UI::show_success(&format!("✓ Added view: {}:{}", methodology_name, level))?;
-
-            // Ask if user wants to add another view
-            let add_another = Confirm::new("Add another view?")
-                .with_default(false)
-                .with_help_message("Each view will generate a separate markdown file")
-                .prompt()?;
-
-            if !add_another {
-                break;
-            }
-        }
-
-        if views.is_empty() {
-            UI::show_error("No views selected. Use case creation cancelled.")?;
-            UI::pause_for_input()?;
-            return Ok(());
-        }
+        };
 
         // Always use interactive form for additional fields
         Self::fill_use_case_form(
@@ -140,163 +63,6 @@ impl UseCaseWorkflow {
 
         UI::pause_for_input()?;
         Ok(())
-    }
-
-    /// Prompt user for methodology-specific field values
-    fn prompt_for_methodology_fields(
-        runner: &InteractiveRunner,
-        views: &[(String, String)],
-    ) -> Result<HashMap<String, String>> {
-        // Collect field definitions
-        let field_collection = match runner.collect_methodology_fields(views) {
-            Ok(collection) => collection,
-            Err(e) => {
-                // If we can't collect fields (e.g., methodology not found in workspace),
-                // just warn and continue without methodology fields
-                UI::show_warning(&format!(
-                    "Could not collect methodology fields: {}. Continuing without methodology-specific fields.",
-                    e
-                ))?;
-                return Ok(HashMap::new());
-            }
-        };
-
-        // Show any warnings
-        for warning in &field_collection.warnings {
-            UI::show_warning(warning)?;
-        }
-
-        if field_collection.fields.is_empty() {
-            return Ok(HashMap::new());
-        }
-
-        UI::show_section_header("Methodology Fields", "🎯")?;
-        UI::show_info("These fields are defined by the methodologies you selected. Press Enter to skip optional fields.")?;
-
-        let mut field_values = HashMap::new();
-
-        // Group fields by methodology for better UX
-        let mut fields_by_methodology: HashMap<String, Vec<&crate::core::CollectedField>> =
-            HashMap::new();
-        for field in field_collection.fields.values() {
-            for methodology in &field.methodologies {
-                fields_by_methodology
-                    .entry(methodology.clone())
-                    .or_default()
-                    .push(field);
-            }
-        }
-
-        // Sort methodologies for consistent ordering
-        let mut methodology_names: Vec<_> = fields_by_methodology.keys().collect();
-        methodology_names.sort();
-
-        // Prompt for each methodology's fields
-        for methodology_name in methodology_names {
-            let fields = fields_by_methodology.get(methodology_name).unwrap();
-            if !fields.is_empty() {
-                UI::show_info(&format!("\n📋 {} Fields:", methodology_name))?;
-
-                for field in fields {
-                    let default_help = format!("{} ({})", field.label, field.field_type);
-                    let help_msg = field.description.as_deref().unwrap_or(&default_help);
-
-                    let prompt_text = if field.required {
-                        format!("{} (required):", field.label)
-                    } else {
-                        format!("{} (optional):", field.label)
-                    };
-
-                    // Handle different field types
-                    let value = match field.field_type.as_str() {
-                        "boolean" => {
-                            // For boolean fields, use Confirm prompt
-                            let default = field
-                                .default
-                                .as_ref()
-                                .and_then(|d| d.parse::<bool>().ok())
-                                .unwrap_or(false);
-
-                            let result = Confirm::new(&prompt_text)
-                                .with_default(default)
-                                .with_help_message(help_msg)
-                                .prompt()?;
-
-                            Some(result.to_string())
-                        }
-                        "array" => {
-                            // For array fields, collect items one by one
-                            UI::show_info("  💡 Enter items one at a time. Press Enter on empty line when done.")?;
-
-                            let mut items = Vec::new();
-                            let mut item_num = 1;
-
-                            loop {
-                                let item_prompt = format!("  Item {}: ", item_num);
-                                let result = Text::new(&item_prompt)
-                                    .with_help_message(help_msg)
-                                    .prompt_skippable()?;
-
-                                match result {
-                                    Some(item) if !item.trim().is_empty() => {
-                                        items.push(item.trim().to_string());
-                                        item_num += 1;
-                                    }
-                                    _ => break,
-                                }
-                            }
-
-                            if items.is_empty() {
-                                None // Will be handled by required field logic below
-                            } else {
-                                // Join items with newlines for array storage
-                                Some(items.join("\n"))
-                            }
-                        }
-                        "number" => {
-                            // For number fields, validate input
-                            loop {
-                                let result = Text::new(&prompt_text)
-                                    .with_help_message(help_msg)
-                                    .with_default(field.default.as_deref().unwrap_or(""))
-                                    .prompt_skippable()?;
-
-                                match result {
-                                    Some(ref s) if !s.trim().is_empty() => {
-                                        // Try to parse as number
-                                        if s.parse::<f64>().is_ok() {
-                                            break Some(s.clone());
-                                        } else {
-                                            UI::show_error("Please enter a valid number")?;
-                                            continue;
-                                        }
-                                    }
-                                    _ => break None,
-                                }
-                            }
-                        }
-                        _ => {
-                            // Default to string
-                            let result = Text::new(&prompt_text)
-                                .with_help_message(help_msg)
-                                .with_default(field.default.as_deref().unwrap_or(""))
-                                .prompt_skippable()?;
-
-                            result.filter(|s| !s.trim().is_empty())
-                        }
-                    };
-
-                    if let Some(v) = value {
-                        field_values.insert(field.name.clone(), v);
-                    } else if field.required && field.default.is_none() {
-                        // Required field with no value and no default - use empty string
-                        field_values.insert(field.name.clone(), String::new());
-                    }
-                }
-            }
-        }
-
-        Ok(field_values)
     }
 
     /// Interactive form for filling use case fields
@@ -412,67 +178,22 @@ impl UseCaseWorkflow {
             .prompt_skippable()?;
 
         // Collect preconditions
-        let add_preconditions = Confirm::new("Add preconditions?")
-            .with_default(false)
-            .with_help_message("Conditions that must be true before this use case can execute")
-            .prompt()?;
-
-        let mut preconditions = Vec::new();
-        if add_preconditions {
-            loop {
-                let condition = Text::new("  Precondition (or press Enter to finish):")
-                    .with_help_message("Enter a precondition. You can reference other use cases like 'UC-XXX must be complete'")
-                    .prompt()?;
-
-                if condition.trim().is_empty() {
-                    break;
-                }
-
-                preconditions.push(condition);
-
-                let add_more = Confirm::new("Add another precondition?")
-                    .with_default(true)
-                    .prompt()?;
-
-                if !add_more {
-                    break;
-                }
-            }
-        }
+        let preconditions = prompts::collect_conditions(
+            "preconditions",
+            false, // No use case references for now (simpler flow)
+            vec![],
+        )?;
 
         // Collect postconditions
-        let add_postconditions = Confirm::new("Add postconditions?")
-            .with_default(false)
-            .with_help_message(
-                "Conditions that will be true after this use case executes successfully",
-            )
-            .prompt()?;
-
-        let mut postconditions = Vec::new();
-        if add_postconditions {
-            loop {
-                let condition = Text::new("  Postcondition (or press Enter to finish):")
-                    .with_help_message("Enter a postcondition describing the result state")
-                    .prompt()?;
-
-                if condition.trim().is_empty() {
-                    break;
-                }
-
-                postconditions.push(condition);
-
-                let add_more = Confirm::new("Add another postcondition?")
-                    .with_default(true)
-                    .prompt()?;
-
-                if !add_more {
-                    break;
-                }
-            }
-        }
+        let postconditions = prompts::collect_conditions(
+            "postconditions",
+            false, // No use case references for postconditions
+            vec![],
+        )?;
 
         // Collect methodology-specific field values
-        let methodology_field_values = Self::prompt_for_methodology_fields(runner, &views)?;
+        let methodology_field_values =
+            use_case_operations::prompt_methodology_fields(runner, &views)?;
 
         // Create the use case with additional fields (only truly extra fields)
         let mut extra_fields = HashMap::new();
@@ -957,131 +678,5 @@ impl UseCaseWorkflow {
         }
 
         Ok(())
-    }
-
-    /// Prompt user to select an existing category or create a new one
-    /// Returns (category_name, category_abbreviation)
-    fn prompt_for_category() -> Result<(String, String)> {
-        use crate::controller::CategoryController;
-
-        let category_controller = CategoryController::new()?;
-
-        // Get existing categories
-        let existing_categories = category_controller.get_all_categories()?;
-
-        // Build options: existing categories + "Create New Category"
-        let mut options: Vec<String> = existing_categories
-            .iter()
-            .map(|(name, abbr)| format!("{} ({})", name, abbr))
-            .collect();
-        options.push("➕ Create New Category".to_string());
-
-        let selection = Select::new("Category:", options)
-            .with_help_message("Select an existing category or create a new one")
-            .prompt()?;
-
-        if selection == "➕ Create New Category" {
-            // Create new category workflow
-            UI::show_section_header("Create New Category", "📁")?;
-
-            let full_name = Text::new("Category name:")
-                .with_help_message("Full category name (e.g., 'Authentication', 'User Management')")
-                .prompt()?;
-
-            // Suggest abbreviation
-            let suggested_abbr = category_controller.suggest_abbreviation(&full_name);
-
-            let abbreviation = Text::new("Abbreviation:")
-                .with_default(&suggested_abbr)
-                .with_help_message("3+ uppercase letters for use case IDs (e.g., 'AUT', 'USR')")
-                .prompt()?;
-
-            // Check for collision
-            if let Some(existing) = category_controller.detect_collision(&abbreviation)? {
-                UI::show_warning(&format!(
-                    "⚠️  Abbreviation '{}' is already used by category '{}'",
-                    abbreviation, existing.full_name
-                ))?;
-
-                // Suggest auto-resolution
-                let (new_abbr, existing_abbr) = category_controller
-                    .suggest_collision_resolution(&full_name, &existing)
-                    .ok_or_else(|| anyhow::anyhow!("Could not generate collision resolution"))?;
-
-                UI::show_info(&format!(
-                    "💡 Suggested resolution:\n   • {}: {} → {}\n   • {}: {} → {}",
-                    full_name,
-                    abbreviation,
-                    new_abbr,
-                    existing.full_name,
-                    existing.abbreviation,
-                    existing_abbr
-                ))?;
-
-                let choices = vec![
-                    "Auto-resolve both categories",
-                    "Edit abbreviation manually",
-                    "Cancel",
-                ];
-
-                match Select::new("How would you like to proceed?", choices).prompt()? {
-                    "Auto-resolve both categories" => {
-                        // Update existing category
-                        category_controller
-                            .update_abbreviation(&existing.abbreviation, &existing_abbr)?;
-
-                        // Create new category with resolved abbreviation
-                        let result = category_controller
-                            .create_category(full_name.clone(), new_abbr.clone())?;
-                        UI::show_success(&result.message)?;
-
-                        return Ok((full_name, new_abbr));
-                    }
-                    "Edit abbreviation manually" => {
-                        // Let user enter a different abbreviation
-                        let new_abbreviation = Text::new("Enter a different abbreviation:")
-                            .with_help_message("Must be at least 3 characters, alphanumeric")
-                            .prompt()?;
-
-                        let result = category_controller
-                            .create_category(full_name.clone(), new_abbreviation.clone())?;
-
-                        if !result.success {
-                            UI::show_error(&result.message)?;
-                            anyhow::bail!("Failed to create category");
-                        }
-
-                        UI::show_success(&result.message)?;
-                        return Ok((full_name, new_abbreviation));
-                    }
-                    _ => {
-                        anyhow::bail!("Category creation cancelled");
-                    }
-                }
-            }
-
-            // No collision, create the category
-            let result =
-                category_controller.create_category(full_name.clone(), abbreviation.clone())?;
-
-            if !result.success {
-                UI::show_error(&result.message)?;
-                anyhow::bail!("Failed to create category");
-            }
-
-            UI::show_success(&result.message)?;
-            Ok((full_name, abbreviation))
-        } else {
-            // Extract name and abbreviation from selection "Name (ABBR)"
-            let parts: Vec<&str> = selection.rsplitn(2, '(').collect();
-            if parts.len() != 2 {
-                anyhow::bail!("Invalid category format");
-            }
-
-            let abbreviation = parts[0].trim_end_matches(')').trim().to_string();
-            let name = parts[1].trim().to_string();
-
-            Ok((name, abbreviation))
-        }
     }
 }
