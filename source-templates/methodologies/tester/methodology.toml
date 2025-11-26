@@ -22,7 +22,8 @@ overwrite_test_documentation = true
 name = "Normal"
 abbreviation = "n"
 filename = "uc_normal.hbs"
-scenario_template = "scenarios/scenario.hbs"
+# Uncomment to override the global default_scenario_template from mucm.toml
+# scenario_template = "scenarios/scenario.hbs"
 description = "Standard test documentation covering test types, priorities, and expected results"
 inherits = []
 
@@ -36,7 +37,8 @@ test_data_requirements = { label = "Test Data Requirements", type = "text", requ
 name = "Advanced"
 abbreviation = "a"
 filename = "uc_advanced.hbs"
-scenario_template = "scenarios/scenario.hbs"
+# Uncomment to override the global default_scenario_template from mucm.toml
+# scenario_template = "scenarios/scenario.hbs"
 description = "Comprehensive test specification with environment setup, regression suites, and coverage metrics"
 inherits = ["Normal"]
 

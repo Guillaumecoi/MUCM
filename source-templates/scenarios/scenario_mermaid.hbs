@@ -1,0 +1,33 @@
+{{#if scenarios}}
+{{#each scenarios}}
+## {{id}} - {{title}}{{#if extends_scenario_id}} (Extension){{/if}}
+
+```mermaid
+sequenceDiagram
+{{#each steps}}
+{{#if receiver}}
+{{actor}}->>{{receiver}}: {{order}}. {{action}}
+{{else}}
+{{actor}}->>{{actor}}: {{order}}. {{action}}
+{{/if}}
+{{/each}}
+```
+
+### Steps
+{{#each steps}}
+{{order}}. **{{actor}}**{{#if receiver}} → **{{receiver}}**{{/if}}: {{action}}
+{{/each}}
+
+{{#if extends_scenario_id}}
+*Extends scenario {{extends_scenario_id}} at step {{extends_at_step}}*{{#if returns_at_step}}, returns at step {{returns_at_step}}{{/if}}
+
+{{/if}}
+{{#if repeat_blocks}}
+### Repeat Blocks
+{{#each repeat_blocks}}
+- Steps {{from_step}} to {{to_step}}: Repeats while *{{condition}}*
+{{/each}}
+
+{{/if}}
+{{/each}}
+{{/if}}

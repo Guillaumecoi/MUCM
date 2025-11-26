@@ -14,6 +14,7 @@ fn create_test_use_case() -> UseCase {
         "UC-TEST-001".to_string(),
         "Test Use Case".to_string(),
         "test".to_string(),
+        "TES".to_string(),
         "A test use case for persistence testing".to_string(),
         "medium".to_string(),
     )
@@ -149,6 +150,7 @@ fn test_load_all(repo: &dyn UseCaseRepository) {
             "UC-ALL-001".to_string(),
             "Load All Test 1".to_string(),
             "load".to_string(),
+            "LOA".to_string(),
             "".to_string(),
             "medium".to_string(),
         )
@@ -157,6 +159,7 @@ fn test_load_all(repo: &dyn UseCaseRepository) {
             "UC-ALL-002".to_string(),
             "Load All Test 2".to_string(),
             "load".to_string(),
+            "LOA".to_string(),
             "".to_string(),
             "medium".to_string(),
         )

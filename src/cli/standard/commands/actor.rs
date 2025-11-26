@@ -162,10 +162,7 @@ fn list_use_cases_for_actor(id: &str) -> Result<()> {
             uc.scenarios.iter().any(|s| {
                 s.steps.iter().any(|step| {
                     actor_matches(&step.actor, id)
-                        || step
-                            .receiver
-                            .as_ref()
-                            .map_or(false, |r| actor_matches(r, id))
+                        || step.receiver.as_ref().is_some_and(|r| actor_matches(r, id))
                 })
             })
         })
@@ -190,10 +187,7 @@ fn list_use_cases_for_actor(id: &str) -> Result<()> {
             .filter(|s| {
                 s.steps.iter().any(|step| {
                     actor_matches(&step.actor, id)
-                        || step
-                            .receiver
-                            .as_ref()
-                            .map_or(false, |r| actor_matches(r, id))
+                        || step.receiver.as_ref().is_some_and(|r| actor_matches(r, id))
                 })
             })
             .collect();

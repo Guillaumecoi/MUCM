@@ -25,6 +25,7 @@
 //! - `MethodologyInfo`: Methodology metadata for display and selection
 
 mod actor_controller;
+mod category_controller;
 pub mod dto;
 mod project_controller;
 mod scenario_controller;
@@ -35,6 +36,7 @@ mod tests;
 
 // Re-export commonly used controllers
 pub use actor_controller::{ActorController, PersonaController};
+pub use category_controller::CategoryController;
 pub use project_controller::ProjectController;
 pub use scenario_controller::ScenarioController;
 pub use use_case_controller::UseCaseController;

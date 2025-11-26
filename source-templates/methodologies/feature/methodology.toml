@@ -23,7 +23,8 @@ overwrite_test_documentation = false
 name = "Normal"
 abbreviation = "n"
 filename = "uc_normal.hbs"
-scenario_template = "scenarios/scenario.hbs"
+# Uncomment to override the global default_scenario_template from mucm.toml
+# scenario_template = "scenarios/scenario.hbs"
 description = "Standard feature documentation with sprint planning and agile workflow"
 inherits = []
 
@@ -36,7 +37,8 @@ hypothesis = { label = "Product Hypothesis", type = "text", required = false, de
 name = "Advanced"
 abbreviation = "a"
 filename = "uc_advanced.hbs"
-scenario_template = "scenarios/scenario.hbs"
+# Uncomment to override the global default_scenario_template from mucm.toml
+# scenario_template = "scenarios/scenario.hbs"
 description = "Comprehensive feature documentation with dependencies, mockups, and detailed planning"
 inherits = ["Normal"]
 

@@ -57,6 +57,30 @@ fn create_main_menu_options() -> Vec<MenuOption<CliRunner>> {
             }
             Ok(false) // Don't exit
         }),
+        MenuOption::new("📄 Regenerate All Documentation", |_| {
+            use crate::controller::UseCaseController;
+
+            let mut controller = match UseCaseController::new() {
+                Ok(c) => c,
+                Err(e) => {
+                    UI::show_error(&format!("Failed to initialize controller: {}", e))?;
+                    return Ok(false);
+                }
+            };
+
+            UI::show_info("Regenerating all documentation...")?;
+
+            match controller.regenerate_all_markdown() {
+                Ok(result) => {
+                    UI::show_success(&result.message)?;
+                }
+                Err(e) => {
+                    UI::show_error(&format!("Error regenerating documentation: {}", e))?;
+                }
+            }
+
+            Ok(false) // Don't exit
+        }),
         MenuOption::new("⚙️  Project Settings", |_| {
             if let Err(e) = Settings::configure() {
                 UI::show_error(&format!("Error configuring settings: {}", e))?;

@@ -367,11 +367,19 @@ Generated at: {{generated_at}}
             }
         };
 
-        // Determine scenario template path
+        // Determine scenario template path with fallback hierarchy:
+        // 1. Level-specific override from methodology.toml
+        // 2. Global default from mucm.toml config
+        // 3. Hard-coded default "scenarios/scenario.hbs"
+        let default_from_config = crate::config::Config::load()
+            .ok()
+            .map(|c| c.templates.default_scenario_template);
+
         let scenario_template_path = level_config
             .scenario_template
             .as_deref()
-            .unwrap_or("scenarios/scenario.hbs"); // Default
+            .or(default_from_config.as_deref())
+            .unwrap_or("scenarios/scenario.hbs");
 
         // Resolve full path
         let full_path = Self::resolve_scenario_template_path(
@@ -388,10 +396,44 @@ Generated at: {{generated_at}}
             self.handlebars
                 .borrow_mut()
                 .register_partial("scenario", content)
-                .context("Failed to register scenario partial")?;
+                .with_context(|| {
+                    format!("Failed to register scenario partial from {:?}", full_path)
+                })?;
         } else {
             // Scenario template not found - this is optional, so just warn
             eprintln!("Warning: Scenario template not found at {:?}", full_path);
+        }
+
+        // Register all other .hbs files in the scenarios directory as partials
+        let scenarios_dir = templates_dir.join("scenarios");
+        if scenarios_dir.exists() && scenarios_dir.is_dir() {
+            for entry in
+                fs::read_dir(&scenarios_dir).context("Failed to read scenarios directory")?
+            {
+                let entry = entry?;
+                let path = entry.path();
+
+                if path.is_file() {
+                    if let Some(filename) = path.file_name().and_then(|n| n.to_str()) {
+                        // Register all .hbs files except scenario.hbs (already registered)
+                        if filename.ends_with(".hbs") && filename != "scenario.hbs" {
+                            let partial_name = filename.strip_suffix(".hbs").unwrap_or(filename);
+                            let content = fs::read_to_string(&path)
+                                .with_context(|| format!("Failed to read partial: {:?}", path))?;
+
+                            self.handlebars
+                                .borrow_mut()
+                                .register_partial(partial_name, content)
+                                .with_context(|| {
+                                    format!(
+                                        "Failed to register partial '{}' from {:?}",
+                                        partial_name, path
+                                    )
+                                })?;
+                        }
+                    }
+                }
+            }
         }
 
         Ok(())

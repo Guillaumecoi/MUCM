@@ -15,9 +15,9 @@ pub use application::{
 
 // Re-export domain types (from domain's public interface)
 pub use domain::{
-    Actor, ActorEntity, ActorRepository, ActorType, Condition, MethodologyView, Persona,
-    PersonaRepository, ReferenceType, ScenarioReference, ScenarioReferenceValidator, ScenarioType,
-    Status, UseCase,
+    Actor, ActorEntity, ActorRepository, ActorType, Category, Condition, ExtensionPointUpdater,
+    MethodologyView, Persona, PersonaRepository, ReferenceType, RepeatBlock, ScenarioFlowValidator,
+    ScenarioReference, ScenarioReferenceValidator, ScenarioType, Status, StepOrder, UseCase,
 };
 
 // Exported for integration tests (appear unused to lib but required by tests/)
@@ -32,7 +32,8 @@ pub use infrastructure::{
 
 // Exported for integration tests (appear unused to lib but required by tests/)
 pub use infrastructure::{
-    SqliteActorRepository, SqliteUseCaseRepository, TomlActorRepository, TomlUseCaseRepository,
+    SqliteActorRepository, SqliteUseCaseRepository, TomlActorRepository, TomlCategoryRepository,
+    TomlUseCaseRepository,
 };
 
 // Re-export utility functions

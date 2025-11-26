@@ -40,6 +40,8 @@ pub struct UseCase {
     pub id: String,
     pub title: String,
     pub category: String,
+    // NEW: Category abbreviation used in ID generation (e.g., "AUT" for "Authentication")
+    pub category_abbreviation: String,
     pub description: String,
     pub priority: Priority,
     pub metadata: Metadata,
@@ -79,10 +81,12 @@ pub struct UseCase {
 }
 
 impl UseCase {
+    /// Create a use case with explicit category abbreviation
     pub fn new(
         id: String,
         title: String,
         category: String,
+        category_abbreviation: String,
         description: String,
         priority: String,
     ) -> Result<Self, String> {
@@ -91,6 +95,7 @@ impl UseCase {
             id,
             title,
             category,
+            category_abbreviation,
             description,
             priority,
             metadata: Metadata::new(),
@@ -219,7 +224,7 @@ impl UseCase {
     pub fn remove_step_from_scenario(
         &mut self,
         scenario_id: &str,
-        step_order: u32,
+        step_order: &str,
     ) -> anyhow::Result<()> {
         if let Some(scenario) = self.scenarios.iter_mut().find(|s| s.id == scenario_id) {
             scenario.remove_step(step_order);
@@ -451,7 +456,7 @@ mod priority_tests {
 #[cfg(test)]
 mod use_case_tests {
     use super::*;
-    use crate::core::domain::entities::{Scenario, ScenarioType};
+    use crate::core::domain::entities::{Actor, Scenario, ScenarioType};
     use serde_json::json;
 
     /// Test UseCase::new with valid priority strings
@@ -461,6 +466,7 @@ mod use_case_tests {
             "UC-TEST-001".to_string(),
             "Test Use Case".to_string(),
             "Test".to_string(),
+            "TES".to_string(),
             "A test use case".to_string(),
             "low".to_string(),
         )
@@ -485,6 +491,7 @@ mod use_case_tests {
                 "UC-TEST-002".to_string(),
                 "Test Use Case".to_string(),
                 "Test".to_string(),
+                "TES".to_string(),
                 "A test use case".to_string(),
                 priority_str.to_string(),
             )
@@ -504,6 +511,7 @@ mod use_case_tests {
                 "UC-TEST-001".to_string(),
                 "Test Use Case".to_string(),
                 "Test".to_string(),
+                "TES".to_string(),
                 "A test use case".to_string(),
                 invalid_priority.to_string(),
             );
@@ -522,6 +530,7 @@ mod use_case_tests {
             "UC-TEST-001".to_string(),
             "Test Use Case".to_string(),
             "Test".to_string(),
+            "TES".to_string(),
             "A test use case".to_string(),
             "medium".to_string(),
         )
@@ -537,6 +546,7 @@ mod use_case_tests {
             "UC-TEST-001".to_string(),
             "Test Use Case".to_string(),
             "Test".to_string(),
+            "TES".to_string(),
             "A test use case".to_string(),
             "high".to_string(),
         )
@@ -590,6 +600,7 @@ mod use_case_tests {
             "id": "UC-TEST-001",
             "title": "Test Use Case",
             "category": "Test",
+            "category_abbreviation": "TES",
             "description": "A test use case",
             "priority": "Critical",
             "metadata": {
@@ -640,6 +651,7 @@ mod use_case_tests {
             "UC-TEST-001".to_string(),
             "Test Use Case".to_string(),
             "Test".to_string(),
+            "TES".to_string(),
             "A test use case".to_string(),
             "low".to_string(),
         )
@@ -655,6 +667,7 @@ mod use_case_tests {
             "UC-TEST-001".to_string(),
             "Test Use Case".to_string(),
             "Test".to_string(),
+            "TES".to_string(),
             "A test use case".to_string(),
             "medium".to_string(),
         )
@@ -673,6 +686,7 @@ mod use_case_tests {
             "UC-TEST-001".to_string(),
             "Test Use Case".to_string(),
             "Test".to_string(),
+            "TES".to_string(),
             "A test use case".to_string(),
             "medium".to_string(),
         )
@@ -694,6 +708,7 @@ mod use_case_tests {
             "UC-TEST-001".to_string(),
             "Test Use Case".to_string(),
             "Test".to_string(),
+            "TES".to_string(),
             "A test use case".to_string(),
             "medium".to_string(),
         )
@@ -715,6 +730,7 @@ mod use_case_tests {
             "UC-TEST-001".to_string(),
             "Test Use Case".to_string(),
             "Test".to_string(),
+            "TES".to_string(),
             "A test use case".to_string(),
             "medium".to_string(),
         )
@@ -743,6 +759,7 @@ mod use_case_tests {
             "UC-TEST-001".to_string(),
             "Test Use Case".to_string(),
             "Test".to_string(),
+            "TES".to_string(),
             "A test use case".to_string(),
             "high".to_string(),
         )
@@ -790,6 +807,7 @@ mod use_case_tests {
             "UC-TEST-001".to_string(),
             "Test Use Case".to_string(),
             "Test".to_string(),
+            "TES".to_string(),
             "A test use case".to_string(),
             "high".to_string(),
         )
@@ -852,6 +870,7 @@ mod use_case_tests {
             "UC-TEST-001".to_string(),
             "Test Use Case".to_string(),
             "Test".to_string(),
+            "TES".to_string(),
             "A test use case".to_string(),
             "medium".to_string(),
         )
@@ -866,6 +885,7 @@ mod use_case_tests {
             "Happy Path".to_string(),
             "Main success scenario".to_string(),
             ScenarioType::HappyPath,
+            Actor::User,
         );
         // scenario1 status is Planned by default
 
@@ -874,6 +894,7 @@ mod use_case_tests {
             "Error Case".to_string(),
             "Error handling scenario".to_string(),
             ScenarioType::ExceptionFlow,
+            Actor::User,
         );
         scenario2.set_status(Status::Implemented);
 
@@ -897,6 +918,7 @@ mod use_case_tests {
             "UC-TEST-001".to_string(),
             "Test Use Case".to_string(),
             "Test".to_string(),
+            "TES".to_string(),
             "A test use case".to_string(),
             "medium".to_string(),
         )
@@ -909,6 +931,7 @@ mod use_case_tests {
             "First Scenario".to_string(),
             "Description".to_string(),
             ScenarioType::HappyPath,
+            Actor::User,
         ));
 
         assert_eq!(use_case.next_scenario_id(), "UC-TEST-001-S02");
@@ -918,6 +941,7 @@ mod use_case_tests {
             "Second Scenario".to_string(),
             "Description".to_string(),
             ScenarioType::AlternativeFlow,
+            Actor::User,
         ));
 
         assert_eq!(use_case.next_scenario_id(), "UC-TEST-001-S03");
@@ -930,6 +954,7 @@ mod use_case_tests {
             "UC-TEST-001".to_string(),
             "Test Use Case".to_string(),
             "Test".to_string(),
+            "TES".to_string(),
             "A test use case".to_string(),
             "medium".to_string(),
         )
@@ -940,6 +965,7 @@ mod use_case_tests {
             "Test Scenario".to_string(),
             "A test scenario".to_string(),
             ScenarioType::HappyPath,
+            Actor::User,
         );
 
         use_case.add_scenario(scenario);
@@ -956,6 +982,7 @@ mod use_case_tests {
             "UC-TEST-001".to_string(),
             "Test Use Case".to_string(),
             "Test".to_string(),
+            "TES".to_string(),
             "A test use case".to_string(),
             "medium".to_string(),
         )
@@ -977,6 +1004,7 @@ mod use_case_tests {
             "UC-TEST-001".to_string(),
             "Test Use Case".to_string(),
             "Test".to_string(),
+            "TES".to_string(),
             "A test use case".to_string(),
             "medium".to_string(),
         )
@@ -998,6 +1026,7 @@ mod use_case_tests {
             "UC-TEST-001".to_string(),
             "Test Use Case".to_string(),
             "Test".to_string(),
+            "TES".to_string(),
             "A test use case".to_string(),
             "medium".to_string(),
         )
@@ -1019,6 +1048,7 @@ mod use_case_tests {
             "UC-TEST-001".to_string(),
             "Test Use Case".to_string(),
             "Test".to_string(),
+            "TES".to_string(),
             "A test use case".to_string(),
             "medium".to_string(),
         )
@@ -1038,6 +1068,7 @@ mod use_case_tests {
             "UC-TEST-001".to_string(),
             "Test Use Case".to_string(),
             "Test".to_string(),
+            "TES".to_string(),
             "A test use case".to_string(),
             "medium".to_string(),
         )
@@ -1061,6 +1092,7 @@ mod use_case_tests {
             "UC-TEST-001".to_string(),
             "Test Use Case".to_string(),
             "Test".to_string(),
+            "TES".to_string(),
             "A test use case".to_string(),
             "medium".to_string(),
         )
@@ -1077,6 +1109,7 @@ mod use_case_tests {
             "UC-TEST-001".to_string(),
             "Test Use Case".to_string(),
             "Test".to_string(),
+            "TES".to_string(),
             "A test use case".to_string(),
             "medium".to_string(),
         )
@@ -1099,6 +1132,7 @@ mod use_case_tests {
             "UC-TEST-001".to_string(),
             "Test Use Case".to_string(),
             "Test".to_string(),
+            "TES".to_string(),
             "A test use case".to_string(),
             "medium".to_string(),
         )
@@ -1127,6 +1161,7 @@ mod use_case_tests {
             "UC-TEST-001".to_string(),
             "Test Use Case".to_string(),
             "Test".to_string(),
+            "TES".to_string(),
             "A test use case".to_string(),
             "medium".to_string(),
         )

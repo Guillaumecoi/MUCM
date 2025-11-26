@@ -228,7 +228,7 @@ inherits = ["Normal"]
             "detailed",
         );
 
-        let result = MethodologyRegistry::new_dynamic(&temp_dir.path());
+        let result = MethodologyRegistry::new_dynamic(temp_dir.path());
         assert!(result.is_ok());
 
         let registry = result.unwrap();
@@ -249,7 +249,7 @@ inherits = ["Normal"]
     fn test_methodology_registry_new_dynamic_no_methodologies_dir() {
         let temp_dir = TempDir::new().unwrap();
 
-        let result = MethodologyRegistry::new_dynamic(&temp_dir.path());
+        let result = MethodologyRegistry::new_dynamic(temp_dir.path());
         assert!(result.is_ok());
 
         let registry = result.unwrap();
@@ -270,7 +270,7 @@ inherits = ["Normal"]
             "detailed",
         );
 
-        let registry = MethodologyRegistry::new_dynamic(&temp_dir.path()).unwrap();
+        let registry = MethodologyRegistry::new_dynamic(temp_dir.path()).unwrap();
 
         // Test primary name
         let methodology = registry.get("business").unwrap();
@@ -305,7 +305,7 @@ inherits = ["Normal"]
             "detailed",
         );
 
-        let registry = MethodologyRegistry::new_dynamic(&temp_dir.path()).unwrap();
+        let registry = MethodologyRegistry::new_dynamic(temp_dir.path()).unwrap();
         let available = registry.available_methodologies();
 
         assert!(available.contains(&"method1".to_string()));
@@ -333,7 +333,7 @@ inherits = ["Normal"]
         fs::create_dir(&bad_methodology_dir).unwrap();
         fs::write(bad_methodology_dir.join("methodology.toml"), "invalid toml").unwrap();
 
-        let result = MethodologyRegistry::new_dynamic(&temp_dir.path());
+        let result = MethodologyRegistry::new_dynamic(temp_dir.path());
         assert!(result.is_ok()); // Should succeed despite one bad methodology
 
         let registry = result.unwrap();
@@ -366,7 +366,7 @@ inherits = ["Normal"]
             "detailed",
         );
 
-        let result = MethodologyRegistry::discover_available(&temp_dir.path());
+        let result = MethodologyRegistry::discover_available(temp_dir.path());
         assert!(result.is_ok());
 
         let methodologies = result.unwrap();

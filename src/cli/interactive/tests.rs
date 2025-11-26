@@ -207,6 +207,7 @@ mod workflow_tests {
             "tests/my-tests".to_string(),
             "docs/my-personas".to_string(),
             "my-data".to_string(),
+            None,
         );
         assert!(result.is_ok());
         let message = result.unwrap();
@@ -273,7 +274,7 @@ mod workflow_tests {
         let mut runner = InteractiveRunner::new();
 
         // Create use cases with different methodologies
-        let methodologies = vec!["business", "developer", "feature", "tester"];
+        let methodologies = ["business", "developer", "feature", "tester"];
 
         for (i, methodology) in methodologies.iter().enumerate() {
             let result = runner.create_use_case_with_views(

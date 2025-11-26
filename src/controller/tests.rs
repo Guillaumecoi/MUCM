@@ -54,6 +54,7 @@ mod use_case_controller_tests {
         let result = controller.create_use_case(
             "Test Use Case".to_string(),
             "test".to_string(),
+            "TES".to_string(),
             Some("Test description".to_string()),
             Some("business".to_string()),
             None,
@@ -77,6 +78,7 @@ mod use_case_controller_tests {
             .create_use_case(
                 "Test UC 1".to_string(),
                 "test".to_string(),
+                "TES".to_string(),
                 None,
                 Some("business".to_string()),
                 None,
@@ -100,6 +102,7 @@ mod use_case_controller_tests {
             .create_use_case(
                 "Test UC".to_string(),
                 "test".to_string(),
+                "TES".to_string(),
                 None,
                 Some("business".to_string()),
                 None,
@@ -129,6 +132,7 @@ mod use_case_controller_tests {
             .create_use_case(
                 "Test UC".to_string(),
                 "test".to_string(),
+                "TES".to_string(),
                 None,
                 Some("business".to_string()),
                 None,
@@ -168,6 +172,7 @@ mod use_case_controller_tests {
             .create_use_case(
                 "Test UC".to_string(),
                 "test".to_string(),
+                "TES".to_string(),
                 None,
                 Some("business".to_string()),
                 None,
@@ -195,6 +200,7 @@ mod use_case_controller_tests {
             .create_use_case(
                 "Test UC 1".to_string(),
                 "test".to_string(),
+                "TES".to_string(),
                 None,
                 Some("business".to_string()),
                 None,
@@ -208,6 +214,7 @@ mod use_case_controller_tests {
             .create_use_case(
                 "Test UC 2".to_string(),
                 "test".to_string(),
+                "TES".to_string(),
                 None,
                 Some("business".to_string()),
                 None,
@@ -240,6 +247,7 @@ mod use_case_controller_tests {
             .create_use_case(
                 "Test UC 1".to_string(),
                 "test".to_string(),
+                "TES".to_string(),
                 None,
                 Some("business".to_string()),
                 None,
@@ -253,6 +261,7 @@ mod use_case_controller_tests {
             .create_use_case(
                 "Test UC 2".to_string(),
                 "test".to_string(),
+                "TES".to_string(),
                 None,
                 Some("business".to_string()),
                 None,
@@ -292,6 +301,7 @@ mod use_case_controller_tests {
             .create_use_case(
                 "Test UC".to_string(),
                 "test".to_string(),
+                "TES".to_string(),
                 None,
                 Some("business".to_string()),
                 None,
@@ -325,6 +335,7 @@ mod use_case_controller_tests {
             .create_use_case(
                 "Test UC".to_string(),
                 "test".to_string(),
+                "TES".to_string(),
                 None,
                 Some("business".to_string()),
                 None,
@@ -373,6 +384,7 @@ mod use_case_controller_tests {
             .create_use_case(
                 "Test UC".to_string(),
                 "test".to_string(),
+                "TES".to_string(),
                 None,
                 Some("business".to_string()),
                 None,
@@ -419,6 +431,7 @@ mod use_case_controller_tests {
             .create_use_case(
                 "Test UC".to_string(),
                 "test".to_string(),
+                "TES".to_string(),
                 None,
                 Some("business".to_string()),
                 None,
@@ -465,6 +478,7 @@ mod use_case_controller_tests {
             .create_use_case(
                 "Test UC".to_string(),
                 "test".to_string(),
+                "TES".to_string(),
                 None,
                 Some("business".to_string()),
                 None,
@@ -528,6 +542,7 @@ mod use_case_controller_tests {
             .create_use_case(
                 "Test UC".to_string(),
                 "test".to_string(),
+                "TES".to_string(),
                 None,
                 Some("business".to_string()),
                 None,
@@ -561,6 +576,7 @@ mod use_case_controller_tests {
             .create_use_case(
                 "Test UC".to_string(),
                 "test".to_string(),
+                "TES".to_string(),
                 None,
                 Some("business".to_string()),
                 None,
@@ -612,6 +628,7 @@ mod use_case_controller_tests {
             .create_use_case(
                 "Original Title".to_string(),
                 "test".to_string(),
+                "TES".to_string(),
                 Some("Original description".to_string()),
                 Some("business".to_string()),
                 None,
@@ -650,6 +667,7 @@ mod use_case_controller_tests {
             .create_use_case(
                 "Original Title".to_string(),
                 "test".to_string(),
+                "TES".to_string(),
                 Some("Original description".to_string()),
                 Some("business".to_string()),
                 None,
@@ -687,6 +705,7 @@ mod use_case_controller_tests {
             .create_use_case(
                 "Test UC".to_string(),
                 "test".to_string(),
+                "TES".to_string(),
                 None,
                 Some("business".to_string()),
                 None,
@@ -724,6 +743,7 @@ mod use_case_controller_tests {
             .create_use_case(
                 "Test UC".to_string(),
                 "test".to_string(),
+                "TES".to_string(),
                 None,
                 Some("business".to_string()),
                 None,
@@ -761,6 +781,7 @@ mod use_case_controller_tests {
             .create_use_case(
                 "Test UC".to_string(),
                 "test".to_string(),
+                "TES".to_string(),
                 None,
                 Some("business".to_string()),
                 None,
@@ -800,6 +821,7 @@ mod use_case_controller_tests {
             .create_use_case(
                 "Test UC".to_string(),
                 "test".to_string(),
+                "TES".to_string(),
                 None,
                 Some("business".to_string()),
                 None,
@@ -947,6 +969,7 @@ mod project_controller_tests {
             None,
             None,
             None,
+            None,
         )
         .unwrap();
 
@@ -963,6 +986,7 @@ mod project_controller_tests {
             Some(vec!["business".to_string()]),
             None,
             Some("business".to_string()),
+            None,
             None,
             None,
             None,
@@ -1007,6 +1031,7 @@ mod project_controller_tests {
             None,
             None,
             None,
+            None,
         );
 
         assert!(result.is_ok(), "Init should succeed");
@@ -1034,6 +1059,7 @@ mod project_controller_tests {
             Some(vec!["feature".to_string()]),
             None,
             Some("feature".to_string()),
+            None,
             None,
             None,
             None,
@@ -1069,6 +1095,7 @@ mod project_controller_tests {
             None,
             None,
             None,
+            None,
         );
 
         assert!(result.is_ok(), "Init should succeed");
@@ -1091,6 +1118,7 @@ mod project_controller_tests {
             Some(vec!["business".to_string()]),
             None,
             Some("business".to_string()),
+            None,
             None,
             None,
             None,
@@ -1122,6 +1150,7 @@ mod project_controller_tests {
             Some(methodologies.clone()),
             None,
             Some("business".to_string()),
+            None,
             None,
             None,
             None,
@@ -1178,6 +1207,7 @@ mod project_controller_tests {
             None,
             None,
             None,
+            None,
         );
 
         assert!(result.is_ok(), "Init should succeed");
@@ -1214,6 +1244,7 @@ mod project_controller_tests {
             None,
             None,
             None,
+            None,
         )
         .unwrap();
 
@@ -1223,6 +1254,7 @@ mod project_controller_tests {
             None,
             None,
             Some("business".to_string()),
+            None,
             None,
             None,
             None,
@@ -1245,6 +1277,7 @@ mod project_controller_tests {
             Some(vec!["business".to_string()]),
             Some("sqlite".to_string()),
             Some("business".to_string()),
+            None,
             None,
             None,
             None,
@@ -1273,6 +1306,7 @@ mod project_controller_tests {
             None,
             None,
             None,
+            None,
         );
 
         assert!(result.is_ok());
@@ -1297,6 +1331,7 @@ mod project_controller_tests {
             Some("custom/tests".to_string()),
             Some("custom/personas".to_string()),
             Some("custom/data".to_string()),
+            None,
         );
 
         assert!(result.is_ok());
@@ -1335,6 +1370,7 @@ mod project_controller_tests {
             None,
             None,
             None,
+            None,
         );
 
         // Should still succeed but use the invalid language as-is (no validation in init)
@@ -1354,6 +1390,7 @@ mod project_controller_tests {
             Some(vec!["invalid_methodology_xyz".to_string()]),
             None,
             Some("invalid_methodology_xyz".to_string()),
+            None,
             None,
             None,
             None,
@@ -1390,6 +1427,7 @@ mod project_controller_tests {
             Some(methodologies.clone()),
             None,
             Some("business".to_string()),
+            None,
             None,
             None,
             None,
@@ -1475,6 +1513,7 @@ mod project_controller_tests {
             None,
             None,
             None,
+            None,
         )
         .unwrap();
 
@@ -1501,6 +1540,7 @@ mod project_controller_tests {
             Some(vec!["business".to_string()]),
             None,
             Some("business".to_string()),
+            None,
             None,
             None,
             None,
@@ -1535,6 +1575,7 @@ mod project_controller_tests {
             None,
             None,
             None,
+            None,
         )
         .unwrap();
 
@@ -1557,6 +1598,7 @@ mod project_controller_tests {
             Some(vec!["developer".to_string()]),
             None,
             Some("developer".to_string()),
+            None,
             None,
             None,
             None,
@@ -1587,6 +1629,7 @@ mod project_controller_tests {
             Some(vec!["business".to_string(), "developer".to_string()]),
             None,
             Some("business".to_string()),
+            None,
             None,
             None,
             None,
@@ -1627,7 +1670,7 @@ mod project_controller_tests {
         assert!(
             lang_names
                 .iter()
-                .any(|&&ref l| l == "rust" || l == "python" || l == "javascript"),
+                .any(|l| *l == "rust" || *l == "python" || *l == "javascript"),
             "Should contain at least one common language"
         );
     }
@@ -1681,6 +1724,7 @@ mod project_controller_tests {
             None,
             None,
             None,
+            None,
         )
         .unwrap();
 
@@ -1730,6 +1774,7 @@ mod project_controller_tests {
             None,
             None,
             None,
+            None,
         )
         .unwrap();
 
@@ -1764,6 +1809,7 @@ mod project_controller_tests {
             None,
             None,
             None,
+            None,
         )
         .unwrap();
 
@@ -1792,6 +1838,7 @@ mod project_controller_tests {
             None,
             None,
             None,
+            None,
         )
         .unwrap();
 
@@ -1810,6 +1857,7 @@ mod project_controller_tests {
             Some(vec!["developer".to_string()]),
             None,
             Some("developer".to_string()),
+            None,
             None,
             None,
             None,
@@ -1867,6 +1915,7 @@ mod project_controller_tests {
             None,
             None,
             None,
+            None,
         )
         .unwrap();
 
@@ -1899,6 +1948,7 @@ mod project_controller_tests {
             Some(vec!["developer".to_string()]),
             None,
             Some("developer".to_string()),
+            None,
             None,
             None,
             None,
@@ -1939,6 +1989,7 @@ mod project_controller_tests {
             ]),
             None,
             Some("developer".to_string()),
+            None,
             None,
             None,
             None,
@@ -1987,6 +2038,7 @@ mod project_controller_tests {
             None,
             None,
             None,
+            None,
         )
         .unwrap();
 
@@ -2014,6 +2066,7 @@ mod project_controller_tests {
             Some(vec!["developer".to_string()]),
             None,
             Some("developer".to_string()),
+            None,
             None,
             None,
             None,
@@ -2050,6 +2103,7 @@ mod project_controller_tests {
             Some(vec!["developer".to_string()]),
             None,
             Some("developer".to_string()),
+            None,
             None,
             None,
             None,
@@ -2106,6 +2160,7 @@ mod project_controller_tests {
             None,
             None,
             None,
+            None,
         )
         .unwrap();
 
@@ -2149,6 +2204,7 @@ mod project_controller_tests {
             Some(vec!["developer".to_string()]),
             None,
             Some("developer".to_string()),
+            None,
             None,
             None,
             None,
@@ -2199,6 +2255,7 @@ mod project_controller_tests {
             Some(vec!["developer".to_string()]),
             None,
             Some("developer".to_string()),
+            None,
             None,
             None,
             None,
@@ -2261,6 +2318,7 @@ mod project_controller_tests {
             None,
             None,
             None,
+            None,
         )
         .unwrap();
 
@@ -2299,6 +2357,7 @@ mod project_controller_tests {
             Some(vec!["developer".to_string(), "business".to_string()]),
             None,
             Some("developer".to_string()),
+            None,
             None,
             None,
             None,
@@ -2349,6 +2408,7 @@ mod project_controller_tests {
             None,
             None,
             None,
+            None,
         )
         .unwrap();
 
@@ -2368,6 +2428,189 @@ mod project_controller_tests {
         assert_eq!(
             content, custom_overview,
             "Overview customization should be preserved"
+        );
+    }
+
+    #[test]
+    #[serial]
+    fn test_get_available_scenario_templates() {
+        let _temp_dir = setup_empty_dir();
+
+        // Before init, should fall back to source templates
+        let templates = ProjectController::get_available_scenario_templates().unwrap();
+        assert!(!templates.is_empty(), "Should have at least one template");
+        assert!(
+            templates.contains(&"scenarios/scenario.hbs".to_string()),
+            "Should include default template"
+        );
+    }
+
+    #[test]
+    #[serial]
+    fn test_get_available_scenario_templates_after_init() {
+        let _temp_dir = setup_empty_dir();
+
+        ProjectController::init_project(
+            Some("rust".to_string()),
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+        )
+        .unwrap();
+
+        let templates = ProjectController::get_available_scenario_templates().unwrap();
+        assert!(!templates.is_empty(), "Should have templates after init");
+        assert!(
+            templates.contains(&"scenarios/scenario.hbs".to_string()),
+            "Should include default template"
+        );
+        assert!(
+            templates.contains(&"scenarios/scenario_mermaid.hbs".to_string()),
+            "Should include mermaid template"
+        );
+    }
+
+    #[test]
+    #[serial]
+    fn test_get_default_scenario_template() {
+        let _temp_dir = setup_empty_dir();
+
+        ProjectController::init_project(
+            Some("rust".to_string()),
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            Some("scenarios/scenario_mermaid.hbs".to_string()),
+        )
+        .unwrap();
+
+        let default = ProjectController::get_default_scenario_template().unwrap();
+        assert_eq!(
+            default, "scenarios/scenario_mermaid.hbs",
+            "Should return the configured default"
+        );
+    }
+
+    #[test]
+    #[serial]
+    fn test_set_default_scenario_template_success() {
+        let _temp_dir = setup_empty_dir();
+
+        ProjectController::init_project(
+            Some("rust".to_string()),
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+        )
+        .unwrap();
+
+        // Change to mermaid template
+        let result = ProjectController::set_default_scenario_template(
+            "scenarios/scenario_mermaid.hbs".to_string(),
+        )
+        .unwrap();
+        assert!(result.is_success(), "Should succeed");
+
+        // Verify it was saved
+        let config = Config::load().unwrap();
+        assert_eq!(
+            config.templates.default_scenario_template,
+            "scenarios/scenario_mermaid.hbs"
+        );
+    }
+
+    #[test]
+    #[serial]
+    fn test_set_default_scenario_template_invalid() {
+        let _temp_dir = setup_empty_dir();
+
+        ProjectController::init_project(
+            Some("rust".to_string()),
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+        )
+        .unwrap();
+
+        // Try to set invalid template
+        let result = ProjectController::set_default_scenario_template(
+            "scenarios/nonexistent.hbs".to_string(),
+        )
+        .unwrap();
+        assert!(!result.is_success(), "Should fail for nonexistent template");
+        assert!(
+            result.message.contains("not found"),
+            "Error message should mention not found"
+        );
+    }
+
+    #[test]
+    #[serial]
+    fn test_init_with_custom_scenario_template() {
+        let _temp_dir = setup_empty_dir();
+
+        ProjectController::init_project(
+            Some("rust".to_string()),
+            Some(vec!["developer".to_string()]),
+            None,
+            Some("developer".to_string()),
+            None,
+            None,
+            None,
+            None,
+            Some("scenarios/scenario_mermaid.hbs".to_string()),
+        )
+        .unwrap();
+
+        let config = Config::load().unwrap();
+        assert_eq!(
+            config.templates.default_scenario_template, "scenarios/scenario_mermaid.hbs",
+            "Config should have custom template"
+        );
+    }
+
+    #[test]
+    #[serial]
+    fn test_default_scenario_template_fallback() {
+        let _temp_dir = setup_empty_dir();
+
+        // Init without specifying template
+        ProjectController::init_project(
+            Some("rust".to_string()),
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None, // No template specified
+        )
+        .unwrap();
+
+        let config = Config::load().unwrap();
+        assert_eq!(
+            config.templates.default_scenario_template, "scenarios/scenario.hbs",
+            "Should default to standard template"
         );
     }
 }

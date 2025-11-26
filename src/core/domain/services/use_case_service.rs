@@ -13,15 +13,25 @@ impl UseCaseService {
         Self
     }
 
-    /// Generate a use case ID based on category and existing use cases
-    /// Generate a unique use case ID that checks both in-memory use cases and filesystem
+    /// Generate a use case ID based on category abbreviation and existing use cases
+    /// Checks both in-memory use cases and filesystem for unique sequential numbering
+    ///
+    /// # Arguments
+    /// * `category` - Full category name (for filesystem path generation)
+    /// * `category_abbreviation` - Category abbreviation to use in ID (e.g., "AUT")
+    /// * `use_cases` - Existing use cases to check for ID conflicts
+    /// * `use_case_dir` - Root directory for use case markdown files
+    ///
+    /// # Returns
+    /// Unique use case ID in format "UC-{ABBR}-{NNN}" (e.g., "UC-AUT-001")
     pub fn generate_unique_use_case_id(
         &self,
         category: &str,
+        category_abbreviation: &str,
         use_cases: &[UseCase],
         use_case_dir: &str,
     ) -> String {
-        let category_prefix = category.to_uppercase().chars().take(3).collect::<String>();
+        let category_prefix = category_abbreviation.to_uppercase();
         let category_dir = Path::new(use_case_dir).join(to_snake_case(category));
 
         // Find the highest existing number by checking both in-memory and filesystem
@@ -87,7 +97,15 @@ mod tests {
         category: String,
         description: String,
     ) -> UseCase {
-        UseCase::new(id, title, category, description, "Medium".to_string()).unwrap()
+        UseCase::new(
+            id,
+            title,
+            category,
+            "TES".to_string(),
+            description,
+            "Medium".to_string(),
+        )
+        .unwrap()
     }
 
     fn find_use_case_by_id<'a>(use_cases: &'a [UseCase], id: &str) -> Option<&'a UseCase> {
@@ -118,16 +136,25 @@ mod tests {
         let temp_dir = std::env::temp_dir().join("mucm_test_use_case_service");
         let temp_dir_str = temp_dir.to_string_lossy();
 
-        let new_id =
-            service.generate_unique_use_case_id("Security", &existing_use_cases, &temp_dir_str);
+        let new_id = service.generate_unique_use_case_id(
+            "Security",
+            "SEC",
+            &existing_use_cases,
+            &temp_dir_str,
+        );
         assert!(new_id.starts_with("UC-SEC-"));
         assert!(new_id.len() > 7); // Should have format UC-SEC-XXX
 
-        let api_id = service.generate_unique_use_case_id("API", &existing_use_cases, &temp_dir_str);
+        let api_id =
+            service.generate_unique_use_case_id("API", "API", &existing_use_cases, &temp_dir_str);
         assert!(api_id.starts_with("UC-API-"));
 
-        let new_category_id =
-            service.generate_unique_use_case_id("Database", &existing_use_cases, &temp_dir_str);
+        let new_category_id = service.generate_unique_use_case_id(
+            "Database",
+            "DAT",
+            &existing_use_cases,
+            &temp_dir_str,
+        );
         assert!(new_category_id.starts_with("UC-DAT-"));
     }
 

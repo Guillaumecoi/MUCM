@@ -35,7 +35,7 @@ use std::path::Path;
 pub fn init_test_project(language: Option<String>) -> Result<Config> {
     let config_dir = Path::new(".config/.mucm");
     if !config_dir.exists() {
-        fs::create_dir_all(&config_dir)?;
+        fs::create_dir_all(config_dir)?;
     }
 
     let mut config = Config::default();
@@ -66,10 +66,8 @@ pub fn init_test_project(language: Option<String>) -> Result<Config> {
         if crate::config::TemplateManager::find_source_templates_dir().is_ok() {
             Config::copy_templates_to_config_with_language(language)?;
         }
-    } else {
-        if crate::config::TemplateManager::find_source_templates_dir().is_ok() {
-            Config::copy_templates_to_config_with_language(None)?;
-        }
+    } else if crate::config::TemplateManager::find_source_templates_dir().is_ok() {
+        Config::copy_templates_to_config_with_language(None)?;
     }
 
     Ok(config)
@@ -80,13 +78,35 @@ mod tests {
     use super::*;
     use serial_test::serial;
     use std::env;
+    use std::path::PathBuf;
     use tempfile::TempDir;
+
+    /// RAII guard that restores the original working directory on drop
+    struct DirGuard {
+        original: PathBuf,
+    }
+
+    impl DirGuard {
+        fn new() -> Result<Self> {
+            Ok(Self {
+                original: env::current_dir()?,
+            })
+        }
+    }
+
+    impl Drop for DirGuard {
+        fn drop(&mut self) {
+            let _ = env::set_current_dir(&self.original);
+        }
+    }
 
     #[test]
     #[serial]
     fn test_init_test_project_creates_config_dir() -> Result<()> {
+        let _guard = DirGuard::new()?;
         let temp_dir = TempDir::new()?;
-        env::set_current_dir(&temp_dir)?;
+        let temp_path = temp_dir.path();
+        env::set_current_dir(temp_path)?;
 
         init_test_project(None)?;
 
@@ -99,8 +119,10 @@ mod tests {
     #[test]
     #[serial]
     fn test_init_test_project_with_language() -> Result<()> {
+        let _guard = DirGuard::new()?;
         let temp_dir = TempDir::new()?;
-        env::set_current_dir(&temp_dir)?;
+        let temp_path = temp_dir.path();
+        env::set_current_dir(temp_path)?;
 
         let config = init_test_project(Some("python".to_string()))?;
 
@@ -113,9 +135,10 @@ mod tests {
     #[test]
     #[serial]
     fn test_init_test_project_without_language() -> Result<()> {
+        let _guard = DirGuard::new()?;
         let temp_dir = TempDir::new()?;
-        let temp_path = temp_dir.path().to_path_buf();
-        env::set_current_dir(&temp_path)?;
+        let temp_path = temp_dir.path();
+        env::set_current_dir(temp_path)?;
 
         let config = init_test_project(None)?;
 

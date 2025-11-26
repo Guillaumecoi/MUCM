@@ -14,6 +14,7 @@ data_dir = "use-cases-data"          # Source of truth (TOML files and SQLite da
 [templates]
 methodologies = ["business", "developer", "feature", "tester"]  # All available methodologies
 default_methodology = "feature"
+default_scenario_template = "scenarios/scenario.hbs"  # Default scenario template (can be overridden in methodology.toml)
 
 # Code generation settings
 [generation]

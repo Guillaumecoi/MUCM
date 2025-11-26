@@ -33,17 +33,13 @@ use std::str::FromStr;
 /// Storage backend for use cases
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
+#[derive(Default)]
 pub enum StorageBackend {
     /// TOML files (default, simple, git-friendly)
+    #[default]
     Toml,
     /// SQLite database (for advanced querying)
     Sqlite,
-}
-
-impl Default for StorageBackend {
-    fn default() -> Self {
-        StorageBackend::Toml
-    }
 }
 
 impl std::fmt::Display for StorageBackend {
@@ -233,6 +229,17 @@ pub struct TemplateConfig {
     /// If not specified, will be set to the first available methodology
     #[serde(default)]
     pub default_methodology: String,
+    /// Default scenario template to use for rendering scenarios
+    /// Can be overridden at the methodology level by setting scenario_template in methodology.toml
+    /// Must be a path relative to the scenarios directory (e.g., "scenarios/scenario.hbs")
+    /// If not specified, defaults to "scenarios/scenario.hbs"
+    #[serde(default = "default_scenario_template")]
+    pub default_scenario_template: String,
+}
+
+/// Default scenario template path
+fn default_scenario_template() -> String {
+    "scenarios/scenario.hbs".to_string()
 }
 
 /// Configuration for code generation and test creation settings.

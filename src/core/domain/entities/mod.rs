@@ -3,6 +3,7 @@
 // Private modules
 mod actor;
 mod actor_entity;
+mod category;
 mod condition;
 mod metadata;
 mod methodology_view;
@@ -19,14 +20,15 @@ mod use_case_reference;
 // Explicit public exports (visible to parent modules)
 pub use actor::Actor;
 pub use actor_entity::{ActorEntity, ActorType};
+pub use category::Category;
 pub use condition::Condition;
 pub use metadata::Metadata;
 pub use methodology_view::MethodologyView;
 pub use persona::Persona;
 pub use reference_type::ReferenceType;
-pub use scenario::Scenario;
+pub use scenario::{RepeatBlock, Scenario};
 pub use scenario_reference::ScenarioReference;
-pub use scenario_step::ScenarioStep;
+pub use scenario_step::{ScenarioStep, StepOrder};
 pub use scenario_type::ScenarioType;
 pub use status::Status;
 pub use use_case::{Priority, UseCase};

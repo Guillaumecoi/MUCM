@@ -55,6 +55,10 @@ impl Settings {
                 ConfigWorkflow::configure_metadata(config)?;
                 Ok(false) // Continue menu
             }),
+            MenuOption::new("Scenario Template", |config| {
+                ConfigWorkflow::configure_scenario_template(config)?;
+                Ok(false) // Continue menu
+            }),
             MenuOption::new("Methodology Management", |config| {
                 Self::manage_methodologies()?;
                 // Reload config to pick up methodology changes saved by controller

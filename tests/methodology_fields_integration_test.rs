@@ -221,8 +221,8 @@ fn test_multi_methodology_storage() -> Result<()> {
     assert!(use_case.methodology_fields.contains_key("feature"));
 
     // Verify structure exists (even if empty when no field values provided)
-    assert!(use_case.methodology_fields.get("business").is_some());
-    assert!(use_case.methodology_fields.get("feature").is_some());
+    assert!(use_case.methodology_fields.contains_key("business"));
+    assert!(use_case.methodology_fields.contains_key("feature"));
 
     Ok(())
 }

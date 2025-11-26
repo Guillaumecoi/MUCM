@@ -224,7 +224,7 @@ impl FieldHelpers {
         match field_type {
             "array" => {
                 let current_items = current_value
-                    .map(|v| Self::parse_json_array(v))
+                    .map(Self::parse_json_array)
                     .unwrap_or_default();
 
                 if let Some(items) = Self::edit_array(label, current_items)? {
@@ -243,7 +243,7 @@ impl FieldHelpers {
 
                 Self::edit_boolean(&format!("{}: ", label), current_bool, help)
             }
-            "text" | _ => {
+            _ => {
                 // "text" and default to string
                 let current = current_value.and_then(|v| v.as_str()).unwrap_or("");
 

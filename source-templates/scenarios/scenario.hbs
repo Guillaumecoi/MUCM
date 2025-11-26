@@ -18,12 +18,41 @@
 {{#each scenarios}}
 ### {{scenario_type}}: {{title}}
 
-**Status:** {{status}}{{#if persona}} | **Persona:** {{actor_emoji persona}} {{persona}}{{/if}}
+**Status:** {{status}}{{#if persona}} | **Persona:** {{actor_emoji persona}} {{persona}}{{/if}}{{#if is_main}} | **Type:** Main Scenario{{/if}}{{#if extends_scenario_id}} | **Extends:** {{extends_scenario_id}}{{/if}}
 
-#### Business Flow
-{{#each steps}}
-{{order}}. {{actor_emoji actor}} **{{actor}}** {{action}} {{description}}
+{{#if extends_scenario_id}}
+> **Extension Point:** This scenario diverges from {{extends_scenario_id}} at step {{extends_at_step}}{{#if returns_at_step}} and returns at step {{returns_at_step}}{{else}} (does not return){{/if}}.
+{{/if}}
+
+{{#if primary_actor}}
+**Primary Actor:** {{actor_emoji primary_actor}} {{primary_actor}}
+
+{{/if}}
+{{#if preconditions}}
+**Preconditions:**
+{{#each preconditions}}
+- {{this}}
 {{/each}}
 
+{{/if}}
+{{#if postconditions}}
+**Postconditions:**
+{{#each postconditions}}
+- {{this}}
+{{/each}}
+
+{{/if}}
+#### Business Flow
+{{#each steps}}
+{{order}}. {{actor_emoji actor}} **{{actor}}** {{action}}{{#if receiver}} to {{actor_emoji receiver}} **{{receiver}}**{{/if}}
+{{/each}}
+
+{{#if repeat_blocks}}
+#### Repeat Blocks
+{{#each repeat_blocks}}
+- **Steps {{from_step}} to {{to_step}}**: Repeat while *{{condition}}*
+{{/each}}
+
+{{/if}}
 {{/each}}
 {{/if}}

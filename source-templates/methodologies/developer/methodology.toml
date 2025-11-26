@@ -22,7 +22,8 @@ overwrite_test_documentation = true
 name = "Normal"
 abbreviation = "n"
 filename = "uc_normal.hbs"
-scenario_template = "scenarios/scenario.hbs"
+# Uncomment to override the global default_scenario_template from mucm.toml
+# scenario_template = "scenarios/scenario.hbs"
 description = "Standard developer documentation with API design and database schema"
 inherits = []
 
@@ -34,7 +35,8 @@ database_tables = { label = "Database Tables", type = "array", required = false,
 name = "Advanced"
 abbreviation = "a"
 filename = "uc_advanced.hbs"
-scenario_template = "scenarios/scenario.hbs"
+# Uncomment to override the global default_scenario_template from mucm.toml
+# scenario_template = "scenarios/scenario.hbs"
 description = "Comprehensive technical specification with performance, security, error handling, and dependencies"
 inherits = ["Normal"]
 

@@ -25,6 +25,7 @@ impl UseCaseCreator {
         &self,
         title: String,
         category: String,
+        category_abbreviation: String,
         description: Option<String>,
         priority: String,
         methodology: &str,
@@ -33,15 +34,22 @@ impl UseCaseCreator {
     ) -> Result<UseCase> {
         let use_case_id = self.use_case_service.generate_unique_use_case_id(
             &category,
+            &category_abbreviation,
             existing_use_cases,
             &self.config.directories.use_case_dir,
         );
         let description = description.unwrap_or_default();
 
-        // Create base use case
-        let mut use_case =
-            UseCase::new(use_case_id.clone(), title, category, description, priority)
-                .map_err(|e: String| anyhow::anyhow!(e))?;
+        // Create base use case with explicit abbreviation
+        let mut use_case = UseCase::new(
+            use_case_id.clone(),
+            title,
+            category.clone(),
+            category_abbreviation.clone(),
+            description,
+            priority,
+        )
+        .map_err(|e: String| anyhow::anyhow!(e))?;
 
         // Add default view (methodology:normal)
         use_case.add_view(MethodologyView::new(
@@ -60,7 +68,7 @@ impl UseCaseCreator {
             for (field_name, field_config) in collection.fields {
                 let value = field_config
                     .default
-                    .map(|d| serde_json::Value::String(d))
+                    .map(serde_json::Value::String)
                     .unwrap_or(serde_json::Value::Null);
                 methodology_fields.insert(field_name, value);
             }
@@ -84,6 +92,7 @@ impl UseCaseCreator {
         &self,
         title: String,
         category: String,
+        category_abbreviation: String,
         description: Option<String>,
         priority: String,
         methodology: &str,
@@ -93,15 +102,22 @@ impl UseCaseCreator {
     ) -> Result<UseCase> {
         let use_case_id = self.use_case_service.generate_unique_use_case_id(
             &category,
+            &category_abbreviation,
             existing_use_cases,
             &self.config.directories.use_case_dir,
         );
         let description = description.unwrap_or_default();
 
-        // Create base use case
-        let mut use_case =
-            UseCase::new(use_case_id.clone(), title, category, description, priority)
-                .map_err(|e: String| anyhow::anyhow!(e))?;
+        // Create base use case with explicit abbreviation
+        let mut use_case = UseCase::new(
+            use_case_id.clone(),
+            title,
+            category.clone(),
+            category_abbreviation.clone(),
+            description,
+            priority,
+        )
+        .map_err(|e: String| anyhow::anyhow!(e))?;
 
         // Add default view (methodology:normal)
         use_case.add_view(MethodologyView::new(
@@ -130,9 +146,9 @@ impl UseCaseCreator {
 
         // Add any user fields that weren't in the methodology definition
         for (key, value) in user_fields {
-            if !methodology_fields.contains_key(&key) {
-                methodology_fields.insert(key, serde_json::Value::String(value));
-            }
+            methodology_fields
+                .entry(key)
+                .or_insert(serde_json::Value::String(value));
         }
 
         if !methodology_fields.is_empty() {
@@ -160,6 +176,7 @@ impl UseCaseCreator {
         &self,
         title: String,
         category: String,
+        category_abbreviation: String,
         description: Option<String>,
         priority: String,
         views: Vec<MethodologyView>,
@@ -169,6 +186,7 @@ impl UseCaseCreator {
     ) -> Result<UseCase> {
         let use_case_id = self.use_case_service.generate_unique_use_case_id(
             &category,
+            &category_abbreviation,
             existing_use_cases,
             &self.config.directories.use_case_dir,
         );
@@ -208,7 +226,7 @@ impl UseCaseCreator {
         for view in &views {
             methodology_fields
                 .entry(view.methodology.clone())
-                .or_insert_with(HashMap::new);
+                .or_default();
         }
 
         // Populate with actual field values
@@ -218,16 +236,22 @@ impl UseCaseCreator {
                 for methodology in &collected_field.methodologies {
                     methodology_fields
                         .entry(methodology.clone())
-                        .or_insert_with(HashMap::new)
+                        .or_default()
                         .insert(field_name.clone(), field_value.clone());
                 }
             }
         }
 
-        // Create the use case with empty extra fields (methodology fields go in methodology_fields)
-        let mut use_case =
-            UseCase::new(use_case_id.clone(), title, category, description, priority)
-                .map_err(|e| anyhow::anyhow!(e))?;
+        // Create the use case with explicit abbreviation from parameter
+        let mut use_case = UseCase::new(
+            use_case_id.clone(),
+            title,
+            category.clone(),
+            category_abbreviation.clone(),
+            description,
+            priority,
+        )
+        .map_err(|e| anyhow::anyhow!(e))?;
 
         // Set methodology fields
         use_case.methodology_fields = methodology_fields;

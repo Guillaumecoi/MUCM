@@ -177,9 +177,16 @@ impl UseCaseCoordinator {
         }
 
         // Use the new create_use_case_with_views method with empty user fields
+        let category_abbreviation = category
+            .chars()
+            .filter(|c| c.is_alphabetic())
+            .take(3)
+            .collect::<String>()
+            .to_uppercase();
         let use_case = self.use_case_creator.create_use_case_with_views(
             title,
             category,
+            category_abbreviation,
             description,
             "Medium".to_string(), // Default priority for create_use_case_with_views
             view_list,
@@ -213,6 +220,7 @@ impl UseCaseCoordinator {
         &mut self,
         title: String,
         category: String,
+        category_abbreviation: String,
         description: Option<String>,
         priority: String,
         views: &str,
@@ -246,6 +254,7 @@ impl UseCaseCoordinator {
         let use_case = self.use_case_creator.create_use_case_with_views(
             title,
             category,
+            category_abbreviation,
             description,
             priority,
             view_list,
@@ -339,7 +348,7 @@ impl UseCaseCoordinator {
             for view in use_case.enabled_views() {
                 let markdown_content =
                     self.markdown_generator
-                        .generate(use_case, None, Some(&view))?;
+                        .generate(use_case, None, Some(view))?;
                 let filename = format!("{}-{}-{}.md", use_case.id, view.methodology, view.level);
                 self.repository.save_markdown_with_filename(
                     use_case,
@@ -525,7 +534,7 @@ impl UseCaseCoordinator {
         &mut self,
         use_case_id: &str,
         scenario_id: &str,
-        order: u32,
+        order: String,
         actor: String,
         receiver: Option<String>,
         action: String,
@@ -573,7 +582,7 @@ impl UseCaseCoordinator {
         &mut self,
         use_case_id: &str,
         scenario_id: &str,
-        step_order: u32,
+        step_order: &str,
     ) -> Result<()> {
         let mut scenario_service = services::ScenarioManagementService::new(
             &self.repository,
@@ -681,6 +690,7 @@ impl UseCaseCoordinator {
         use_case_id: &str,
         scenario_id: &str,
         step_order: u32,
+        actor: Option<String>,
         new_description: String,
     ) -> Result<()> {
         let mut scenario_service = services::ScenarioManagementService::new(
@@ -688,7 +698,13 @@ impl UseCaseCoordinator {
             &mut self.use_cases,
             &self.scenario_creator,
         );
-        scenario_service.edit_scenario_step(use_case_id, scenario_id, step_order, new_description)
+        scenario_service.edit_scenario_step(
+            use_case_id,
+            scenario_id,
+            step_order,
+            actor,
+            new_description,
+        )
     }
 
     /// Reorder scenario steps
@@ -696,7 +712,7 @@ impl UseCaseCoordinator {
         &mut self,
         use_case_id: &str,
         scenario_id: &str,
-        reorderings: HashMap<u32, u32>,
+        reorderings: HashMap<String, String>,
     ) -> Result<()> {
         let mut scenario_service = services::ScenarioManagementService::new(
             &self.repository,
@@ -735,6 +751,138 @@ impl UseCaseCoordinator {
         scenario_service.unassign_persona_from_scenario(use_case_id, scenario_id)
     }
 
+    // ========== Extension Scenarios and Advanced Operations ==========
+
+    /// Create an extension scenario that diverges from a main scenario
+    pub fn create_extension_scenario(
+        &mut self,
+        use_case_id: &str,
+        parent_scenario_id: &str,
+        extends_at_step: String,
+        returns_at_step: Option<String>,
+        title: String,
+        description: String,
+        primary_actor: crate::core::Actor,
+    ) -> Result<String> {
+        let mut scenario_service = services::ScenarioManagementService::new(
+            &self.repository,
+            &mut self.use_cases,
+            &self.scenario_creator,
+        );
+        scenario_service.create_extension_scenario(
+            use_case_id,
+            parent_scenario_id,
+            extends_at_step,
+            returns_at_step,
+            title,
+            description,
+            primary_actor,
+        )
+    }
+
+    /// Add a repeat block to a scenario
+    pub fn add_repeat_block(
+        &mut self,
+        use_case_id: &str,
+        scenario_id: &str,
+        from_step: String,
+        to_step: String,
+        condition: String,
+    ) -> Result<()> {
+        let mut scenario_service = services::ScenarioManagementService::new(
+            &self.repository,
+            &mut self.use_cases,
+            &self.scenario_creator,
+        );
+        scenario_service.add_repeat_block(use_case_id, scenario_id, from_step, to_step, condition)
+    }
+
+    /// Remove a repeat block from a scenario
+    pub fn remove_repeat_block(
+        &mut self,
+        use_case_id: &str,
+        scenario_id: &str,
+        from_step: &str,
+        to_step: &str,
+    ) -> Result<()> {
+        let mut scenario_service = services::ScenarioManagementService::new(
+            &self.repository,
+            &mut self.use_cases,
+            &self.scenario_creator,
+        );
+        scenario_service.remove_repeat_block(use_case_id, scenario_id, from_step, to_step)
+    }
+
+    /// Insert a step into a main scenario with automatic extension update
+    /// Returns the new step order
+    pub fn insert_step_with_extension_update(
+        &mut self,
+        use_case_id: &str,
+        scenario_id: &str,
+        after_step: &str,
+        actor: String,
+        receiver: Option<String>,
+        action: String,
+        expected_result: Option<String>,
+    ) -> Result<String> {
+        let mut scenario_service = services::ScenarioManagementService::new(
+            &self.repository,
+            &mut self.use_cases,
+            &self.scenario_creator,
+        );
+        scenario_service.insert_step_with_extension_update(
+            use_case_id,
+            scenario_id,
+            after_step,
+            actor,
+            receiver,
+            action,
+            expected_result,
+        )
+    }
+
+    /// Delete a step from a main scenario with extension validation
+    /// Returns list of extension scenarios that became invalid
+    pub fn delete_step_with_extension_update(
+        &mut self,
+        use_case_id: &str,
+        scenario_id: &str,
+        step_order: &str,
+    ) -> Result<Vec<String>> {
+        let mut scenario_service = services::ScenarioManagementService::new(
+            &self.repository,
+            &mut self.use_cases,
+            &self.scenario_creator,
+        );
+        scenario_service.delete_step_with_extension_update(use_case_id, scenario_id, step_order)
+    }
+
+    /// Renumber steps in a scenario starting from a specific step
+    pub fn renumber_steps_from(
+        &mut self,
+        use_case_id: &str,
+        scenario_id: &str,
+        from_step: &str,
+        increment: i32,
+    ) -> Result<()> {
+        let mut scenario_service = services::ScenarioManagementService::new(
+            &self.repository,
+            &mut self.use_cases,
+            &self.scenario_creator,
+        );
+        scenario_service.renumber_steps_from(use_case_id, scenario_id, from_step, increment)
+    }
+
+    /// Validate all scenarios in a use case
+    pub fn validate_use_case_scenarios(&mut self, use_case_id: &str) -> Result<()> {
+        let scenario_service = services::ScenarioManagementService::new(
+            &self.repository,
+            &mut self.use_cases,
+            &self.scenario_creator,
+        );
+        scenario_service.validate_use_case_scenarios(use_case_id)
+    }
+
     // ========== Private Helpers (Delegation) ==========
 
     /// Helper to find a use case index by ID
@@ -756,6 +904,23 @@ impl UseCaseCoordinator {
         Ok(&self.use_cases[index])
     }
 
+    // ========== Public Helpers for Controller Access ==========
+
+    /// Get a mutable copy of a use case for modification
+    /// After modification, call save_use_case to persist changes
+    pub fn get_use_case(&self, use_case_id: &str) -> Result<UseCase> {
+        let index = self.find_use_case_index(use_case_id)?;
+        Ok(self.use_cases[index].clone())
+    }
+
+    /// Save a modified use case back to the repository and update internal state
+    pub fn save_use_case(&mut self, use_case: &UseCase) -> Result<()> {
+        let index = self.find_use_case_index(&use_case.id)?;
+        self.repository.save(use_case)?;
+        self.use_cases[index] = use_case.clone();
+        Ok(())
+    }
+
     // Deleted: create_use_case_internal() - never used (PR #13)
 
     /// Internal helper to create use cases with methodology custom fields
@@ -766,9 +931,16 @@ impl UseCaseCoordinator {
         description: Option<String>,
         methodology: &str,
     ) -> Result<UseCase> {
+        let category_abbreviation = category
+            .chars()
+            .filter(|c| c.is_alphabetic())
+            .take(3)
+            .collect::<String>()
+            .to_uppercase();
         let use_case = self.use_case_creator.create_use_case_with_methodology(
             title,
             category,
+            category_abbreviation,
             description,
             "Medium".to_string(), // Default priority for internal helper
             methodology,
@@ -792,9 +964,16 @@ impl UseCaseCoordinator {
         methodology: &str,
         extra_fields: std::collections::HashMap<String, String>,
     ) -> Result<UseCase> {
+        let category_abbreviation = category
+            .chars()
+            .filter(|c| c.is_alphabetic())
+            .take(3)
+            .collect::<String>()
+            .to_uppercase();
         let use_case = self.use_case_creator.create_use_case_with_custom_fields(
             title,
             category,
+            category_abbreviation,
             description,
             "Medium".to_string(), // Default priority for internal helper
             methodology,
@@ -1154,14 +1333,35 @@ mod tests {
     use serial_test::serial;
     use std::env;
     use std::fs;
-    use std::path::Path;
+    use std::path::{Path, PathBuf};
     use tempfile::TempDir;
+
+    /// RAII guard that restores the original working directory on drop
+    struct DirGuard {
+        original: PathBuf,
+    }
+
+    impl DirGuard {
+        fn new() -> Result<Self> {
+            Ok(Self {
+                original: env::current_dir()?,
+            })
+        }
+    }
+
+    impl Drop for DirGuard {
+        fn drop(&mut self) {
+            let _ = env::set_current_dir(&self.original);
+        }
+    }
 
     #[test]
     #[serial]
     fn test_interactive_workflow_simulation() -> Result<()> {
+        let _guard = DirGuard::new()?;
         let temp_dir = TempDir::new()?;
-        env::set_current_dir(&temp_dir)?;
+        let temp_path = temp_dir.path();
+        env::set_current_dir(temp_path)?;
 
         init_test_project(None)?;
 
@@ -1197,8 +1397,10 @@ mod tests {
     #[test]
     #[serial]
     fn test_interactive_category_suggestions() -> Result<()> {
+        let _guard = DirGuard::new()?;
         let temp_dir = TempDir::new()?;
-        env::set_current_dir(&temp_dir)?;
+        let temp_path = temp_dir.path();
+        env::set_current_dir(temp_path)?;
 
         init_test_project(None)?;
         let mut coordinator = UseCaseCoordinator::load()?;
@@ -1261,8 +1463,10 @@ mod tests {
     #[test]
     #[serial]
     fn test_complete_interactive_workflow_simulation() -> Result<()> {
+        let _guard = DirGuard::new()?;
         let temp_dir = TempDir::new()?;
-        env::set_current_dir(&temp_dir)?;
+        let temp_path = temp_dir.path();
+        env::set_current_dir(temp_path)?;
 
         init_test_project(Some("rust".to_string()))?;
 
@@ -1316,6 +1520,7 @@ mod tests {
             return Ok(());
         }
 
+        let _guard = DirGuard::new()?;
         let temp_dir = TempDir::new()?;
         let temp_path = temp_dir.path().to_path_buf();
         env::set_current_dir(&temp_path)?;

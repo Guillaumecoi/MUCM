@@ -3,8 +3,8 @@
 //! Tests scenario references functionality across both TOML and SQLite backends
 
 use markdown_use_case_manager::core::{
-    ReferenceType, Scenario, ScenarioReference, ScenarioType, SqliteUseCaseRepository, UseCase,
-    UseCaseRepository,
+    Actor, ReferenceType, Scenario, ScenarioReference, ScenarioType, SqliteUseCaseRepository,
+    UseCase, UseCaseRepository,
 };
 use serial_test::serial;
 use std::env;
@@ -16,6 +16,7 @@ fn create_test_use_case_with_scenarios() -> UseCase {
         "UC-TEST-001".to_string(),
         "Test Use Case".to_string(),
         "test".to_string(),
+        "TES".to_string(),
         "A test use case for scenario reference testing".to_string(),
         "medium".to_string(),
     )
@@ -27,6 +28,7 @@ fn create_test_use_case_with_scenarios() -> UseCase {
         "Happy Path".to_string(),
         "Main success scenario".to_string(),
         ScenarioType::HappyPath,
+        Actor::User,
     );
 
     let scenario2 = Scenario::new(
@@ -34,6 +36,7 @@ fn create_test_use_case_with_scenarios() -> UseCase {
         "Alternative Flow".to_string(),
         "Alternative path scenario".to_string(),
         ScenarioType::AlternativeFlow,
+        Actor::User,
     );
 
     let scenario3 = Scenario::new(
@@ -41,6 +44,7 @@ fn create_test_use_case_with_scenarios() -> UseCase {
         "Exception Flow".to_string(),
         "Error handling scenario".to_string(),
         ScenarioType::ExceptionFlow,
+        Actor::User,
     );
 
     use_case.add_scenario(scenario1);
@@ -266,7 +270,7 @@ fn test_toml_reference_with_all_relationship_types() {
     let mut use_case = create_test_use_case_with_scenarios();
 
     // Test all relationship types
-    let relationships = vec![
+    let relationships = [
         "includes",
         "extends",
         "depends_on",
@@ -304,7 +308,7 @@ fn test_sqlite_reference_with_all_relationship_types() {
     let mut use_case = create_test_use_case_with_scenarios();
 
     // Test all relationship types
-    let relationships = vec![
+    let relationships = [
         "includes",
         "extends",
         "depends_on",

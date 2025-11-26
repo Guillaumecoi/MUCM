@@ -794,7 +794,7 @@ experience_level = { type = "string", required = false }
             persona.extra.get("is_manager"),
             Some(&serde_json::Value::Bool(true))
         );
-        assert!(persona.extra.get("skills").is_some());
+        assert!(persona.extra.contains_key("skills"));
 
         Ok(())
     }

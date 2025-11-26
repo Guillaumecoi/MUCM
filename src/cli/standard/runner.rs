@@ -109,6 +109,7 @@ impl CliRunner {
             None,
             None,
             None,
+            None, // default_scenario_template
         )?;
         Ok(result)
     }
@@ -145,9 +146,17 @@ impl CliRunner {
         description: Option<String>,
     ) -> Result<DisplayResult> {
         let controller = self.ensure_use_case_controller()?;
+        let category_clean = Self::sanitize_required_string(category);
+        let category_abbreviation = category_clean
+            .chars()
+            .filter(|c| c.is_alphabetic())
+            .take(3)
+            .collect::<String>()
+            .to_uppercase();
         controller.create_use_case(
             Self::sanitize_required_string(title),
-            Self::sanitize_required_string(category),
+            category_clean,
+            category_abbreviation,
             Self::sanitize_optional_string(description),
             None,
             None,
@@ -177,9 +186,17 @@ impl CliRunner {
         methodology: String,
     ) -> Result<DisplayResult> {
         let controller = self.ensure_use_case_controller()?;
+        let category_clean = Self::sanitize_required_string(category);
+        let category_abbreviation = category_clean
+            .chars()
+            .filter(|c| c.is_alphabetic())
+            .take(3)
+            .collect::<String>()
+            .to_uppercase();
         controller.create_use_case(
             Self::sanitize_required_string(title),
-            Self::sanitize_required_string(category),
+            category_clean,
+            category_abbreviation,
             Self::sanitize_optional_string(description),
             Some(Self::sanitize_required_string(methodology)),
             None,
@@ -209,9 +226,17 @@ impl CliRunner {
         views: String,
     ) -> Result<DisplayResult> {
         let controller = self.ensure_use_case_controller()?;
+        let category_clean = Self::sanitize_required_string(category);
+        let category_abbreviation = category_clean
+            .chars()
+            .filter(|c| c.is_alphabetic())
+            .take(3)
+            .collect::<String>()
+            .to_uppercase();
         controller.create_use_case(
             Self::sanitize_required_string(title),
-            Self::sanitize_required_string(category),
+            category_clean,
+            category_abbreviation,
             Self::sanitize_optional_string(description),
             None,
             Some(Self::sanitize_required_string(views)),
@@ -592,7 +617,6 @@ impl CliRunner {
     /// # Arguments
     /// * `persona_id` - The persona identifier to search for
     ///
-
     /// Clean up orphaned methodology fields from use cases
     ///
     /// Scans methodology_fields and removes entries for methodologies not used by any enabled view.

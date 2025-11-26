@@ -77,6 +77,7 @@ impl UseCaseController {
         &mut self,
         title: String,
         category: String,
+        category_abbreviation: String,
         description: Option<String>,
         methodology: Option<String>,
         views: Option<String>,
@@ -99,10 +100,11 @@ impl UseCaseController {
         // All use cases now use the views-based API
         let result = if priority.is_some() || extra_fields.is_some() {
             let prio = priority.unwrap_or_else(|| "medium".to_string());
-            let fields = extra_fields.unwrap_or_else(|| std::collections::HashMap::new());
+            let fields = extra_fields.unwrap_or_default();
             self.app_service.create_use_case_with_views_and_fields(
                 title,
                 category,
+                category_abbreviation,
                 description,
                 prio,
                 &views_str,
@@ -254,6 +256,25 @@ impl UseCaseController {
         self.app_service.regenerate_all_markdown()?;
         UseCaseFormatter::display_all_regenerated(count);
         Ok(())
+    }
+
+    /// Regenerate markdown for all use cases and return a DisplayResult.
+    ///
+    /// Wrapper around `regenerate_all_use_cases` that returns a DisplayResult
+    /// for use in interactive workflows.
+    ///
+    /// # Returns
+    /// DisplayResult with success message and regeneration count
+    ///
+    /// # Errors
+    /// Returns error if any regeneration fails
+    pub fn regenerate_all_markdown(&mut self) -> Result<DisplayResult> {
+        let count = self.app_service.get_all_use_cases().len();
+        self.app_service.regenerate_all_markdown()?;
+        Ok(DisplayResult::success(format!(
+            "✅ Regenerated documentation for {} use case(s)",
+            count
+        )))
     }
 
     /// Add a precondition to a use case.
@@ -768,7 +789,7 @@ impl UseCaseController {
     ) -> Result<DisplayResult> {
         // For now, we'll use default values for the required parameters
         // In a real implementation, we'd need to get these from the user
-        let order_val = order.unwrap_or(0); // 0 means append
+        let order_val = order.unwrap_or(0).to_string(); // Convert to String
         let actor = "User".to_string(); // Default actor
         let receiver = None; // No receiver by default
         let action = step; // Use the step as the action
@@ -897,9 +918,10 @@ impl UseCaseController {
         scenario_title: String,
         order: u32,
     ) -> Result<DisplayResult> {
+        let order_str = order.to_string();
         match self
             .app_service
-            .remove_scenario_step(&use_case_id, &scenario_title, order)
+            .remove_scenario_step(&use_case_id, &scenario_title, &order_str)
         {
             Ok(_) => Ok(DisplayResult::success(format!(
                 "Removed step {} from scenario '{}' in use case: {}",

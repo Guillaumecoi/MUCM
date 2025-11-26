@@ -150,6 +150,60 @@ impl ConfigWorkflow {
         Ok(())
     }
 
+    /// Configure default scenario template
+    pub fn configure_scenario_template(config: &mut Config) -> Result<()> {
+        use crate::controller::ProjectController;
+
+        println!("\n🎨 Scenario Template Configuration");
+        println!("──────────────────────────────────");
+
+        // Get available templates
+        let available_templates = ProjectController::get_available_scenario_templates()?;
+
+        if available_templates.is_empty() {
+            println!("⚠️  No scenario templates found in project templates.");
+            println!("Using default: scenarios/scenario.hbs\n");
+            UI::pause_for_input()?;
+            return Ok(());
+        }
+
+        // Create display options with descriptions
+        let mut template_options: Vec<String> = Vec::new();
+        for template in &available_templates {
+            let description = if template.contains("mermaid") {
+                "Mermaid sequence diagrams"
+            } else {
+                "Standard text-based scenarios"
+            };
+            template_options.push(format!("{} - {}", template, description));
+        }
+
+        // Show current default
+        println!(
+            "Current default: {}\n",
+            config.templates.default_scenario_template
+        );
+
+        // Prompt for selection
+        let selection = Select::new("Default scenario template:", template_options)
+            .with_help_message("Methodology levels can override this in their methodology.toml")
+            .prompt()?;
+
+        // Extract template path from selection (before the " - " separator)
+        let template_path = selection.split(" - ").next().unwrap().to_string();
+
+        // Update config
+        config.templates.default_scenario_template = template_path.clone();
+
+        println!(
+            "\n✅ Default scenario template updated to: {}",
+            template_path
+        );
+        println!("💡 Methodology levels can still override this by setting scenario_template in methodology.toml\n");
+
+        Ok(())
+    }
+
     /// Save configuration
     pub fn save_config(config: &Config) -> Result<()> {
         config.save_in_dir(".")?;

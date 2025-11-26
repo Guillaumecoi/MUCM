@@ -124,8 +124,8 @@ impl MethodologyDefinition {
         // Convert levels to the expected format
         let levels: Vec<DocumentationLevel> = data
             .levels
-            .iter()
-            .map(|(_level_name, level_data)| DocumentationLevel {
+            .values()
+            .map(|level_data| DocumentationLevel {
                 name: level_data.name.clone(),
                 abbreviation: level_data.abbreviation.clone(),
                 filename: level_data.filename.clone(),
@@ -151,7 +151,7 @@ impl MethodologyDefinition {
 
         // Flatten all custom fields from all levels for backward compatibility
         let mut all_custom_fields = HashMap::new();
-        for (_level_name, level_data) in &data.levels {
+        for level_data in data.levels.values() {
             all_custom_fields.extend(level_data.custom_fields.clone());
         }
 
@@ -277,7 +277,7 @@ inherits = ["Normal"]
     fn test_methodology_definition_from_toml() {
         let temp_dir = TempDir::new().unwrap();
         let methodology_dir = create_test_methodology(
-            &temp_dir.path(),
+            temp_dir.path(),
             "testmethod",
             "Test Methodology",
             "Test description",
@@ -402,20 +402,20 @@ hypothesis = { label = "Product Hypothesis", type = "text", required = false, de
         let user_segment = custom_fields.get("user_segment").unwrap();
         assert_eq!(user_segment.label, Some("Target User Segment".to_string()));
         assert_eq!(user_segment.field_type, "string");
-        assert_eq!(user_segment.required, true);
+        assert!(user_segment.required);
         assert_eq!(user_segment.default, None);
 
         // Check success_metrics field
         let success_metrics = custom_fields.get("success_metrics").unwrap();
         assert_eq!(success_metrics.label, Some("Success Metrics".to_string()));
         assert_eq!(success_metrics.field_type, "array");
-        assert_eq!(success_metrics.required, true);
+        assert!(success_metrics.required);
 
         // Check hypothesis field (with default)
         let hypothesis = custom_fields.get("hypothesis").unwrap();
         assert_eq!(hypothesis.label, Some("Product Hypothesis".to_string()));
         assert_eq!(hypothesis.field_type, "text");
-        assert_eq!(hypothesis.required, false);
+        assert!(!hypothesis.required);
         assert_eq!(hypothesis.default, Some("To be defined".to_string()));
     }
 

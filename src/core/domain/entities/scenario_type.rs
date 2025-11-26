@@ -4,17 +4,13 @@ use std::str::FromStr;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
+#[derive(Default)]
 pub enum ScenarioType {
-    HappyPath,       // Main success scenario
+    #[default]
+    HappyPath, // Main success scenario
     AlternativeFlow, // Valid alternative path
     ExceptionFlow,   // Error/exception handling
     Extension,       // Extension point
-}
-
-impl Default for ScenarioType {
-    fn default() -> Self {
-        ScenarioType::HappyPath
-    }
 }
 
 impl fmt::Display for ScenarioType {

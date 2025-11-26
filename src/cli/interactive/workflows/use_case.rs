@@ -35,9 +35,8 @@ impl UseCaseWorkflow {
             .with_help_message("A clear, descriptive title for the use case")
             .prompt()?;
 
-        let category = Text::new("Category:")
-            .with_help_message("Group this use case (e.g., 'authentication', 'data-processing')")
-            .prompt()?;
+        // Get category with abbreviation using the new workflow
+        let (category, category_abbreviation) = Self::prompt_for_category()?;
 
         // Step 2: Collect views
         UI::show_section_header("Select Views", "👁️")?;
@@ -130,7 +129,14 @@ impl UseCaseWorkflow {
         }
 
         // Always use interactive form for additional fields
-        Self::fill_use_case_form(&mut runner, title, category, None, views)?;
+        Self::fill_use_case_form(
+            &mut runner,
+            title,
+            category,
+            category_abbreviation,
+            None,
+            views,
+        )?;
 
         UI::pause_for_input()?;
         Ok(())
@@ -176,7 +182,7 @@ impl UseCaseWorkflow {
             for methodology in &field.methodologies {
                 fields_by_methodology
                     .entry(methodology.clone())
-                    .or_insert_with(Vec::new)
+                    .or_default()
                     .push(field);
             }
         }
@@ -240,10 +246,8 @@ impl UseCaseWorkflow {
                                 }
                             }
 
-                            if items.is_empty() && field.required {
+                            if items.is_empty() {
                                 None // Will be handled by required field logic below
-                            } else if items.is_empty() {
-                                None
                             } else {
                                 // Join items with newlines for array storage
                                 Some(items.join("\n"))
@@ -300,6 +304,7 @@ impl UseCaseWorkflow {
         runner: &mut InteractiveRunner,
         title: String,
         category: String,
+        category_abbreviation: String,
         description: Option<String>,
         views: Vec<(String, String)>,
     ) -> Result<()> {
@@ -314,6 +319,7 @@ impl UseCaseWorkflow {
             let (use_case_id, message) = runner.create_use_case_with_views_and_fields(
                 title,
                 category,
+                category_abbreviation.clone(),
                 description,
                 "Medium".to_string(), // Default priority
                 views.clone(),
@@ -334,56 +340,26 @@ impl UseCaseWorkflow {
                 use crate::controller::UseCaseController;
                 let mut uc_controller = UseCaseController::new()?;
 
-                // Collect preconditions
-                let add_preconditions = Confirm::new("Add preconditions?")
-                    .with_default(false)
-                    .prompt()?;
+                // Collect preconditions using the reusable helper
+                let preconditions =
+                    super::conditions::ConditionsWorkflow::collect_conditions_with_refs(
+                        "preconditions",
+                        "use case",
+                        &use_case_id,
+                    )?;
 
-                if add_preconditions {
-                    loop {
-                        let condition_text =
-                            Text::new("  Precondition (or press Enter to finish):").prompt()?;
-
-                        if condition_text.trim().is_empty() {
-                            break;
-                        }
-
-                        uc_controller.add_precondition(use_case_id.clone(), condition_text)?;
-
-                        let add_more = Confirm::new("Add another precondition?")
-                            .with_default(true)
-                            .prompt()?;
-
-                        if !add_more {
-                            break;
-                        }
-                    }
+                for condition in preconditions {
+                    uc_controller.add_precondition(use_case_id.clone(), condition)?;
                 }
 
-                // Collect postconditions
-                let add_postconditions = Confirm::new("Add postconditions?")
-                    .with_default(false)
-                    .prompt()?;
+                // Collect postconditions (text-only, no references)
+                let postconditions =
+                    super::conditions::ConditionsWorkflow::collect_conditions_text_only(
+                        "postconditions",
+                    )?;
 
-                if add_postconditions {
-                    loop {
-                        let condition_text =
-                            Text::new("  Postcondition (or press Enter to finish):").prompt()?;
-
-                        if condition_text.trim().is_empty() {
-                            break;
-                        }
-
-                        uc_controller.add_postcondition(use_case_id.clone(), condition_text)?;
-
-                        let add_more = Confirm::new("Add another postcondition?")
-                            .with_default(true)
-                            .prompt()?;
-
-                        if !add_more {
-                            break;
-                        }
-                    }
+                for condition in postconditions {
+                    uc_controller.add_postcondition(use_case_id.clone(), condition)?;
                 }
             }
 
@@ -519,6 +495,7 @@ impl UseCaseWorkflow {
         let (use_case_id, message) = runner.create_use_case_with_views_and_fields(
             title,
             category,
+            category_abbreviation,
             final_description,
             priority.to_string(),
             views.clone(),
@@ -980,5 +957,131 @@ impl UseCaseWorkflow {
         }
 
         Ok(())
+    }
+
+    /// Prompt user to select an existing category or create a new one
+    /// Returns (category_name, category_abbreviation)
+    fn prompt_for_category() -> Result<(String, String)> {
+        use crate::controller::CategoryController;
+
+        let category_controller = CategoryController::new()?;
+
+        // Get existing categories
+        let existing_categories = category_controller.get_all_categories()?;
+
+        // Build options: existing categories + "Create New Category"
+        let mut options: Vec<String> = existing_categories
+            .iter()
+            .map(|(name, abbr)| format!("{} ({})", name, abbr))
+            .collect();
+        options.push("➕ Create New Category".to_string());
+
+        let selection = Select::new("Category:", options)
+            .with_help_message("Select an existing category or create a new one")
+            .prompt()?;
+
+        if selection == "➕ Create New Category" {
+            // Create new category workflow
+            UI::show_section_header("Create New Category", "📁")?;
+
+            let full_name = Text::new("Category name:")
+                .with_help_message("Full category name (e.g., 'Authentication', 'User Management')")
+                .prompt()?;
+
+            // Suggest abbreviation
+            let suggested_abbr = category_controller.suggest_abbreviation(&full_name);
+
+            let abbreviation = Text::new("Abbreviation:")
+                .with_default(&suggested_abbr)
+                .with_help_message("3+ uppercase letters for use case IDs (e.g., 'AUT', 'USR')")
+                .prompt()?;
+
+            // Check for collision
+            if let Some(existing) = category_controller.detect_collision(&abbreviation)? {
+                UI::show_warning(&format!(
+                    "⚠️  Abbreviation '{}' is already used by category '{}'",
+                    abbreviation, existing.full_name
+                ))?;
+
+                // Suggest auto-resolution
+                let (new_abbr, existing_abbr) = category_controller
+                    .suggest_collision_resolution(&full_name, &existing)
+                    .ok_or_else(|| anyhow::anyhow!("Could not generate collision resolution"))?;
+
+                UI::show_info(&format!(
+                    "💡 Suggested resolution:\n   • {}: {} → {}\n   • {}: {} → {}",
+                    full_name,
+                    abbreviation,
+                    new_abbr,
+                    existing.full_name,
+                    existing.abbreviation,
+                    existing_abbr
+                ))?;
+
+                let choices = vec![
+                    "Auto-resolve both categories",
+                    "Edit abbreviation manually",
+                    "Cancel",
+                ];
+
+                match Select::new("How would you like to proceed?", choices).prompt()? {
+                    "Auto-resolve both categories" => {
+                        // Update existing category
+                        category_controller
+                            .update_abbreviation(&existing.abbreviation, &existing_abbr)?;
+
+                        // Create new category with resolved abbreviation
+                        let result = category_controller
+                            .create_category(full_name.clone(), new_abbr.clone())?;
+                        UI::show_success(&result.message)?;
+
+                        return Ok((full_name, new_abbr));
+                    }
+                    "Edit abbreviation manually" => {
+                        // Let user enter a different abbreviation
+                        let new_abbreviation = Text::new("Enter a different abbreviation:")
+                            .with_help_message("Must be at least 3 characters, alphanumeric")
+                            .prompt()?;
+
+                        let result = category_controller
+                            .create_category(full_name.clone(), new_abbreviation.clone())?;
+
+                        if !result.success {
+                            UI::show_error(&result.message)?;
+                            anyhow::bail!("Failed to create category");
+                        }
+
+                        UI::show_success(&result.message)?;
+                        return Ok((full_name, new_abbreviation));
+                    }
+                    _ => {
+                        anyhow::bail!("Category creation cancelled");
+                    }
+                }
+            }
+
+            // No collision, create the category
+            let result =
+                category_controller.create_category(full_name.clone(), abbreviation.clone())?;
+
+            if !result.success {
+                UI::show_error(&result.message)?;
+                anyhow::bail!("Failed to create category");
+            }
+
+            UI::show_success(&result.message)?;
+            Ok((full_name, abbreviation))
+        } else {
+            // Extract name and abbreviation from selection "Name (ABBR)"
+            let parts: Vec<&str> = selection.rsplitn(2, '(').collect();
+            if parts.len() != 2 {
+                anyhow::bail!("Invalid category format");
+            }
+
+            let abbreviation = parts[0].trim_end_matches(')').trim().to_string();
+            let name = parts[1].trim().to_string();
+
+            Ok((name, abbreviation))
+        }
     }
 }

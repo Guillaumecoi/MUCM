@@ -203,7 +203,7 @@ template_file = "test.hbs""#,
         create_test_language(&languages_dir, "lang1", &["l1"], "l1", "template1");
         create_test_language(&languages_dir, "lang2", &["l2", "alt"], "l2", "template2");
 
-        let result = LanguageRegistry::new_dynamic(&temp_dir.path());
+        let result = LanguageRegistry::new_dynamic(temp_dir.path());
         assert!(result.is_ok());
 
         let registry = result.unwrap();
@@ -227,7 +227,7 @@ template_file = "test.hbs""#,
     fn test_language_registry_new_dynamic_no_languages_dir() {
         let temp_dir = TempDir::new().unwrap();
 
-        let result = LanguageRegistry::new_dynamic(&temp_dir.path());
+        let result = LanguageRegistry::new_dynamic(temp_dir.path());
         assert!(result.is_err());
         assert!(result
             .unwrap_err()
@@ -241,7 +241,7 @@ template_file = "test.hbs""#,
         let languages_dir = temp_dir.path().join("languages");
         fs::create_dir(&languages_dir).unwrap();
 
-        let result = LanguageRegistry::new_dynamic(&temp_dir.path());
+        let result = LanguageRegistry::new_dynamic(temp_dir.path());
         assert!(result.is_ok());
 
         let registry = result.unwrap();
@@ -256,7 +256,7 @@ template_file = "test.hbs""#,
 
         create_test_language(&languages_dir, "rust", &["rs"], "rs", "fn main() {}");
 
-        let registry = LanguageRegistry::new_dynamic(&temp_dir.path()).unwrap();
+        let registry = LanguageRegistry::new_dynamic(temp_dir.path()).unwrap();
 
         // Test primary name
         let lang = registry.get("rust").unwrap();
@@ -289,7 +289,7 @@ template_file = "test.hbs""#,
             "template2",
         );
 
-        let registry = LanguageRegistry::new_dynamic(&temp_dir.path()).unwrap();
+        let registry = LanguageRegistry::new_dynamic(temp_dir.path()).unwrap();
         let available = registry.available_languages();
 
         // Should contain primary names only, not aliases
@@ -322,7 +322,7 @@ template_file = "test.hbs""#,
         .unwrap();
         // Don't create the template file
 
-        let result = LanguageRegistry::new_dynamic(&temp_dir.path());
+        let result = LanguageRegistry::new_dynamic(temp_dir.path());
         assert!(result.is_ok()); // Should succeed despite one bad language
 
         let registry = result.unwrap();
@@ -344,7 +344,7 @@ template_file = "test.hbs""#,
         create_test_language(&languages_dir, "lang1", &["alias1"], "ext1", "template1");
         create_test_language(&languages_dir, "lang2", &["alias2"], "ext2", "template2");
 
-        let result = LanguageRegistry::discover_available(&temp_dir.path());
+        let result = LanguageRegistry::discover_available(temp_dir.path());
         assert!(result.is_ok());
 
         let languages = result.unwrap();

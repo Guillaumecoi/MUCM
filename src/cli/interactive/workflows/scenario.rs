@@ -30,29 +30,53 @@ impl ScenarioWorkflow {
             } else {
                 println!("\n  Existing scenarios:");
                 for scenario in &scenarios {
-                    println!(
-                        "    • {} - {} [{}] ({} steps)",
-                        scenario.id,
-                        scenario.title,
-                        scenario.scenario_type,
-                        scenario.steps.len()
-                    );
+                    if scenario.is_main {
+                        println!(
+                            "    • {} - {} [Main] ({} steps)",
+                            scenario.id,
+                            scenario.title,
+                            scenario.steps.len()
+                        );
+                    } else {
+                        let extension_info = if let Some(ref parent) = scenario.extends_scenario_id
+                        {
+                            format!(
+                                " → extends {} at step {}",
+                                parent,
+                                scenario
+                                    .extends_at_step
+                                    .as_ref()
+                                    .unwrap_or(&"?".to_string())
+                            )
+                        } else {
+                            String::new()
+                        };
+                        println!(
+                            "    • {} - {} [{}] ({} steps){}",
+                            scenario.id,
+                            scenario.title,
+                            scenario.scenario_type,
+                            scenario.steps.len(),
+                            extension_info
+                        );
+                    }
                 }
                 println!();
             }
 
             // Show action menu
             let actions = vec![
-                "Create new scenario",
+                "Create main scenario",
                 "Edit scenario",
                 "Delete scenario",
+                "Validate scenarios",
                 "Back to use case menu",
             ];
 
             let choice = Select::new("What would you like to do?", actions).prompt()?;
 
             match choice {
-                "Create new scenario" => {
+                "Create main scenario" => {
                     Self::create_scenario(use_case_id)?;
                 }
                 "Edit scenario" => {
@@ -60,6 +84,9 @@ impl ScenarioWorkflow {
                 }
                 "Delete scenario" => {
                     Self::delete_scenario(use_case_id)?;
+                }
+                "Validate scenarios" => {
+                    Self::validate_scenarios(use_case_id)?;
                 }
                 "Back to use case menu" => break,
                 _ => {}
@@ -74,37 +101,53 @@ impl ScenarioWorkflow {
         Self::create_scenario(use_case_id)
     }
 
-    /// Create a new scenario interactively
+    /// Create a new main scenario interactively
+    /// Note: Alternatives and exceptions are created via "Create extension scenario" or from step management
     fn create_scenario(use_case_id: &str) -> Result<()> {
-        UI::show_section_header("Create Scenario", "➕")?;
+        UI::show_section_header("Create Main Scenario", "➕")?;
+
+        println!("  ℹ️  Creating a main scenario (happy path).");
+        println!("  To add alternatives/exceptions, use 'Create extension scenario' or add from a step.\n");
 
         let title = Text::new("Scenario title:")
-            .with_help_message("Brief, descriptive title (e.g., 'User successfully logs in', 'Invalid password error')")
+            .with_help_message("Brief, descriptive title (e.g., 'User successfully logs in')")
             .prompt()?;
-
-        let scenario_types = vec!["main", "alternative", "exception"];
-        let scenario_type = Select::new("Scenario type:", scenario_types).prompt()?;
 
         let description = Text::new("Description (optional):")
             .with_help_message("Describe what this scenario covers. Press Enter to skip.")
             .prompt()
             .ok();
 
-        // Collect preconditions
-        let preconditions = Self::collect_conditions("preconditions", use_case_id)?;
+        // Collect preconditions using the reusable helper
+        let preconditions = super::conditions::ConditionsWorkflow::collect_conditions_with_refs(
+            "preconditions",
+            "scenario",
+            use_case_id,
+        )?;
+        let preconditions = if preconditions.is_empty() {
+            None
+        } else {
+            Some(preconditions)
+        };
 
-        // Collect postconditions
-        let postconditions = Self::collect_conditions("postconditions", use_case_id)?;
+        // Collect postconditions using the reusable helper
+        let postconditions = super::conditions::ConditionsWorkflow::collect_conditions_with_refs(
+            "postconditions",
+            "scenario",
+            use_case_id,
+        )?;
+        let postconditions = if postconditions.is_empty() {
+            None
+        } else {
+            Some(postconditions)
+        };
 
-        // Note: Actors are automatically derived from scenario steps, not manually assigned
-        // Create the scenario
+        // Controller handles creating main scenarios - no type selection needed
         let mut controller = ScenarioController::new()?;
-        let result = controller.create_scenario(
+        let result = controller.create_main_scenario(
             use_case_id.to_string(),
             title.clone(),
-            scenario_type.to_string(),
             description,
-            None, // persona_id removed from interactive workflow
             preconditions,
             postconditions,
         )?;
@@ -174,71 +217,20 @@ impl ScenarioWorkflow {
         Ok(())
     }
 
-    /// Helper to collect preconditions or postconditions interactively
-    fn collect_conditions(
-        condition_type: &str,
-        _current_use_case_id: &str,
-    ) -> Result<Option<Vec<String>>> {
-        let add_conditions = Confirm::new(&format!("Add {}?", condition_type))
-            .with_default(false)
-            .prompt()?;
-
-        if !add_conditions {
-            return Ok(None);
-        }
-
-        let mut conditions = Vec::new();
-        loop {
-            let condition = Text::new(&format!(
-                "  {} (or press Enter to finish):",
-                condition_type.trim_end_matches('s')
-            ))
-            .with_help_message(&format!(
-                "Enter a text description of the {}",
-                condition_type.trim_end_matches('s')
-            ))
-            .prompt()?;
-
-            if condition.trim().is_empty() {
-                break;
-            }
-
-            conditions.push(condition);
-
-            let add_more = Confirm::new(&format!(
-                "Add another {}?",
-                condition_type.trim_end_matches('s')
-            ))
-            .with_default(true)
-            .prompt()?;
-
-            if !add_more {
-                break;
-            }
-        }
-
-        if conditions.is_empty() {
-            Ok(None)
-        } else {
-            Ok(Some(conditions))
-        }
-    }
-
     /// Helper to select multiple actors interactively
     /// Helper to select a single actor for a step
     fn select_actor_for_step() -> Result<Option<String>> {
         let runner = InteractiveRunner::new();
-        let mut available_actors = runner.get_available_actors()?;
+        let available_actors = runner.get_available_actors()?;
 
-        if available_actors.is_empty() {
-            println!("\n  No actors available. Using default 'Actor'.\n");
-            return Ok(None);
-        }
-
-        // Add built-in actors
-        available_actors.insert(0, "User".to_string());
-        available_actors.insert(1, "System".to_string());
-        available_actors.insert(2, "Default (Actor)".to_string());
+        // Always add built-in actors at the top
+        let mut all_options = vec![
+            "User".to_string(),
+            "System".to_string(),
+            "Default (Actor)".to_string(),
+        ];
+        all_options.extend(available_actors);
+        let available_actors = all_options;
 
         let choice = Select::new("Select actor for this step:", available_actors).prompt()?;
 
@@ -261,6 +253,7 @@ impl ScenarioWorkflow {
         UI::show_section_header("Edit Scenario", "✏️")?;
 
         let mut controller = ScenarioController::new()?;
+        let runner = InteractiveRunner::new();
         let scenarios = controller.get_scenarios(use_case_id)?;
 
         if scenarios.is_empty() {
@@ -269,11 +262,27 @@ impl ScenarioWorkflow {
             return Ok(());
         }
 
-        // Select scenario to edit
-        let mut scenario_options: Vec<String> = scenarios
-            .iter()
-            .map(|s| format!("{} - {}", s.id, s.title))
-            .collect();
+        // Select scenario to edit - group by type
+        let mut scenario_options: Vec<String> = Vec::new();
+
+        // Add main scenarios first
+        let main_scenarios: Vec<_> = scenarios.iter().filter(|s| s.is_main).collect();
+        if !main_scenarios.is_empty() {
+            scenario_options.push("─── Main Scenarios ───".to_string());
+            for s in main_scenarios {
+                scenario_options.push(format!("{} - {} [Main]", s.id, s.title));
+            }
+        }
+
+        // Add extension scenarios
+        let extension_scenarios: Vec<_> = scenarios.iter().filter(|s| !s.is_main).collect();
+        if !extension_scenarios.is_empty() {
+            scenario_options.push("─── Extensions ───".to_string());
+            for s in extension_scenarios {
+                let ext_type = &s.scenario_type;
+                scenario_options.push(format!("{} - {} [{}]", s.id, s.title, ext_type));
+            }
+        }
 
         // Add cancel option
         scenario_options.push("[Cancel]".to_string());
@@ -299,10 +308,39 @@ impl ScenarioWorkflow {
 
             println!("\n  Current values:");
             println!("    Title: {}", scenario.title);
+            println!(
+                "    Kind: {}",
+                if scenario.is_main {
+                    "Main scenario"
+                } else {
+                    "Extension scenario"
+                }
+            );
             println!("    Type: {}", scenario.scenario_type);
             println!("    Description: {}", scenario.description);
             println!("    Status: {}", scenario.status);
+            println!("    Primary Actor: {}", scenario.primary_actor);
             println!("    Steps: {}", scenario.steps.len());
+
+            // Show extension information
+            if !scenario.is_main {
+                if let Some(ref parent) = scenario.extends_scenario_id {
+                    println!(
+                        "    Extends: {} at step {}",
+                        parent,
+                        scenario
+                            .extends_at_step
+                            .as_ref()
+                            .unwrap_or(&"?".to_string())
+                    );
+                    if let Some(ref returns) = scenario.returns_at_step {
+                        println!("    Returns at: step {}", returns);
+                    } else {
+                        println!("    Returns: doesn't return to main");
+                    }
+                }
+            }
+
             println!("    Preconditions: {}", scenario.preconditions.len());
             println!("    Postconditions: {}", scenario.postconditions.len());
             if let Some(ref p) = scenario.persona {
@@ -313,7 +351,6 @@ impl ScenarioWorkflow {
             let fields = vec![
                 "Edit title",
                 "Edit description",
-                "Edit type",
                 "Edit status",
                 "Manage steps",
                 "Manage conditions",
@@ -355,21 +392,6 @@ impl ScenarioWorkflow {
 
                     UI::show_success("✓ Description updated")?;
                 }
-                "Edit type" => {
-                    let types = vec!["main", "alternative", "exception"];
-                    let new_type = Select::new("New type:", types).prompt()?;
-
-                    controller.edit_scenario(
-                        use_case_id.to_string(),
-                        scenario_id.to_string(),
-                        None,
-                        None,
-                        Some(new_type.to_string()),
-                        None,
-                    )?;
-
-                    UI::show_success("✓ Type updated")?;
-                }
                 "Edit status" => {
                     let statuses =
                         vec!["Planned", "InProgress", "Implemented", "Tested", "Deployed"];
@@ -390,7 +412,12 @@ impl ScenarioWorkflow {
                     Self::manage_steps_inline(use_case_id, scenario_id, &mut controller)?;
                 }
                 "Manage conditions" => {
-                    Self::manage_all_conditions_inline(use_case_id, scenario_id, &mut controller)?;
+                    Self::manage_all_conditions_inline(
+                        use_case_id,
+                        scenario_id,
+                        &mut controller,
+                        &runner,
+                    )?;
                 }
                 "Done editing" => break,
                 _ => {}
@@ -478,14 +505,23 @@ impl ScenarioWorkflow {
             }
             println!();
 
-            let actions = vec![
+            let mut actions = vec![
                 "Add step",
                 "Insert step",
                 "Edit step",
-                "Remove step",
-                "Reorder step",
-                "Back",
+                "Delete step",
+                "Reorder steps",
             ];
+
+            // Only allow adding extensions and loops from main scenarios
+            if scenario.is_main {
+                actions.push("Create extension from step");
+                actions.push("Add repeat block (loop)");
+                actions.push("Remove repeat block");
+            }
+
+            actions.push("Back");
+
             let choice = Select::new("What would you like to do?", actions).prompt()?;
 
             match choice {
@@ -537,110 +573,26 @@ impl ScenarioWorkflow {
                     let step_order: u32 =
                         selected_step.split('.').next().unwrap().trim().parse()?;
 
-                    let new_description = Text::new("New description:").prompt()?;
+                    let actor = Self::select_actor_for_step()?;
+                    let new_description = Text::new("Step description:").prompt()?;
 
                     let result = controller.edit_step(
                         use_case_id.to_string(),
                         scenario_id.to_string(),
                         step_order,
+                        actor,
                         new_description,
                     )?;
 
                     UI::show_success(&result.message)?;
                 }
                 "Insert step" => {
-                    if scenario.steps.is_empty() {
-                        println!("\n  No steps yet. Use 'Add step' to create the first step.\n");
-                        continue;
-                    }
-
-                    // Ask for position to insert
-                    let mut position_options: Vec<String> = Vec::new();
-                    position_options.push("At beginning (before step 1)".to_string());
-                    for step in &scenario.steps {
-                        position_options
-                            .push(format!("After step {} ({})", step.order, step.action));
-                    }
-
-                    let position_choice =
-                        Select::new("Where to insert the new step?", position_options).prompt()?;
-
-                    let insert_order: u32 = if position_choice.starts_with("At beginning") {
-                        1
-                    } else {
-                        // Extract step number and add 1
-                        let after_step: u32 = position_choice
-                            .split("step ")
-                            .nth(1)
-                            .and_then(|s| s.split(' ').next())
-                            .and_then(|n| n.parse().ok())
-                            .unwrap_or(1);
-                        after_step + 1
-                    };
-
-                    let actor = Self::select_actor_for_step()?;
-
-                    let add_receiver = Confirm::new("Add a receiving actor?")
-                        .with_default(false)
-                        .with_help_message("Does this action have a target/receiver?")
-                        .prompt()?;
-
-                    let receiver = if add_receiver {
-                        Self::select_actor_for_step()?
-                    } else {
-                        None
-                    };
-
-                    let description = Text::new("Step description:")
-                        .with_help_message(
-                            "Describe the action (e.g., 'enters credentials', 'validates input')",
-                        )
-                        .prompt()?;
-
-                    // Add step at specified position
-                    let result = controller.add_step(
-                        use_case_id.to_string(),
-                        scenario_id.to_string(),
-                        description,
-                        Some(insert_order),
-                        actor,
-                        receiver,
-                    )?;
-
-                    UI::show_success(&result.message)?;
+                    Self::insert_step_inline(use_case_id, scenario_id, controller)?;
                 }
-                "Remove step" => {
-                    if scenario.steps.is_empty() {
-                        println!("\n  No steps to remove.\n");
-                        continue;
-                    }
-
-                    let mut step_choices: Vec<String> = scenario
-                        .steps
-                        .iter()
-                        .map(|s| format!("{}. {}", s.order, s.action))
-                        .collect();
-                    step_choices.push("[Cancel]".to_string());
-
-                    let selected_step =
-                        Select::new("Select step to remove:", step_choices).prompt()?;
-
-                    if selected_step == "[Cancel]" {
-                        continue;
-                    }
-
-                    let step_order: u32 =
-                        selected_step.split('.').next().unwrap().trim().parse()?;
-
-                    let result = controller.remove_step(
-                        use_case_id.to_string(),
-                        scenario_id.to_string(),
-                        step_order,
-                    )?;
-
-                    UI::show_success(&result.message)?;
+                "Delete step" => {
+                    Self::delete_step_inline(use_case_id, scenario_id, controller)?;
                 }
-                "Reorder step" => {
+                "Reorder steps" => {
                     if scenario.steps.len() < 2 {
                         println!("\n  Need at least 2 steps to reorder.\n");
                         continue;
@@ -700,28 +652,28 @@ impl ScenarioWorkflow {
                         continue;
                     }
 
-                    // Build reordering map
+                    // Build reordering map (using String keys and values)
                     let mut reorderings = std::collections::HashMap::new();
 
                     // Simple swap or shift logic
                     if (new_order as i32 - step_order as i32).abs() == 1 {
                         // Simple adjacent swap
-                        reorderings.insert(step_order, new_order);
-                        reorderings.insert(new_order, step_order);
+                        reorderings.insert(step_order.to_string(), new_order.to_string());
+                        reorderings.insert(new_order.to_string(), step_order.to_string());
                     } else {
                         // Complex reordering - move step and shift others
                         if new_order < step_order {
                             // Moving up
                             for i in new_order..step_order {
-                                reorderings.insert(i, i + 1);
+                                reorderings.insert(i.to_string(), (i + 1).to_string());
                             }
-                            reorderings.insert(step_order, new_order);
+                            reorderings.insert(step_order.to_string(), new_order.to_string());
                         } else {
                             // Moving down
                             for i in (step_order + 1)..=new_order {
-                                reorderings.insert(i, i - 1);
+                                reorderings.insert(i.to_string(), (i - 1).to_string());
                             }
-                            reorderings.insert(step_order, new_order);
+                            reorderings.insert(step_order.to_string(), new_order.to_string());
                         }
                     }
 
@@ -732,6 +684,146 @@ impl ScenarioWorkflow {
                     )?;
 
                     UI::show_success(&result.message)?;
+                }
+                "Create extension from step" => {
+                    if scenario.steps.is_empty() {
+                        println!("\n  ⚠️  No steps available. Add steps first.\n");
+                        UI::pause_for_input()?;
+                        continue;
+                    }
+
+                    // Select the step where the extension diverges
+                    let step_choices: Vec<String> = scenario
+                        .steps
+                        .iter()
+                        .map(|s| format!("Step {}: {}", s.order, s.action))
+                        .collect();
+
+                    let selected_step = Select::new(
+                        "At which step should the extension diverge?",
+                        step_choices.clone(),
+                    )
+                    .prompt()?;
+
+                    let extends_at_step = selected_step
+                        .split(':')
+                        .next()
+                        .unwrap()
+                        .replace("Step ", "")
+                        .trim()
+                        .to_string();
+
+                    // Select extension type
+                    let ext_types = vec!["alternative", "exception"];
+                    let extension_type = Select::new("Extension type:", ext_types).prompt()?;
+
+                    // Get title and description
+                    let title = Text::new(&format!("{} scenario title:", extension_type))
+                        .with_help_message("E.g., 'Invalid password', 'Network error'")
+                        .prompt()?;
+
+                    let description = Text::new("Description (optional):").prompt().ok();
+
+                    // Ask about return point
+                    let should_return =
+                        Confirm::new("Does this extension return to the main flow?")
+                            .with_default(false)
+                            .with_help_message(
+                                "Alternatives may return, exceptions typically don't",
+                            )
+                            .prompt()?;
+
+                    let returns_at_step = if should_return {
+                        let return_step =
+                            Select::new("At which step does it return?", step_choices).prompt()?;
+                        Some(
+                            return_step
+                                .split(':')
+                                .next()
+                                .unwrap()
+                                .replace("Step ", "")
+                                .trim()
+                                .to_string(),
+                        )
+                    } else {
+                        None
+                    };
+
+                    // Select primary actor
+                    let primary_actor =
+                        Self::select_actor_for_step()?.unwrap_or_else(|| "User".to_string());
+
+                    // Create the extension scenario
+                    let result = controller.create_extension_scenario(
+                        use_case_id.to_string(),
+                        scenario_id.to_string(),
+                        extends_at_step,
+                        returns_at_step,
+                        title,
+                        description.unwrap_or_default(),
+                        primary_actor,
+                    )?;
+
+                    UI::show_success(&result.message)?;
+                    println!(
+                        "\n  💡 Tip: Use 'Edit scenario' to add steps to the new extension.\n"
+                    );
+                    UI::pause_for_input()?;
+                }
+                "Add repeat block (loop)" => {
+                    if scenario.steps.is_empty() {
+                        println!("\n  ⚠️  No steps available. Add steps first.\n");
+                        UI::pause_for_input()?;
+                        continue;
+                    }
+
+                    // Select from_step
+                    let step_choices: Vec<String> = scenario
+                        .steps
+                        .iter()
+                        .map(|s| format!("Step {}: {}", s.order, s.action))
+                        .collect();
+
+                    let from_step_str = Select::new("Loop starts from step:", step_choices.clone())
+                        .with_help_message("First step in the repeating block")
+                        .prompt()?;
+                    let from_step = from_step_str
+                        .split(':')
+                        .next()
+                        .unwrap()
+                        .replace("Step ", "")
+                        .trim()
+                        .to_string();
+
+                    // Select to_step
+                    let to_step_str = Select::new("Loop ends at step:", step_choices)
+                        .with_help_message("Last step in the repeating block")
+                        .prompt()?;
+                    let to_step = to_step_str
+                        .split(':')
+                        .next()
+                        .unwrap()
+                        .replace("Step ", "")
+                        .trim()
+                        .to_string();
+
+                    // Get condition
+                    let condition = Text::new("Loop condition:")
+                        .with_help_message("E.g., 'until payment succeeds', 'while retries < 3'")
+                        .prompt()?;
+
+                    let result = controller.add_repeat_block(
+                        use_case_id.to_string(),
+                        scenario_id.to_string(),
+                        from_step,
+                        to_step,
+                        condition,
+                    )?;
+
+                    UI::show_success(&result.message)?;
+                }
+                "Remove repeat block" => {
+                    Self::remove_repeat_block_inline(use_case_id, scenario_id, controller)?;
                 }
                 "Back" => break,
                 _ => {}
@@ -747,6 +839,7 @@ impl ScenarioWorkflow {
         use_case_id: &str,
         scenario_id: &str,
         controller: &mut ScenarioController,
+        runner: &InteractiveRunner,
     ) -> Result<()> {
         loop {
             let scenario = controller.get_scenario(use_case_id, scenario_id)?;
@@ -787,17 +880,69 @@ impl ScenarioWorkflow {
 
             match choice {
                 "Add Precondition" => {
-                    let condition = Text::new("Enter precondition:")
-                        .with_help_message("Describe what must be true before this scenario starts")
-                        .prompt()?;
+                    let condition_types = vec!["Text description", "Reference to use case"];
+                    let cond_type = Select::new("Precondition type:", condition_types).prompt()?;
 
-                    let result = controller.add_precondition(
-                        use_case_id.to_string(),
-                        scenario_id.to_string(),
-                        condition,
-                    )?;
+                    if cond_type == "Text description" {
+                        let condition = Text::new("Enter precondition:")
+                            .with_help_message(
+                                "Describe what must be true before this scenario starts",
+                            )
+                            .prompt()?;
 
-                    UI::show_success(&result.message)?;
+                        let result = controller.add_precondition(
+                            use_case_id.to_string(),
+                            scenario_id.to_string(),
+                            condition,
+                        )?;
+
+                        UI::show_success(&result.message)?;
+                    } else {
+                        // Reference to use case
+                        let runner = InteractiveRunner::new();
+                        let all_use_cases = runner.get_available_use_cases()?;
+
+                        if all_use_cases.is_empty() {
+                            println!("\n  No use cases available to reference.\n");
+                            UI::pause_for_input()?;
+                            continue;
+                        }
+
+                        let uc_options: Vec<String> = all_use_cases
+                            .iter()
+                            .map(|uc| format!("{} - {}", uc.id, uc.title))
+                            .collect();
+
+                        let selected =
+                            Select::new("Select use case to reference:", uc_options).prompt()?;
+                        let referenced_uc_id = selected.split(" - ").next().unwrap();
+
+                        let relationships = vec![
+                            "must be completed",
+                            "must be in progress",
+                            "depends on",
+                            "requires",
+                        ];
+                        let relationship = Select::new("Relationship:", relationships).prompt()?;
+
+                        let text = Text::new("Precondition description:")
+                            .with_help_message(&format!(
+                                "E.g., 'User must complete {}'",
+                                referenced_uc_id
+                            ))
+                            .with_default(&format!("{} {}", referenced_uc_id, relationship))
+                            .prompt()?;
+
+                        let result = controller.add_precondition_with_use_case(
+                            use_case_id.to_string(),
+                            scenario_id.to_string(),
+                            text,
+                            referenced_uc_id.to_string(),
+                            relationship.to_string(),
+                        )?;
+
+                        UI::show_success(&result.message)?;
+                    }
                 }
                 "Remove Precondition" => {
                     if scenario.preconditions.is_empty() {
@@ -836,17 +981,73 @@ impl ScenarioWorkflow {
                     UI::show_success(&result.message)?;
                 }
                 "Add Postcondition" => {
-                    let condition = Text::new("Enter postcondition:")
-                        .with_help_message(
-                            "Describe what must be true after this scenario completes",
-                        )
-                        .prompt()?;
+                    // Let user choose between text or use case reference
+                    let condition_type = Select::new(
+                        "How would you like to specify the postcondition?",
+                        vec!["Text description", "Reference to use case"],
+                    )
+                    .prompt()?;
 
-                    let result = controller.add_postcondition(
-                        use_case_id.to_string(),
-                        scenario_id.to_string(),
-                        condition,
-                    )?;
+                    let result = match condition_type {
+                        "Text description" => {
+                            let condition = Text::new("Enter postcondition:")
+                                .with_help_message(
+                                    "Describe what must be true after this scenario completes",
+                                )
+                                .prompt()?;
+
+                            controller.add_postcondition(
+                                use_case_id.to_string(),
+                                scenario_id.to_string(),
+                                condition,
+                            )?
+                        }
+                        "Reference to use case" => {
+                            // Get list of available use cases
+                            let available_use_cases = runner.get_available_use_cases()?;
+                            if available_use_cases.is_empty() {
+                                println!("\n  No use cases available to reference.\n");
+                                UI::pause_for_input()?;
+                                continue;
+                            }
+
+                            let use_case_options: Vec<String> = available_use_cases
+                                .iter()
+                                .map(|uc| format!("{} - {}", uc.id, uc.title))
+                                .collect();
+
+                            let selected = Select::new(
+                                "Select use case to reference:",
+                                use_case_options.clone(),
+                            )
+                            .prompt()?;
+
+                            // Extract the use case ID
+                            let target_use_case_id =
+                                selected.split(" - ").next().unwrap().to_string();
+
+                            // Ask for relationship
+                            let relationship = Text::new("Describe the relationship:")
+                                .with_help_message(
+                                    "e.g., 'must be completed', 'triggers', 'creates'",
+                                )
+                                .prompt()?;
+
+                            // Ask for description text
+                            let text = Text::new("Enter postcondition description:")
+                                .with_help_message("Describe what must be true after this scenario")
+                                .prompt()?;
+
+                            controller.add_postcondition_with_use_case(
+                                use_case_id.to_string(),
+                                scenario_id.to_string(),
+                                text,
+                                target_use_case_id,
+                                relationship,
+                            )?
+                        }
+                        _ => unreachable!(),
+                    };
 
                     UI::show_success(&result.message)?;
                 }
@@ -891,6 +1092,809 @@ impl ScenarioWorkflow {
             }
         }
 
+        Ok(())
+    }
+
+    /// Inline helper to remove repeat block within manage_steps context
+    fn remove_repeat_block_inline(
+        use_case_id: &str,
+        scenario_id: &str,
+        controller: &mut ScenarioController,
+    ) -> Result<()> {
+        let scenario = controller.get_scenario(use_case_id, scenario_id)?;
+
+        if scenario.repeat_blocks.is_empty() {
+            println!("\n  No repeat blocks to remove.\n");
+            UI::pause_for_input()?;
+            return Ok(());
+        }
+
+        let block_options: Vec<String> = scenario
+            .repeat_blocks
+            .iter()
+            .map(|b| format!("Steps {} to {}: {}", b.from_step, b.to_step, b.condition))
+            .collect();
+
+        let selected = Select::new("Select repeat block to remove:", block_options).prompt()?;
+
+        let from_step = selected
+            .split("Steps ")
+            .nth(1)
+            .and_then(|s| s.split(" to ").next())
+            .unwrap()
+            .to_string();
+
+        let to_step = selected
+            .split(" to ")
+            .nth(1)
+            .and_then(|s| s.split(":").next())
+            .unwrap()
+            .to_string();
+
+        let result = controller.remove_repeat_block(
+            use_case_id.to_string(),
+            scenario_id.to_string(),
+            from_step,
+            to_step,
+        )?;
+
+        UI::show_success(&result.message)?;
+        Ok(())
+    }
+
+    /// Inline helper to insert step with auto-renumbering
+    fn insert_step_inline(
+        use_case_id: &str,
+        scenario_id: &str,
+        controller: &mut ScenarioController,
+    ) -> Result<()> {
+        let scenario = controller.get_scenario(use_case_id, scenario_id)?;
+
+        if scenario.steps.is_empty() {
+            println!("\n  No steps yet. Use 'Add step' first.\n");
+            UI::pause_for_input()?;
+            return Ok(());
+        }
+
+        let step_options: Vec<String> = scenario
+            .steps
+            .iter()
+            .map(|s| format!("Step {}: {}", s.order, s.action))
+            .collect();
+
+        let after_step = Select::new("Insert after which step?", step_options).prompt()?;
+        let after_step_order = after_step
+            .split(':')
+            .next()
+            .unwrap()
+            .replace("Step ", "")
+            .trim()
+            .to_string();
+
+        let actor = Self::select_actor_for_step()?;
+
+        let add_receiver = Confirm::new("Add a receiving actor?")
+            .with_default(false)
+            .prompt()?;
+
+        let receiver = if add_receiver {
+            Self::select_actor_for_step()?
+        } else {
+            None
+        };
+
+        let description = Text::new("Step description:").prompt()?;
+
+        let result = controller.insert_step(
+            use_case_id.to_string(),
+            scenario_id.to_string(),
+            after_step_order,
+            actor.unwrap_or_else(|| "User".to_string()),
+            receiver,
+            description,
+            None,
+        )?;
+
+        UI::show_success(&result.message)?;
+        Ok(())
+    }
+
+    /// Inline helper to delete step with auto-renumbering
+    fn delete_step_inline(
+        use_case_id: &str,
+        scenario_id: &str,
+        controller: &mut ScenarioController,
+    ) -> Result<()> {
+        let scenario = controller.get_scenario(use_case_id, scenario_id)?;
+
+        if scenario.steps.is_empty() {
+            println!("\n  No steps to delete.\n");
+            UI::pause_for_input()?;
+            return Ok(());
+        }
+
+        let step_options: Vec<String> = scenario
+            .steps
+            .iter()
+            .map(|s| format!("Step {}: {}", s.order, s.action))
+            .collect();
+
+        let selected_step = Select::new("Select step to delete:", step_options).prompt()?;
+        let step_order = selected_step
+            .split(':')
+            .next()
+            .unwrap()
+            .replace("Step ", "")
+            .trim()
+            .to_string();
+
+        let result =
+            controller.delete_step(use_case_id.to_string(), scenario_id.to_string(), step_order)?;
+
+        UI::show_success(&result.message)?;
+        Ok(())
+    }
+
+    /// Inline helper to renumber steps within manage_steps context
+    #[allow(dead_code)]
+    fn renumber_steps_inline(
+        use_case_id: &str,
+        scenario_id: &str,
+        controller: &mut ScenarioController,
+    ) -> Result<()> {
+        let scenario = controller.get_scenario(use_case_id, scenario_id)?;
+
+        if scenario.steps.len() < 2 {
+            println!("\n  Need at least 2 steps to renumber.\n");
+            UI::pause_for_input()?;
+            return Ok(());
+        }
+
+        let step_options: Vec<String> = scenario
+            .steps
+            .iter()
+            .map(|s| format!("Step {}: {}", s.order, s.action))
+            .collect();
+
+        let from_step = Select::new("Renumber starting from which step?", step_options).prompt()?;
+        let from_step_order = from_step
+            .split(':')
+            .next()
+            .unwrap()
+            .replace("Step ", "")
+            .trim()
+            .to_string();
+
+        let increment = Text::new("Increment:")
+            .with_default("1")
+            .with_help_message("Usually 1, but can be 10 for leaving gaps")
+            .prompt()?;
+
+        let increment_val: i32 = increment.parse().unwrap_or(1);
+
+        let result = controller.renumber_steps(
+            use_case_id.to_string(),
+            scenario_id.to_string(),
+            from_step_order,
+            increment_val,
+        )?;
+
+        UI::show_success(&result.message)?;
+        Ok(())
+    }
+
+    // ============================================================================
+    // Legacy Functions (kept for reference, now integrated into manage_steps)
+    // ============================================================================
+
+    /// Create an extension scenario that diverges from a main scenario
+    /// Note: This is now called from within the step management menu
+    #[allow(dead_code)]
+    fn create_extension_scenario(use_case_id: &str) -> Result<()> {
+        UI::show_section_header("Create Extension Scenario", "🔀")?;
+
+        let mut controller = ScenarioController::new()?;
+        let scenarios = controller.get_scenarios(use_case_id)?;
+
+        // Filter to show only main scenarios
+        let main_scenarios: Vec<_> = scenarios.iter().filter(|s| s.is_main).collect();
+
+        if main_scenarios.is_empty() {
+            println!("\n  No main scenarios found. Create a main scenario first.\n");
+            UI::pause_for_input()?;
+            return Ok(());
+        }
+
+        // Select parent scenario
+        let scenario_options: Vec<String> = main_scenarios
+            .iter()
+            .map(|s| format!("{} - {} ({} steps)", s.id, s.title, s.steps.len()))
+            .collect();
+
+        let selected = Select::new("Select main scenario to extend:", scenario_options).prompt()?;
+        let parent_id = selected.split(" - ").next().unwrap();
+
+        let parent = scenarios.iter().find(|s| s.id == parent_id).unwrap();
+
+        // Select divergence point
+        if parent.steps.is_empty() {
+            println!("\n  Parent scenario has no steps. Add steps first.\n");
+            UI::pause_for_input()?;
+            return Ok(());
+        }
+
+        let step_options: Vec<String> = parent
+            .steps
+            .iter()
+            .map(|s| format!("Step {}: {}", s.order, s.action))
+            .collect();
+
+        let extends_step =
+            Select::new("Extension diverges at which step?", step_options).prompt()?;
+        let extends_at_step = extends_step
+            .split(':')
+            .next()
+            .unwrap()
+            .replace("Step ", "")
+            .trim()
+            .to_string();
+
+        // Optional return point
+        let add_return = Confirm::new("Does this extension return to the main scenario?")
+            .with_default(false)
+            .with_help_message("Some extensions rejoin the main flow, others end independently")
+            .prompt()?;
+
+        let returns_at_step = if add_return {
+            let return_options: Vec<String> = parent
+                .steps
+                .iter()
+                .map(|s| format!("Step {}: {}", s.order, s.action))
+                .collect();
+
+            let return_step = Select::new("Extension returns at which step?", return_options)
+                .with_help_message(
+                    "Can return to any step (earlier for loops, same for retry, later to continue)",
+                )
+                .prompt()?;
+            Some(
+                return_step
+                    .split(':')
+                    .next()
+                    .unwrap()
+                    .replace("Step ", "")
+                    .trim()
+                    .to_string(),
+            )
+        } else {
+            None
+        };
+
+        // Get extension details
+        let title = Text::new("Extension scenario title:")
+            .with_help_message("Brief, descriptive title (e.g., 'Invalid credentials error')")
+            .prompt()?;
+
+        let description = Text::new("Description:")
+            .with_help_message("Describe what this extension handles")
+            .prompt()?;
+
+        // Select primary actor
+        let actor = Self::select_actor_for_step()?.unwrap_or_else(|| "User".to_string());
+
+        // Create extension
+        let result = controller.create_extension_scenario(
+            use_case_id.to_string(),
+            parent_id.to_string(),
+            extends_at_step.clone(),
+            returns_at_step.clone(),
+            title.clone(),
+            description,
+            actor,
+        )?;
+
+        UI::show_success(&result.message)?;
+
+        // Prompt to add steps
+        let add_steps = Confirm::new("Add steps to this extension now?")
+            .with_default(true)
+            .prompt()?;
+
+        if add_steps {
+            // Extract scenario_id from result message
+            let scenario_id = result
+                .message
+                .split(':')
+                .nth(1)
+                .and_then(|part| part.trim().split(" - ").next())
+                .map(|id| id.trim())
+                .unwrap_or("");
+
+            if !scenario_id.is_empty() {
+                println!("\n  📝 Adding steps to extension: {}\n", title);
+                loop {
+                    let step_actor = Self::select_actor_for_step()?;
+
+                    let add_receiver = Confirm::new("Add a receiving actor?")
+                        .with_default(false)
+                        .prompt()?;
+
+                    let receiver = if add_receiver {
+                        Self::select_actor_for_step()?
+                    } else {
+                        None
+                    };
+
+                    let step_description = Text::new("Step description:").prompt()?;
+
+                    let step_result = controller.add_step(
+                        use_case_id.to_string(),
+                        scenario_id.to_string(),
+                        step_description,
+                        None,
+                        step_actor,
+                        receiver,
+                    )?;
+
+                    UI::show_success(&step_result.message)?;
+
+                    let add_more = Confirm::new("Add another step?")
+                        .with_default(true)
+                        .prompt()?;
+
+                    if !add_more {
+                        break;
+                    }
+                }
+            }
+        }
+
+        UI::pause_for_input()?;
+        Ok(())
+    }
+
+    /// Advanced scenario operations menu
+    #[allow(dead_code)]
+    fn advanced_operations(use_case_id: &str) -> Result<()> {
+        loop {
+            UI::show_section_header("Advanced Scenario Operations", "⚙️")?;
+
+            let actions = vec![
+                "Add repeat block",
+                "Remove repeat block",
+                "Smart insert step (with extension updates)",
+                "Smart delete step (with validation)",
+                "Renumber steps",
+                "Back",
+            ];
+
+            let choice = Select::new("Select operation:", actions).prompt()?;
+
+            match choice {
+                "Add repeat block" => {
+                    Self::add_repeat_block(use_case_id)?;
+                }
+                "Remove repeat block" => {
+                    Self::remove_repeat_block(use_case_id)?;
+                }
+                "Smart insert step (with extension updates)" => {
+                    Self::smart_insert_step(use_case_id)?;
+                }
+                "Smart delete step (with validation)" => {
+                    Self::smart_delete_step(use_case_id)?;
+                }
+                "Renumber steps" => {
+                    Self::renumber_steps(use_case_id)?;
+                }
+                "Back" => break,
+                _ => {}
+            }
+        }
+
+        Ok(())
+    }
+
+    /// Add a repeat block to a scenario
+    #[allow(dead_code)]
+    fn add_repeat_block(use_case_id: &str) -> Result<()> {
+        UI::show_section_header("Add Repeat Block", "🔁")?;
+
+        let mut controller = ScenarioController::new()?;
+        let scenarios = controller.get_scenarios(use_case_id)?;
+
+        if scenarios.is_empty() {
+            println!("\n  No scenarios available.\n");
+            UI::pause_for_input()?;
+            return Ok(());
+        }
+
+        // Select scenario
+        let scenario_options: Vec<String> = scenarios
+            .iter()
+            .map(|s| format!("{} - {} ({} steps)", s.id, s.title, s.steps.len()))
+            .collect();
+
+        let selected = Select::new("Select scenario:", scenario_options).prompt()?;
+        let scenario_id = selected.split(" - ").next().unwrap();
+
+        let scenario = scenarios.iter().find(|s| s.id == scenario_id).unwrap();
+
+        if scenario.steps.len() < 2 {
+            println!("\n  Need at least 2 steps for a repeat block.\n");
+            UI::pause_for_input()?;
+            return Ok(());
+        }
+
+        // Select from_step
+        let step_options: Vec<String> = scenario
+            .steps
+            .iter()
+            .map(|s| format!("Step {}: {}", s.order, s.action))
+            .collect();
+
+        let from_choice = Select::new("Repeat block starts at:", step_options.clone()).prompt()?;
+        let from_step = from_choice
+            .split(':')
+            .next()
+            .unwrap()
+            .replace("Step ", "")
+            .trim()
+            .to_string();
+
+        // Select to_step (must be after from_step)
+        let to_options: Vec<String> = scenario
+            .steps
+            .iter()
+            .filter(|s| s.order > from_step)
+            .map(|s| format!("Step {}: {}", s.order, s.action))
+            .collect();
+
+        if to_options.is_empty() {
+            println!("\n  No steps after the selected start step.\n");
+            UI::pause_for_input()?;
+            return Ok(());
+        }
+
+        let to_choice = Select::new("Repeat block ends at:", to_options).prompt()?;
+        let to_step = to_choice
+            .split(':')
+            .next()
+            .unwrap()
+            .replace("Step ", "")
+            .trim()
+            .to_string();
+
+        // Get condition
+        let condition = Text::new("Repeat condition:")
+            .with_help_message("Describe when to repeat (e.g., 'User has more items to process')")
+            .prompt()?;
+
+        let result = controller.add_repeat_block(
+            use_case_id.to_string(),
+            scenario_id.to_string(),
+            from_step,
+            to_step,
+            condition,
+        )?;
+
+        UI::show_success(&result.message)?;
+        UI::pause_for_input()?;
+        Ok(())
+    }
+
+    /// Remove a repeat block from a scenario
+    #[allow(dead_code)]
+    fn remove_repeat_block(use_case_id: &str) -> Result<()> {
+        UI::show_section_header("Remove Repeat Block", "❌")?;
+
+        let mut controller = ScenarioController::new()?;
+        let scenarios = controller.get_scenarios(use_case_id)?;
+
+        // Filter scenarios with repeat blocks
+        let scenarios_with_blocks: Vec<_> = scenarios
+            .iter()
+            .filter(|s| !s.repeat_blocks.is_empty())
+            .collect();
+
+        if scenarios_with_blocks.is_empty() {
+            println!("\n  No scenarios with repeat blocks.\n");
+            UI::pause_for_input()?;
+            return Ok(());
+        }
+
+        // Select scenario
+        let scenario_options: Vec<String> = scenarios_with_blocks
+            .iter()
+            .map(|s| {
+                format!(
+                    "{} - {} ({} repeat blocks)",
+                    s.id,
+                    s.title,
+                    s.repeat_blocks.len()
+                )
+            })
+            .collect();
+
+        let selected = Select::new("Select scenario:", scenario_options).prompt()?;
+        let scenario_id = selected.split(" - ").next().unwrap();
+
+        let scenario = scenarios.iter().find(|s| s.id == scenario_id).unwrap();
+
+        // Select repeat block
+        let block_options: Vec<String> = scenario
+            .repeat_blocks
+            .iter()
+            .map(|b| format!("Steps {} to {} ({})", b.from_step, b.to_step, b.condition))
+            .collect();
+
+        let block_choice = Select::new("Select repeat block to remove:", block_options).prompt()?;
+
+        // Extract from_step and to_step
+        let parts: Vec<&str> = block_choice.split_whitespace().collect();
+        let from_step = parts[1].to_string();
+        let to_step = parts[3].to_string();
+
+        let result = controller.remove_repeat_block(
+            use_case_id.to_string(),
+            scenario_id.to_string(),
+            from_step,
+            to_step,
+        )?;
+
+        UI::show_success(&result.message)?;
+        UI::pause_for_input()?;
+        Ok(())
+    }
+
+    /// Smart insert step with automatic extension updates
+    fn smart_insert_step(use_case_id: &str) -> Result<()> {
+        UI::show_section_header("Smart Insert Step", "➕")?;
+
+        let mut controller = ScenarioController::new()?;
+        let scenarios = controller.get_scenarios(use_case_id)?;
+
+        // Filter to main scenarios only
+        let main_scenarios: Vec<_> = scenarios.iter().filter(|s| s.is_main).collect();
+
+        if main_scenarios.is_empty() {
+            println!("\n  No main scenarios. Smart insert only works on main scenarios.\n");
+            UI::pause_for_input()?;
+            return Ok(());
+        }
+
+        // Select scenario
+        let scenario_options: Vec<String> = main_scenarios
+            .iter()
+            .map(|s| format!("{} - {} ({} steps)", s.id, s.title, s.steps.len()))
+            .collect();
+
+        let selected = Select::new("Select main scenario:", scenario_options).prompt()?;
+        let scenario_id = selected.split(" - ").next().unwrap();
+
+        let scenario = scenarios.iter().find(|s| s.id == scenario_id).unwrap();
+
+        if scenario.steps.is_empty() {
+            println!("\n  No steps. Use regular 'Add step' first.\n");
+            UI::pause_for_input()?;
+            return Ok(());
+        }
+
+        // Select insertion point
+        let step_options: Vec<String> = scenario
+            .steps
+            .iter()
+            .map(|s| format!("After step {}: {}", s.order, s.action))
+            .collect();
+
+        let after_choice = Select::new("Insert after which step?", step_options).prompt()?;
+        let after_step = after_choice
+            .split(':')
+            .next()
+            .unwrap()
+            .replace("After step ", "")
+            .trim()
+            .to_string();
+
+        // Get step details
+        let actor = Self::select_actor_for_step()?.unwrap_or_else(|| "User".to_string());
+
+        let add_receiver = Confirm::new("Add a receiving actor?")
+            .with_default(false)
+            .prompt()?;
+
+        let receiver = if add_receiver {
+            Self::select_actor_for_step()?
+        } else {
+            None
+        };
+
+        let action = Text::new("Step action:").prompt()?;
+
+        let expected_result = Text::new("Expected result (optional):")
+            .prompt()
+            .ok()
+            .filter(|s| !s.is_empty());
+
+        let result = controller.insert_step(
+            use_case_id.to_string(),
+            scenario_id.to_string(),
+            after_step,
+            actor,
+            receiver,
+            action,
+            expected_result,
+        )?;
+
+        UI::show_success(&result.message)?;
+        UI::pause_for_input()?;
+        Ok(())
+    }
+
+    /// Smart delete step with extension validation
+    fn smart_delete_step(use_case_id: &str) -> Result<()> {
+        UI::show_section_header("Smart Delete Step", "🗑️")?;
+
+        let mut controller = ScenarioController::new()?;
+        let scenarios = controller.get_scenarios(use_case_id)?;
+
+        // Filter to main scenarios only
+        let main_scenarios: Vec<_> = scenarios.iter().filter(|s| s.is_main).collect();
+
+        if main_scenarios.is_empty() {
+            println!("\n  No main scenarios. Smart delete only works on main scenarios.\n");
+            UI::pause_for_input()?;
+            return Ok(());
+        }
+
+        // Select scenario
+        let scenario_options: Vec<String> = main_scenarios
+            .iter()
+            .map(|s| format!("{} - {} ({} steps)", s.id, s.title, s.steps.len()))
+            .collect();
+
+        let selected = Select::new("Select main scenario:", scenario_options).prompt()?;
+        let scenario_id = selected.split(" - ").next().unwrap();
+
+        let scenario = scenarios.iter().find(|s| s.id == scenario_id).unwrap();
+
+        if scenario.steps.is_empty() {
+            println!("\n  No steps to delete.\n");
+            UI::pause_for_input()?;
+            return Ok(());
+        }
+
+        // Select step to delete
+        let step_options: Vec<String> = scenario
+            .steps
+            .iter()
+            .map(|s| format!("Step {}: {}", s.order, s.action))
+            .collect();
+
+        let step_choice = Select::new("Select step to delete:", step_options).prompt()?;
+        let step_order = step_choice
+            .split(':')
+            .next()
+            .unwrap()
+            .replace("Step ", "")
+            .trim()
+            .to_string();
+
+        // Confirm deletion
+        let confirm = Confirm::new(&format!("Delete step {}?", step_order))
+            .with_default(false)
+            .with_help_message("This will check if any extensions are affected")
+            .prompt()?;
+
+        if !confirm {
+            println!("\n  Deletion cancelled.\n");
+            UI::pause_for_input()?;
+            return Ok(());
+        }
+
+        let result =
+            controller.delete_step(use_case_id.to_string(), scenario_id.to_string(), step_order)?;
+
+        UI::show_success(&result.message)?;
+        UI::pause_for_input()?;
+        Ok(())
+    }
+
+    /// Renumber steps in a scenario
+    #[allow(dead_code)]
+    fn renumber_steps(use_case_id: &str) -> Result<()> {
+        UI::show_section_header("Renumber Steps", "🔢")?;
+
+        let mut controller = ScenarioController::new()?;
+        let scenarios = controller.get_scenarios(use_case_id)?;
+
+        if scenarios.is_empty() {
+            println!("\n  No scenarios available.\n");
+            UI::pause_for_input()?;
+            return Ok(());
+        }
+
+        // Select scenario
+        let scenario_options: Vec<String> = scenarios
+            .iter()
+            .map(|s| format!("{} - {} ({} steps)", s.id, s.title, s.steps.len()))
+            .collect();
+
+        let selected = Select::new("Select scenario:", scenario_options).prompt()?;
+        let scenario_id = selected.split(" - ").next().unwrap();
+
+        let scenario = scenarios.iter().find(|s| s.id == scenario_id).unwrap();
+
+        if scenario.steps.len() < 2 {
+            println!("\n  Need at least 2 steps to renumber.\n");
+            UI::pause_for_input()?;
+            return Ok(());
+        }
+
+        // Select starting point
+        let step_options: Vec<String> = scenario
+            .steps
+            .iter()
+            .map(|s| format!("Step {}: {}", s.order, s.action))
+            .collect();
+
+        let from_choice = Select::new("Renumber starting from:", step_options).prompt()?;
+        let from_step = from_choice
+            .split(':')
+            .next()
+            .unwrap()
+            .replace("Step ", "")
+            .trim()
+            .to_string();
+
+        // Get increment
+        let increment_str = Text::new("Increment amount:")
+            .with_help_message(
+                "Positive to shift forward, negative to shift backward (e.g., 1, -1, 2)",
+            )
+            .with_default("1")
+            .prompt()?;
+
+        let increment: i32 = increment_str.parse().unwrap_or(1);
+
+        let confirm = Confirm::new(&format!(
+            "Renumber steps from {} with increment {}?",
+            from_step, increment
+        ))
+        .with_default(true)
+        .prompt()?;
+
+        if !confirm {
+            println!("\n  Renumbering cancelled.\n");
+            UI::pause_for_input()?;
+            return Ok(());
+        }
+
+        let result = controller.renumber_steps(
+            use_case_id.to_string(),
+            scenario_id.to_string(),
+            from_step,
+            increment,
+        )?;
+
+        UI::show_success(&result.message)?;
+        UI::pause_for_input()?;
+        Ok(())
+    }
+
+    /// Validate all scenarios in a use case
+    fn validate_scenarios(use_case_id: &str) -> Result<()> {
+        UI::show_section_header("Validate Scenarios", "✅")?;
+
+        let mut controller = ScenarioController::new()?;
+        let result = controller.validate_scenarios(use_case_id.to_string())?;
+
+        if result.is_success() {
+            UI::show_success(&result.message)?;
+        } else {
+            println!("\n{}\n", result.message);
+        }
+
+        UI::pause_for_input()?;
         Ok(())
     }
 }

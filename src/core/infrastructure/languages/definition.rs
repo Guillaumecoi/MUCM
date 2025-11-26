@@ -147,7 +147,7 @@ template_file = "test.hbs""#,
     fn test_language_definition_from_toml() {
         let temp_dir = TempDir::new().unwrap();
         let lang_dir = create_test_language(
-            &temp_dir.path(),
+            temp_dir.path(),
             "testlang",
             &["tl"],
             "tl",

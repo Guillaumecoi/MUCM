@@ -36,6 +36,7 @@ mod tests {
             "UC-001".to_string(),
             "Test Use Case".to_string(),
             "testing".to_string(),
+            "TES".to_string(),
             "Description".to_string(),
             "medium".to_string(),
         )
@@ -61,6 +62,7 @@ mod tests {
             "UC-001".to_string(),
             "Test Use Case".to_string(),
             "testing".to_string(),
+            "TES".to_string(),
             "Description".to_string(),
             "medium".to_string(),
         )
@@ -95,6 +97,7 @@ mod tests {
             "UC-001".to_string(),
             "Test Use Case".to_string(),
             "testing".to_string(),
+            "TES".to_string(),
             "Description".to_string(),
             "medium".to_string(),
         )

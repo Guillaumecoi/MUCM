@@ -211,14 +211,26 @@ impl SqliteUseCaseRepository {
             })?;
             let references: Vec<ScenarioReference> = ref_rows.collect::<Result<Vec<_>, _>>()?;
 
+            // For backward compatibility, derive primary_actor from first step or default to User
+            let primary_actor = steps
+                .first()
+                .map(|s| s.actor.clone())
+                .unwrap_or(crate::core::domain::Actor::User);
+
             scenarios.push(Scenario {
                 id: scenario_id,
                 title,
                 description,
                 scenario_type,
                 status,
+                is_main: true, // Default to main for existing scenarios
+                primary_actor,
                 persona,
+                extends_scenario_id: None,
+                extends_at_step: None,
+                returns_at_step: None,
                 steps,
+                repeat_blocks: Vec::new(), // Empty for existing scenarios
                 preconditions,
                 postconditions,
                 references,
@@ -328,8 +340,8 @@ impl SqliteUseCaseRepository {
                 .context("Failed to serialize scenario extra fields")?;
 
             tx.execute(
-                "INSERT INTO scenarios (id, use_case_id, title, description, scenario_type, status, persona, extra_json)
-                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                "INSERT INTO scenarios (id, use_case_id, title, description, scenario_type, status, persona, created_at, updated_at, extra_json)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'), ?)",
                 params![
                     scenario.id,
                     use_case.id,
@@ -432,42 +444,55 @@ impl SqliteUseCaseRepository {
                         )
                     })?;
 
-                Ok(UseCase {
-                    id: row.get(0)?,
-                    title: row.get(1)?,
-                    category: row.get(2)?,
-                    description: row.get(3)?,
-                    priority: row.get::<_, String>(4)?.parse().map_err(|e: String| {
-                        rusqlite::Error::FromSqlConversionFailure(
-                            4,
-                            rusqlite::types::Type::Text,
-                            Box::new(std::io::Error::new(std::io::ErrorKind::InvalidData, e)),
-                        )
-                    })?,
-                    metadata: crate::core::domain::Metadata {
-                        created_at: row.get::<_, String>(5)?.parse().map_err(|e| {
+                {
+                    let category: String = row.get(2)?;
+                    // Generate abbreviation from category (first 3 alphabetic chars, uppercase)
+                    // TODO: Once schema is updated, read from database instead
+                    let category_abbreviation = category
+                        .chars()
+                        .filter(|c| c.is_alphabetic())
+                        .take(3)
+                        .collect::<String>()
+                        .to_uppercase();
+
+                    Ok(UseCase {
+                        id: row.get(0)?,
+                        title: row.get(1)?,
+                        category,
+                        category_abbreviation,
+                        description: row.get(3)?,
+                        priority: row.get::<_, String>(4)?.parse().map_err(|e: String| {
                             rusqlite::Error::FromSqlConversionFailure(
-                                5,
+                                4,
                                 rusqlite::types::Type::Text,
-                                Box::new(e),
+                                Box::new(std::io::Error::new(std::io::ErrorKind::InvalidData, e)),
                             )
                         })?,
-                        updated_at: row.get::<_, String>(6)?.parse().map_err(|e| {
-                            rusqlite::Error::FromSqlConversionFailure(
-                                6,
-                                rusqlite::types::Type::Text,
-                                Box::new(e),
-                            )
-                        })?,
-                    },
-                    views: Vec::new(), // Will be populated below (multi-view support)
-                    preconditions: Vec::new(), // Will be populated below
-                    postconditions: Vec::new(), // Will be populated below
-                    methodology_fields: std::collections::HashMap::new(), // New field for methodology-specific fields
-                    use_case_references: Vec::new(),                      // Will be populated below
-                    scenarios: Vec::new(), // Will be loaded from relational tables
-                    extra,
-                })
+                        metadata: crate::core::domain::Metadata {
+                            created_at: row.get::<_, String>(5)?.parse().map_err(|e| {
+                                rusqlite::Error::FromSqlConversionFailure(
+                                    5,
+                                    rusqlite::types::Type::Text,
+                                    Box::new(e),
+                                )
+                            })?,
+                            updated_at: row.get::<_, String>(6)?.parse().map_err(|e| {
+                                rusqlite::Error::FromSqlConversionFailure(
+                                    6,
+                                    rusqlite::types::Type::Text,
+                                    Box::new(e),
+                                )
+                            })?,
+                        },
+                        views: Vec::new(), // Will be populated below (multi-view support)
+                        preconditions: Vec::new(), // Will be populated below
+                        postconditions: Vec::new(), // Will be populated below
+                        methodology_fields: std::collections::HashMap::new(), // New field for methodology-specific fields
+                        use_case_references: Vec::new(), // Will be populated below
+                        scenarios: Vec::new(),           // Will be loaded from relational tables
+                        extra,
+                    })
+                }
             })
             .context("Failed to execute use case query")?;
 

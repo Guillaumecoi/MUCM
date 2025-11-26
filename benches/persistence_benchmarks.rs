@@ -9,6 +9,7 @@ fn create_test_use_case(id: &str, title: &str, category: &str) -> UseCase {
         id.to_string(),
         title.to_string(),
         category.to_string(),
+        "TES".to_string(),
         "A test use case for benchmarking".to_string(),
         "medium".to_string(),
     )

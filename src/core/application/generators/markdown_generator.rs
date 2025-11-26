@@ -106,6 +106,7 @@ mod tests {
             "UC-TEST-001".to_string(),
             "Test Use Case".to_string(),
             "Test".to_string(),
+            "TES".to_string(), // category_abbreviation
             "Test description".to_string(),
             "Medium".to_string(),
         )
@@ -163,6 +164,7 @@ mod tests {
             "UC-TEST-001".to_string(),
             "Test Use Case".to_string(),
             "Test".to_string(),
+            "TES".to_string(), // category_abbreviation
             "Test description".to_string(),
             "Medium".to_string(),
         )

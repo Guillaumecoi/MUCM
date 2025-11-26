@@ -184,7 +184,8 @@ fn handle_scenario_step_command(
             order,
             description,
         } => {
-            let result = controller.edit_step(use_case_id, scenario_id, order, description)?;
+            let result =
+                controller.edit_step(use_case_id, scenario_id, order, None, description)?;
             DisplayResultFormatter::display(&result);
         }
         ScenarioStepCommands::Remove {
