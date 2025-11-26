@@ -78,13 +78,35 @@ mod tests {
     use super::*;
     use serial_test::serial;
     use std::env;
+    use std::path::PathBuf;
     use tempfile::TempDir;
+
+    /// RAII guard that restores the original working directory on drop
+    struct DirGuard {
+        original: PathBuf,
+    }
+
+    impl DirGuard {
+        fn new() -> Result<Self> {
+            Ok(Self {
+                original: env::current_dir()?,
+            })
+        }
+    }
+
+    impl Drop for DirGuard {
+        fn drop(&mut self) {
+            let _ = env::set_current_dir(&self.original);
+        }
+    }
 
     #[test]
     #[serial]
     fn test_init_test_project_creates_config_dir() -> Result<()> {
+        let _guard = DirGuard::new()?;
         let temp_dir = TempDir::new()?;
-        env::set_current_dir(&temp_dir)?;
+        let temp_path = temp_dir.path();
+        env::set_current_dir(temp_path)?;
 
         init_test_project(None)?;
 
@@ -97,8 +119,10 @@ mod tests {
     #[test]
     #[serial]
     fn test_init_test_project_with_language() -> Result<()> {
+        let _guard = DirGuard::new()?;
         let temp_dir = TempDir::new()?;
-        env::set_current_dir(&temp_dir)?;
+        let temp_path = temp_dir.path();
+        env::set_current_dir(temp_path)?;
 
         let config = init_test_project(Some("python".to_string()))?;
 
@@ -111,9 +135,10 @@ mod tests {
     #[test]
     #[serial]
     fn test_init_test_project_without_language() -> Result<()> {
+        let _guard = DirGuard::new()?;
         let temp_dir = TempDir::new()?;
-        let temp_path = temp_dir.path().to_path_buf();
-        env::set_current_dir(&temp_path)?;
+        let temp_path = temp_dir.path();
+        env::set_current_dir(temp_path)?;
 
         let config = init_test_project(None)?;
 

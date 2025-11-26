@@ -5,10 +5,11 @@ use tempfile::TempDir;
 
 /// Create a test use case with the given ID
 fn create_test_use_case(id: &str, title: &str, category: &str) -> UseCase {
-    UseCase::new_with_auto_abbreviation(
+    UseCase::new(
         id.to_string(),
         title.to_string(),
         category.to_string(),
+        "TES".to_string(),
         "A test use case for benchmarking".to_string(),
         "medium".to_string(),
     )

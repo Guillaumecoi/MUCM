@@ -75,10 +75,11 @@ mod tests {
         let file_ops = FileOperations::new(config);
 
         // Create a test use case
-        let use_case = UseCase::new_with_auto_abbreviation(
+        let use_case = UseCase::new(
             "UC-TEST-001".to_string(),
             "Test Use Case".to_string(),
             "Test".to_string(),
+            "TES".to_string(),
             "A test use case".to_string(),
             "Medium".to_string(),
         )
@@ -100,10 +101,11 @@ mod tests {
         assert!(!file_ops.test_file_exists(&use_case, "js"));
 
         // Test with different use case
-        let other_use_case = UseCase::new_with_auto_abbreviation(
+        let other_use_case = UseCase::new(
             "UC-OTHER-001".to_string(),
             "Other Use Case".to_string(),
             "Test".to_string(),
+            "TES".to_string(),
             "Another test use case".to_string(),
             "Medium".to_string(),
         )
@@ -125,10 +127,11 @@ mod tests {
         let file_ops = FileOperations::new(config);
 
         // Create a test use case
-        let use_case = UseCase::new_with_auto_abbreviation(
+        let use_case = UseCase::new(
             "UC-TEST-002".to_string(),
             "Test Use Case 2".to_string(),
             "Feature".to_string(),
+            "FEA".to_string(),
             "A test use case".to_string(),
             "Medium".to_string(),
         )

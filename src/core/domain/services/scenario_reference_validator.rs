@@ -88,10 +88,11 @@ mod tests {
     use crate::core::domain::entities::{Scenario, ScenarioReference, ScenarioType};
 
     fn create_test_use_case_with_scenarios() -> UseCase {
-        let mut uc = UseCase::new_with_auto_abbreviation(
+        let mut uc = UseCase::new(
             "UC-TEST-001".to_string(),
             "Test".to_string(),
             "Test".to_string(),
+            "TES".to_string(),
             "Test".to_string(),
             "medium".to_string(),
         )

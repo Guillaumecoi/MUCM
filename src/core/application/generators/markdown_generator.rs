@@ -102,10 +102,11 @@ mod tests {
     #[test]
     fn test_methodology_fields_flattening() {
         // Create a use case with methodology_fields
-        let mut use_case = UseCase::new_with_auto_abbreviation(
+        let mut use_case = UseCase::new(
             "UC-TEST-001".to_string(),
             "Test Use Case".to_string(),
             "Test".to_string(),
+            "TES".to_string(), // category_abbreviation
             "Test description".to_string(),
             "Medium".to_string(),
         )
@@ -159,10 +160,11 @@ mod tests {
     #[test]
     fn test_standard_fields_take_priority_over_methodology_fields() {
         // Create a use case with both extra and methodology_fields
-        let mut use_case = UseCase::new_with_auto_abbreviation(
+        let mut use_case = UseCase::new(
             "UC-TEST-001".to_string(),
             "Test Use Case".to_string(),
             "Test".to_string(),
+            "TES".to_string(), // category_abbreviation
             "Test description".to_string(),
             "Medium".to_string(),
         )

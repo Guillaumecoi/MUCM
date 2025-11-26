@@ -109,32 +109,6 @@ impl UseCase {
         })
     }
 
-    /// Create a use case with auto-generated abbreviation (first 3 chars of category, uppercase)
-    /// For backward compatibility and migration - prefer using new() with explicit abbreviation
-    #[deprecated(note = "Use new() with explicit abbreviation from Category instead")]
-    pub fn new_with_auto_abbreviation(
-        id: String,
-        title: String,
-        category: String,
-        description: String,
-        priority: String,
-    ) -> Result<Self, String> {
-        let category_abbreviation = category
-            .chars()
-            .filter(|c| c.is_alphabetic())
-            .take(3)
-            .collect::<String>()
-            .to_uppercase();
-        Self::new(
-            id,
-            title,
-            category,
-            category_abbreviation,
-            description,
-            priority,
-        )
-    }
-
     pub fn status(&self) -> Status {
         if self.scenarios.is_empty() {
             return Status::Planned;
