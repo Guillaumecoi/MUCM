@@ -106,23 +106,23 @@ impl UseCaseWorkflow {
                 use crate::controller::UseCaseController;
                 let mut uc_controller = UseCaseController::new()?;
 
-                // Collect preconditions using the reusable helper
-                let preconditions =
-                    super::conditions::ConditionsWorkflow::collect_conditions_with_refs(
-                        "preconditions",
-                        "use case",
-                        &use_case_id,
-                    )?;
+                // Collect preconditions with use case references (exclude self)
+                let preconditions = prompts::collect_conditions(
+                    "preconditions",
+                    true,               // Allow references to other use cases
+                    Some(&use_case_id), // Exclude self-reference
+                )?;
 
                 for condition in preconditions {
                     uc_controller.add_precondition(use_case_id.clone(), condition)?;
                 }
 
                 // Collect postconditions (text-only, no references)
-                let postconditions =
-                    super::conditions::ConditionsWorkflow::collect_conditions_text_only(
-                        "postconditions",
-                    )?;
+                let postconditions = prompts::collect_conditions(
+                    "postconditions",
+                    false, // No references for postconditions
+                    None,
+                )?;
 
                 for condition in postconditions {
                     uc_controller.add_postcondition(use_case_id.clone(), condition)?;
@@ -177,18 +177,19 @@ impl UseCaseWorkflow {
             .with_help_message("Person responsible for reviewing this use case")
             .prompt_skippable()?;
 
-        // Collect preconditions
+        // Collect preconditions with use case references
+        // Note: Use case doesn't exist yet, so can't exclude self
         let preconditions = prompts::collect_conditions(
             "preconditions",
-            false, // No use case references for now (simpler flow)
-            vec![],
+            true, // Allow references to other use cases
+            None, // No self to exclude yet (creating new use case)
         )?;
 
-        // Collect postconditions
+        // Collect postconditions (text-only, no references)
         let postconditions = prompts::collect_conditions(
             "postconditions",
-            false, // No use case references for postconditions
-            vec![],
+            false, // No references for postconditions
+            None,
         )?;
 
         // Collect methodology-specific field values
