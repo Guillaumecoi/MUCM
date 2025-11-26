@@ -139,6 +139,12 @@ impl ConfigFileManager {
             "default_methodology",
             &format!(r#""{}""#, new_config.templates.default_methodology),
         );
+        content = Self::update_toml_value(
+            &content,
+            "templates",
+            "default_scenario_template",
+            &format!(r#""{}""#, new_config.templates.default_scenario_template),
+        );
 
         // Update generation settings
         content = Self::update_toml_value(

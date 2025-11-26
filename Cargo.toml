@@ -39,6 +39,7 @@ handlebars = "6.3.2"
 # File system and I/O
 walkdir = "2.5"
 directories = "6.0"
+include_dir = "0.7"
 
 # Date and time
 chrono = { version = "0.4", features = ["serde"] }

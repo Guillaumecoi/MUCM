@@ -34,8 +34,12 @@
 
 use crate::config::types::Config;
 use anyhow::{Context, Result};
+use include_dir::{include_dir, Dir};
 use std::fs;
 use std::path::{Path, PathBuf};
+
+// Embed source templates at compile time for cargo install support
+static EMBEDDED_TEMPLATES: Dir = include_dir!("$CARGO_MANIFEST_DIR/source-templates");
 
 pub struct TemplateManager;
 
@@ -96,6 +100,15 @@ impl TemplateManager {
             &format!(
                 r#"default_methodology = "{}""#,
                 config.templates.default_methodology
+            ),
+        );
+
+        // Default scenario template
+        template_content = template_content.replace(
+            r#"default_scenario_template = "scenarios/scenario.hbs""#,
+            &format!(
+                r#"default_scenario_template = "{}""#,
+                config.templates.default_scenario_template
             ),
         );
 
@@ -231,10 +244,51 @@ impl TemplateManager {
             }
         }
 
+        // Last resort: extract embedded templates to user config
+        if let Some(proj_dirs) = ProjectDirs::from("", "", "mucm") {
+            let user_templates = proj_dirs.config_dir().join("templates");
+
+            // Extract embedded templates if they don't exist
+            if !user_templates.exists() {
+                Self::extract_embedded_templates(&user_templates)?;
+                eprintln!(
+                    "✓ Installed embedded templates to {}",
+                    user_templates.display()
+                );
+            }
+
+            if user_templates.exists() {
+                return Ok(user_templates);
+            }
+        }
+
         anyhow::bail!(
-            "Source templates directory not found. Run from project root or ensure source-templates/ exists.\n\
-             Tip: Templates should be installed to ~/.config/mucm/templates/ automatically on first run."
+            "Source templates directory not found and could not extract embedded templates.\n\
+             This should not happen - please report this issue."
         )
+    }
+
+    /// Extract embedded templates to user config directory
+    ///
+    /// This function extracts the templates that were embedded at compile time
+    /// to the user's config directory. This is used when cargo install is used
+    /// and the source-templates directory is not available.
+    ///
+    /// # Arguments
+    /// * `target_path` - Path where templates should be extracted
+    ///
+    /// # Returns
+    /// Ok(()) if successful, or an error if extraction fails
+    fn extract_embedded_templates(target_path: &Path) -> Result<()> {
+        // Create the target directory
+        fs::create_dir_all(target_path).context("Failed to create templates directory")?;
+
+        // Extract all files from the embedded directory
+        EMBEDDED_TEMPLATES
+            .extract(target_path)
+            .context("Failed to extract embedded templates")?;
+
+        Ok(())
     }
 
     /// Install templates to user config directory (~/.config/mucm/templates/)

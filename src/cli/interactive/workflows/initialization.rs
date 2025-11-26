@@ -220,6 +220,7 @@ impl Initialization {
             &test_dir,
             &persona_dir,
             &data_dir,
+            &scenario_template,
         )?;
 
         // Confirm settings
@@ -272,6 +273,7 @@ fn show_configuration_summary(
     test_dir: &str,
     persona_dir: &str,
     data_dir: &str,
+    scenario_template: &Option<String>,
 ) -> Result<()> {
     println!("\n✨ Configuration Summary:");
     println!(
@@ -281,6 +283,12 @@ fn show_configuration_summary(
     println!("   Methodologies: {}", selected_methodologies.join(", "));
     println!("   Default: {}", default_methodology);
     println!("   Storage: {}", storage_backend);
+    println!(
+        "   Scenario Template: {}",
+        scenario_template
+            .as_ref()
+            .unwrap_or(&"scenarios/scenario.hbs".to_string())
+    );
     println!("   Use case dir: {}", use_case_dir);
     println!("   Test dir: {}", test_dir);
     println!("   Persona dir: {}", persona_dir);
