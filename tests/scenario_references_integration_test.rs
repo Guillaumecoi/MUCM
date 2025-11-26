@@ -12,7 +12,7 @@ use tempfile::TempDir;
 
 /// Test helper: Create a test use case with scenarios
 fn create_test_use_case_with_scenarios() -> UseCase {
-    let mut use_case = UseCase::new(
+    let mut use_case = UseCase::new_with_auto_abbreviation(
         "UC-TEST-001".to_string(),
         "Test Use Case".to_string(),
         "test".to_string(),

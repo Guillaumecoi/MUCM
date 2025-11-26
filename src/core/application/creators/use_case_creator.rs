@@ -39,9 +39,14 @@ impl UseCaseCreator {
         let description = description.unwrap_or_default();
 
         // Create base use case
-        let mut use_case =
-            UseCase::new(use_case_id.clone(), title, category, description, priority)
-                .map_err(|e: String| anyhow::anyhow!(e))?;
+        let mut use_case = UseCase::new_with_auto_abbreviation(
+            use_case_id.clone(),
+            title,
+            category,
+            description,
+            priority,
+        )
+        .map_err(|e: String| anyhow::anyhow!(e))?;
 
         // Add default view (methodology:normal)
         use_case.add_view(MethodologyView::new(
@@ -99,9 +104,14 @@ impl UseCaseCreator {
         let description = description.unwrap_or_default();
 
         // Create base use case
-        let mut use_case =
-            UseCase::new(use_case_id.clone(), title, category, description, priority)
-                .map_err(|e: String| anyhow::anyhow!(e))?;
+        let mut use_case = UseCase::new_with_auto_abbreviation(
+            use_case_id.clone(),
+            title,
+            category,
+            description,
+            priority,
+        )
+        .map_err(|e: String| anyhow::anyhow!(e))?;
 
         // Add default view (methodology:normal)
         use_case.add_view(MethodologyView::new(
@@ -225,9 +235,14 @@ impl UseCaseCreator {
         }
 
         // Create the use case with empty extra fields (methodology fields go in methodology_fields)
-        let mut use_case =
-            UseCase::new(use_case_id.clone(), title, category, description, priority)
-                .map_err(|e| anyhow::anyhow!(e))?;
+        let mut use_case = UseCase::new_with_auto_abbreviation(
+            use_case_id.clone(),
+            title,
+            category,
+            description,
+            priority,
+        )
+        .map_err(|e| anyhow::anyhow!(e))?;
 
         // Set methodology fields
         use_case.methodology_fields = methodology_fields;

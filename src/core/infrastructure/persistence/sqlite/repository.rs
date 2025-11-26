@@ -444,42 +444,55 @@ impl SqliteUseCaseRepository {
                         )
                     })?;
 
-                Ok(UseCase {
-                    id: row.get(0)?,
-                    title: row.get(1)?,
-                    category: row.get(2)?,
-                    description: row.get(3)?,
-                    priority: row.get::<_, String>(4)?.parse().map_err(|e: String| {
-                        rusqlite::Error::FromSqlConversionFailure(
-                            4,
-                            rusqlite::types::Type::Text,
-                            Box::new(std::io::Error::new(std::io::ErrorKind::InvalidData, e)),
-                        )
-                    })?,
-                    metadata: crate::core::domain::Metadata {
-                        created_at: row.get::<_, String>(5)?.parse().map_err(|e| {
+                {
+                    let category: String = row.get(2)?;
+                    // Generate abbreviation from category (first 3 alphabetic chars, uppercase)
+                    // TODO: Once schema is updated, read from database instead
+                    let category_abbreviation = category
+                        .chars()
+                        .filter(|c| c.is_alphabetic())
+                        .take(3)
+                        .collect::<String>()
+                        .to_uppercase();
+
+                    Ok(UseCase {
+                        id: row.get(0)?,
+                        title: row.get(1)?,
+                        category,
+                        category_abbreviation,
+                        description: row.get(3)?,
+                        priority: row.get::<_, String>(4)?.parse().map_err(|e: String| {
                             rusqlite::Error::FromSqlConversionFailure(
-                                5,
+                                4,
                                 rusqlite::types::Type::Text,
-                                Box::new(e),
+                                Box::new(std::io::Error::new(std::io::ErrorKind::InvalidData, e)),
                             )
                         })?,
-                        updated_at: row.get::<_, String>(6)?.parse().map_err(|e| {
-                            rusqlite::Error::FromSqlConversionFailure(
-                                6,
-                                rusqlite::types::Type::Text,
-                                Box::new(e),
-                            )
-                        })?,
-                    },
-                    views: Vec::new(), // Will be populated below (multi-view support)
-                    preconditions: Vec::new(), // Will be populated below
-                    postconditions: Vec::new(), // Will be populated below
-                    methodology_fields: std::collections::HashMap::new(), // New field for methodology-specific fields
-                    use_case_references: Vec::new(),                      // Will be populated below
-                    scenarios: Vec::new(), // Will be loaded from relational tables
-                    extra,
-                })
+                        metadata: crate::core::domain::Metadata {
+                            created_at: row.get::<_, String>(5)?.parse().map_err(|e| {
+                                rusqlite::Error::FromSqlConversionFailure(
+                                    5,
+                                    rusqlite::types::Type::Text,
+                                    Box::new(e),
+                                )
+                            })?,
+                            updated_at: row.get::<_, String>(6)?.parse().map_err(|e| {
+                                rusqlite::Error::FromSqlConversionFailure(
+                                    6,
+                                    rusqlite::types::Type::Text,
+                                    Box::new(e),
+                                )
+                            })?,
+                        },
+                        views: Vec::new(), // Will be populated below (multi-view support)
+                        preconditions: Vec::new(), // Will be populated below
+                        postconditions: Vec::new(), // Will be populated below
+                        methodology_fields: std::collections::HashMap::new(), // New field for methodology-specific fields
+                        use_case_references: Vec::new(), // Will be populated below
+                        scenarios: Vec::new(),           // Will be loaded from relational tables
+                        extra,
+                    })
+                }
             })
             .context("Failed to execute use case query")?;
 

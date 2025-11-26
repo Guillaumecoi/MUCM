@@ -87,7 +87,8 @@ mod tests {
         category: String,
         description: String,
     ) -> UseCase {
-        UseCase::new(id, title, category, description, "Medium".to_string()).unwrap()
+        UseCase::new_with_auto_abbreviation(id, title, category, description, "Medium".to_string())
+            .unwrap()
     }
 
     fn find_use_case_by_id<'a>(use_cases: &'a [UseCase], id: &str) -> Option<&'a UseCase> {

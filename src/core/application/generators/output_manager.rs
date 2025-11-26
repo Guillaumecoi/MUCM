@@ -32,7 +32,7 @@ mod tests {
 
     #[test]
     fn test_generate_all_filenames_single_view() {
-        let mut use_case = UseCase::new(
+        let mut use_case = UseCase::new_with_auto_abbreviation(
             "UC-001".to_string(),
             "Test Use Case".to_string(),
             "testing".to_string(),
@@ -57,7 +57,7 @@ mod tests {
 
     #[test]
     fn test_generate_all_filenames_multi_view() {
-        let mut use_case = UseCase::new(
+        let mut use_case = UseCase::new_with_auto_abbreviation(
             "UC-001".to_string(),
             "Test Use Case".to_string(),
             "testing".to_string(),
@@ -91,7 +91,7 @@ mod tests {
 
     #[test]
     fn test_generate_all_filenames_with_disabled_view() {
-        let mut use_case = UseCase::new(
+        let mut use_case = UseCase::new_with_auto_abbreviation(
             "UC-001".to_string(),
             "Test Use Case".to_string(),
             "testing".to_string(),

@@ -40,6 +40,8 @@ pub struct UseCase {
     pub id: String,
     pub title: String,
     pub category: String,
+    // NEW: Category abbreviation used in ID generation (e.g., "AUT" for "Authentication")
+    pub category_abbreviation: String,
     pub description: String,
     pub priority: Priority,
     pub metadata: Metadata,
@@ -79,10 +81,12 @@ pub struct UseCase {
 }
 
 impl UseCase {
+    /// Create a use case with explicit category abbreviation
     pub fn new(
         id: String,
         title: String,
         category: String,
+        category_abbreviation: String,
         description: String,
         priority: String,
     ) -> Result<Self, String> {
@@ -91,6 +95,7 @@ impl UseCase {
             id,
             title,
             category,
+            category_abbreviation,
             description,
             priority,
             metadata: Metadata::new(),
@@ -102,6 +107,32 @@ impl UseCase {
             methodology_fields: std::collections::HashMap::new(),
             extra: std::collections::HashMap::new(),
         })
+    }
+
+    /// Create a use case with auto-generated abbreviation (first 3 chars of category, uppercase)
+    /// For backward compatibility and migration - prefer using new() with explicit abbreviation
+    #[deprecated(note = "Use new() with explicit abbreviation from Category instead")]
+    pub fn new_with_auto_abbreviation(
+        id: String,
+        title: String,
+        category: String,
+        description: String,
+        priority: String,
+    ) -> Result<Self, String> {
+        let category_abbreviation = category
+            .chars()
+            .filter(|c| c.is_alphabetic())
+            .take(3)
+            .collect::<String>()
+            .to_uppercase();
+        Self::new(
+            id,
+            title,
+            category,
+            category_abbreviation,
+            description,
+            priority,
+        )
     }
 
     pub fn status(&self) -> Status {
@@ -461,6 +492,7 @@ mod use_case_tests {
             "UC-TEST-001".to_string(),
             "Test Use Case".to_string(),
             "Test".to_string(),
+            "TES".to_string(),
             "A test use case".to_string(),
             "low".to_string(),
         )
@@ -485,6 +517,7 @@ mod use_case_tests {
                 "UC-TEST-002".to_string(),
                 "Test Use Case".to_string(),
                 "Test".to_string(),
+                "TES".to_string(),
                 "A test use case".to_string(),
                 priority_str.to_string(),
             )
@@ -504,6 +537,7 @@ mod use_case_tests {
                 "UC-TEST-001".to_string(),
                 "Test Use Case".to_string(),
                 "Test".to_string(),
+                "TES".to_string(),
                 "A test use case".to_string(),
                 invalid_priority.to_string(),
             );
@@ -522,6 +556,7 @@ mod use_case_tests {
             "UC-TEST-001".to_string(),
             "Test Use Case".to_string(),
             "Test".to_string(),
+            "TES".to_string(),
             "A test use case".to_string(),
             "medium".to_string(),
         )
@@ -537,6 +572,7 @@ mod use_case_tests {
             "UC-TEST-001".to_string(),
             "Test Use Case".to_string(),
             "Test".to_string(),
+            "TES".to_string(),
             "A test use case".to_string(),
             "high".to_string(),
         )
@@ -640,6 +676,7 @@ mod use_case_tests {
             "UC-TEST-001".to_string(),
             "Test Use Case".to_string(),
             "Test".to_string(),
+            "TES".to_string(),
             "A test use case".to_string(),
             "low".to_string(),
         )
@@ -655,6 +692,7 @@ mod use_case_tests {
             "UC-TEST-001".to_string(),
             "Test Use Case".to_string(),
             "Test".to_string(),
+            "TES".to_string(),
             "A test use case".to_string(),
             "medium".to_string(),
         )
@@ -673,6 +711,7 @@ mod use_case_tests {
             "UC-TEST-001".to_string(),
             "Test Use Case".to_string(),
             "Test".to_string(),
+            "TES".to_string(),
             "A test use case".to_string(),
             "medium".to_string(),
         )
@@ -694,6 +733,7 @@ mod use_case_tests {
             "UC-TEST-001".to_string(),
             "Test Use Case".to_string(),
             "Test".to_string(),
+            "TES".to_string(),
             "A test use case".to_string(),
             "medium".to_string(),
         )
@@ -715,6 +755,7 @@ mod use_case_tests {
             "UC-TEST-001".to_string(),
             "Test Use Case".to_string(),
             "Test".to_string(),
+            "TES".to_string(),
             "A test use case".to_string(),
             "medium".to_string(),
         )
@@ -743,6 +784,7 @@ mod use_case_tests {
             "UC-TEST-001".to_string(),
             "Test Use Case".to_string(),
             "Test".to_string(),
+            "TES".to_string(),
             "A test use case".to_string(),
             "high".to_string(),
         )
@@ -790,6 +832,7 @@ mod use_case_tests {
             "UC-TEST-001".to_string(),
             "Test Use Case".to_string(),
             "Test".to_string(),
+            "TES".to_string(),
             "A test use case".to_string(),
             "high".to_string(),
         )
@@ -852,6 +895,7 @@ mod use_case_tests {
             "UC-TEST-001".to_string(),
             "Test Use Case".to_string(),
             "Test".to_string(),
+            "TES".to_string(),
             "A test use case".to_string(),
             "medium".to_string(),
         )
@@ -899,6 +943,7 @@ mod use_case_tests {
             "UC-TEST-001".to_string(),
             "Test Use Case".to_string(),
             "Test".to_string(),
+            "TES".to_string(),
             "A test use case".to_string(),
             "medium".to_string(),
         )
@@ -934,6 +979,7 @@ mod use_case_tests {
             "UC-TEST-001".to_string(),
             "Test Use Case".to_string(),
             "Test".to_string(),
+            "TES".to_string(),
             "A test use case".to_string(),
             "medium".to_string(),
         )
@@ -961,6 +1007,7 @@ mod use_case_tests {
             "UC-TEST-001".to_string(),
             "Test Use Case".to_string(),
             "Test".to_string(),
+            "TES".to_string(),
             "A test use case".to_string(),
             "medium".to_string(),
         )
@@ -982,6 +1029,7 @@ mod use_case_tests {
             "UC-TEST-001".to_string(),
             "Test Use Case".to_string(),
             "Test".to_string(),
+            "TES".to_string(),
             "A test use case".to_string(),
             "medium".to_string(),
         )
@@ -1003,6 +1051,7 @@ mod use_case_tests {
             "UC-TEST-001".to_string(),
             "Test Use Case".to_string(),
             "Test".to_string(),
+            "TES".to_string(),
             "A test use case".to_string(),
             "medium".to_string(),
         )
@@ -1024,6 +1073,7 @@ mod use_case_tests {
             "UC-TEST-001".to_string(),
             "Test Use Case".to_string(),
             "Test".to_string(),
+            "TES".to_string(),
             "A test use case".to_string(),
             "medium".to_string(),
         )
@@ -1043,6 +1093,7 @@ mod use_case_tests {
             "UC-TEST-001".to_string(),
             "Test Use Case".to_string(),
             "Test".to_string(),
+            "TES".to_string(),
             "A test use case".to_string(),
             "medium".to_string(),
         )
@@ -1066,6 +1117,7 @@ mod use_case_tests {
             "UC-TEST-001".to_string(),
             "Test Use Case".to_string(),
             "Test".to_string(),
+            "TES".to_string(),
             "A test use case".to_string(),
             "medium".to_string(),
         )
@@ -1082,6 +1134,7 @@ mod use_case_tests {
             "UC-TEST-001".to_string(),
             "Test Use Case".to_string(),
             "Test".to_string(),
+            "TES".to_string(),
             "A test use case".to_string(),
             "medium".to_string(),
         )
@@ -1104,6 +1157,7 @@ mod use_case_tests {
             "UC-TEST-001".to_string(),
             "Test Use Case".to_string(),
             "Test".to_string(),
+            "TES".to_string(),
             "A test use case".to_string(),
             "medium".to_string(),
         )
@@ -1132,6 +1186,7 @@ mod use_case_tests {
             "UC-TEST-001".to_string(),
             "Test Use Case".to_string(),
             "Test".to_string(),
+            "TES".to_string(),
             "A test use case".to_string(),
             "medium".to_string(),
         )
