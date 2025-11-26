@@ -31,8 +31,17 @@ impl UseCaseCreator {
         existing_use_cases: &[UseCase],
         repository: &dyn UseCaseRepository,
     ) -> Result<UseCase> {
+        // TODO: Accept category_abbreviation as parameter once CLI integration is complete
+        let category_abbreviation = category
+            .chars()
+            .filter(|c| c.is_alphabetic())
+            .take(3)
+            .collect::<String>()
+            .to_uppercase();
+
         let use_case_id = self.use_case_service.generate_unique_use_case_id(
             &category,
+            &category_abbreviation,
             existing_use_cases,
             &self.config.directories.use_case_dir,
         );
@@ -96,8 +105,17 @@ impl UseCaseCreator {
         existing_use_cases: &[UseCase],
         repository: &dyn UseCaseRepository,
     ) -> Result<UseCase> {
+        // TODO: Accept category_abbreviation as parameter once CLI integration is complete
+        let category_abbreviation = category
+            .chars()
+            .filter(|c| c.is_alphabetic())
+            .take(3)
+            .collect::<String>()
+            .to_uppercase();
+
         let use_case_id = self.use_case_service.generate_unique_use_case_id(
             &category,
+            &category_abbreviation,
             existing_use_cases,
             &self.config.directories.use_case_dir,
         );
@@ -177,8 +195,17 @@ impl UseCaseCreator {
         existing_use_cases: &[UseCase],
         repository: &dyn UseCaseRepository,
     ) -> Result<UseCase> {
+        // TODO: Accept category_abbreviation as parameter once CLI integration is complete
+        let category_abbreviation = category
+            .chars()
+            .filter(|c| c.is_alphabetic())
+            .take(3)
+            .collect::<String>()
+            .to_uppercase();
+
         let use_case_id = self.use_case_service.generate_unique_use_case_id(
             &category,
+            &category_abbreviation,
             existing_use_cases,
             &self.config.directories.use_case_dir,
         );
