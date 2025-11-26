@@ -35,9 +35,8 @@ impl UseCaseWorkflow {
             .with_help_message("A clear, descriptive title for the use case")
             .prompt()?;
 
-        let category = Text::new("Category:")
-            .with_help_message("Group this use case (e.g., 'authentication', 'data-processing')")
-            .prompt()?;
+        // Get category with abbreviation using the new workflow
+        let (category, category_abbreviation) = Self::prompt_for_category()?;
 
         // Step 2: Collect views
         UI::show_section_header("Select Views", "👁️")?;
@@ -130,7 +129,14 @@ impl UseCaseWorkflow {
         }
 
         // Always use interactive form for additional fields
-        Self::fill_use_case_form(&mut runner, title, category, None, views)?;
+        Self::fill_use_case_form(
+            &mut runner,
+            title,
+            category,
+            category_abbreviation,
+            None,
+            views,
+        )?;
 
         UI::pause_for_input()?;
         Ok(())
@@ -300,9 +306,14 @@ impl UseCaseWorkflow {
         runner: &mut InteractiveRunner,
         title: String,
         category: String,
+        _category_abbreviation: String, // TODO: Pass to runner once creator API updated
         description: Option<String>,
         views: Vec<(String, String)>,
     ) -> Result<()> {
+        // NOTE: category_abbreviation is collected but not yet used because the
+        // use_case_creator currently auto-generates it from category name.
+        // This will be updated in a future commit to pass abbreviation explicitly.
+
         // Ask if user wants to fill additional fields
         let fill_additional = Confirm::new("Fill in additional fields now?")
             .with_default(false)
@@ -950,5 +961,131 @@ impl UseCaseWorkflow {
         }
 
         Ok(())
+    }
+
+    /// Prompt user to select an existing category or create a new one
+    /// Returns (category_name, category_abbreviation)
+    fn prompt_for_category() -> Result<(String, String)> {
+        use crate::controller::CategoryController;
+
+        let category_controller = CategoryController::new()?;
+
+        // Get existing categories
+        let existing_categories = category_controller.get_all_categories()?;
+
+        // Build options: existing categories + "Create New Category"
+        let mut options: Vec<String> = existing_categories
+            .iter()
+            .map(|(name, abbr)| format!("{} ({})", name, abbr))
+            .collect();
+        options.push("➕ Create New Category".to_string());
+
+        let selection = Select::new("Category:", options)
+            .with_help_message("Select an existing category or create a new one")
+            .prompt()?;
+
+        if selection == "➕ Create New Category" {
+            // Create new category workflow
+            UI::show_section_header("Create New Category", "📁")?;
+
+            let full_name = Text::new("Category name:")
+                .with_help_message("Full category name (e.g., 'Authentication', 'User Management')")
+                .prompt()?;
+
+            // Suggest abbreviation
+            let suggested_abbr = category_controller.suggest_abbreviation(&full_name);
+
+            let abbreviation = Text::new("Abbreviation:")
+                .with_default(&suggested_abbr)
+                .with_help_message("3+ uppercase letters for use case IDs (e.g., 'AUT', 'USR')")
+                .prompt()?;
+
+            // Check for collision
+            if let Some(existing) = category_controller.detect_collision(&abbreviation)? {
+                UI::show_warning(&format!(
+                    "⚠️  Abbreviation '{}' is already used by category '{}'",
+                    abbreviation, existing.full_name
+                ))?;
+
+                // Suggest auto-resolution
+                let (new_abbr, existing_abbr) = category_controller
+                    .suggest_collision_resolution(&full_name, &existing)
+                    .ok_or_else(|| anyhow::anyhow!("Could not generate collision resolution"))?;
+
+                UI::show_info(&format!(
+                    "💡 Suggested resolution:\n   • {}: {} → {}\n   • {}: {} → {}",
+                    full_name,
+                    abbreviation,
+                    new_abbr,
+                    existing.full_name,
+                    existing.abbreviation,
+                    existing_abbr
+                ))?;
+
+                let choices = vec![
+                    "Auto-resolve both categories",
+                    "Edit abbreviation manually",
+                    "Cancel",
+                ];
+
+                match Select::new("How would you like to proceed?", choices).prompt()? {
+                    "Auto-resolve both categories" => {
+                        // Update existing category
+                        category_controller
+                            .update_abbreviation(&existing.abbreviation, &existing_abbr)?;
+
+                        // Create new category with resolved abbreviation
+                        let result = category_controller
+                            .create_category(full_name.clone(), new_abbr.clone())?;
+                        UI::show_success(&result.message)?;
+
+                        return Ok((full_name, new_abbr));
+                    }
+                    "Edit abbreviation manually" => {
+                        // Let user enter a different abbreviation
+                        let new_abbreviation = Text::new("Enter a different abbreviation:")
+                            .with_help_message("Must be at least 3 characters, alphanumeric")
+                            .prompt()?;
+
+                        let result = category_controller
+                            .create_category(full_name.clone(), new_abbreviation.clone())?;
+
+                        if !result.success {
+                            UI::show_error(&result.message)?;
+                            anyhow::bail!("Failed to create category");
+                        }
+
+                        UI::show_success(&result.message)?;
+                        return Ok((full_name, new_abbreviation));
+                    }
+                    _ => {
+                        anyhow::bail!("Category creation cancelled");
+                    }
+                }
+            }
+
+            // No collision, create the category
+            let result =
+                category_controller.create_category(full_name.clone(), abbreviation.clone())?;
+
+            if !result.success {
+                UI::show_error(&result.message)?;
+                anyhow::bail!("Failed to create category");
+            }
+
+            UI::show_success(&result.message)?;
+            Ok((full_name, abbreviation))
+        } else {
+            // Extract name and abbreviation from selection "Name (ABBR)"
+            let parts: Vec<&str> = selection.rsplitn(2, '(').collect();
+            if parts.len() != 2 {
+                anyhow::bail!("Invalid category format");
+            }
+
+            let abbreviation = parts[0].trim_end_matches(')').trim().to_string();
+            let name = parts[1].trim().to_string();
+
+            Ok((name, abbreviation))
+        }
     }
 }
