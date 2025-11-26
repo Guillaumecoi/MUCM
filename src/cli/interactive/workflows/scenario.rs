@@ -126,11 +126,29 @@ impl ScenarioWorkflow {
             .prompt()
             .ok();
 
-        // Collect preconditions
-        let preconditions = Self::collect_conditions("preconditions", use_case_id)?;
+        // Collect preconditions using the reusable helper
+        let preconditions = super::conditions::ConditionsWorkflow::collect_conditions_with_refs(
+            "preconditions",
+            "scenario",
+            use_case_id,
+        )?;
+        let preconditions = if preconditions.is_empty() {
+            None
+        } else {
+            Some(preconditions)
+        };
 
-        // Collect postconditions
-        let postconditions = Self::collect_conditions("postconditions", use_case_id)?;
+        // Collect postconditions using the reusable helper
+        let postconditions = super::conditions::ConditionsWorkflow::collect_conditions_with_refs(
+            "postconditions",
+            "scenario",
+            use_case_id,
+        )?;
+        let postconditions = if postconditions.is_empty() {
+            None
+        } else {
+            Some(postconditions)
+        };
 
         // Controller handles creating main scenarios - no type selection needed
         let mut controller = ScenarioController::new()?;
@@ -205,58 +223,6 @@ impl ScenarioWorkflow {
         UI::pause_for_input()?;
 
         Ok(())
-    }
-
-    /// Helper to collect preconditions or postconditions interactively
-    /// Returns simple text conditions (use case references handled separately in manage_conditions_inline)
-    fn collect_conditions(
-        condition_type: &str,
-        _current_use_case_id: &str,
-    ) -> Result<Option<Vec<String>>> {
-        let add_conditions = Confirm::new(&format!("Add {}?", condition_type))
-            .with_default(false)
-            .prompt()?;
-
-        if !add_conditions {
-            return Ok(None);
-        }
-
-        println!("\n  💡 Tip: You can add use case references later via 'Manage conditions'\n");
-
-        let mut conditions = Vec::new();
-        loop {
-            let condition = Text::new(&format!(
-                "  {} (or press Enter to finish):",
-                condition_type.trim_end_matches('s')
-            ))
-            .with_help_message(&format!(
-                "Enter a text description (e.g., 'User must be logged in')",
-            ))
-            .prompt()?;
-
-            if condition.trim().is_empty() {
-                break;
-            }
-
-            conditions.push(condition);
-
-            let add_more = Confirm::new(&format!(
-                "Add another {}?",
-                condition_type.trim_end_matches('s')
-            ))
-            .with_default(true)
-            .prompt()?;
-
-            if !add_more {
-                break;
-            }
-        }
-
-        if conditions.is_empty() {
-            Ok(None)
-        } else {
-            Ok(Some(conditions))
-        }
     }
 
     /// Helper to select multiple actors interactively

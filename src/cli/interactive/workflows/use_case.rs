@@ -334,56 +334,26 @@ impl UseCaseWorkflow {
                 use crate::controller::UseCaseController;
                 let mut uc_controller = UseCaseController::new()?;
 
-                // Collect preconditions
-                let add_preconditions = Confirm::new("Add preconditions?")
-                    .with_default(false)
-                    .prompt()?;
+                // Collect preconditions using the reusable helper
+                let preconditions =
+                    super::conditions::ConditionsWorkflow::collect_conditions_with_refs(
+                        "preconditions",
+                        "use case",
+                        &use_case_id,
+                    )?;
 
-                if add_preconditions {
-                    loop {
-                        let condition_text =
-                            Text::new("  Precondition (or press Enter to finish):").prompt()?;
-
-                        if condition_text.trim().is_empty() {
-                            break;
-                        }
-
-                        uc_controller.add_precondition(use_case_id.clone(), condition_text)?;
-
-                        let add_more = Confirm::new("Add another precondition?")
-                            .with_default(true)
-                            .prompt()?;
-
-                        if !add_more {
-                            break;
-                        }
-                    }
+                for condition in preconditions {
+                    uc_controller.add_precondition(use_case_id.clone(), condition)?;
                 }
 
-                // Collect postconditions
-                let add_postconditions = Confirm::new("Add postconditions?")
-                    .with_default(false)
-                    .prompt()?;
+                // Collect postconditions (text-only, no references)
+                let postconditions =
+                    super::conditions::ConditionsWorkflow::collect_conditions_text_only(
+                        "postconditions",
+                    )?;
 
-                if add_postconditions {
-                    loop {
-                        let condition_text =
-                            Text::new("  Postcondition (or press Enter to finish):").prompt()?;
-
-                        if condition_text.trim().is_empty() {
-                            break;
-                        }
-
-                        uc_controller.add_postcondition(use_case_id.clone(), condition_text)?;
-
-                        let add_more = Confirm::new("Add another postcondition?")
-                            .with_default(true)
-                            .prompt()?;
-
-                        if !add_more {
-                            break;
-                        }
-                    }
+                for condition in postconditions {
+                    uc_controller.add_postcondition(use_case_id.clone(), condition)?;
                 }
             }
 
