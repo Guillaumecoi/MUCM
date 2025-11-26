@@ -89,10 +89,10 @@ impl ScenarioCreator {
                 );
             }
 
-            // Validate return step is after extends step
-            if StepOrder::compare(&extends_at_step, return_step) != std::cmp::Ordering::Less {
+            // Validate return step is at or after extends step (allow same step for retry)
+            if StepOrder::compare(&extends_at_step, return_step) == std::cmp::Ordering::Greater {
                 anyhow::bail!(
-                    "Return step '{}' must be after divergence step '{}'",
+                    "Return step '{}' cannot be before divergence step '{}'",
                     return_step,
                     extends_at_step
                 );

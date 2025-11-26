@@ -111,10 +111,10 @@ impl ScenarioFlowValidator {
                 );
             }
 
-            // Validate return step is after divergence step
-            if StepOrder::compare(extends_at, returns_at) != Ordering::Less {
+            // Validate return step is at or after divergence step (allow same step for retry)
+            if StepOrder::compare(extends_at, returns_at) == Ordering::Greater {
                 anyhow::bail!(
-                    "Extension '{}' return step '{}' must be after divergence step '{}'",
+                    "Extension '{}' return step '{}' cannot be before divergence step '{}'",
                     scenario.id,
                     returns_at,
                     extends_at

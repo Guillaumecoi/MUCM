@@ -961,7 +961,7 @@ impl ScenarioController {
     ///
     /// # Returns
     /// DisplayResult with the new step order
-    pub fn insert_step_smart(
+    pub fn insert_step(
         &mut self,
         use_case_id: String,
         scenario_id: String,
@@ -1002,7 +1002,7 @@ impl ScenarioController {
     ///
     /// # Returns
     /// DisplayResult with warning if extensions are affected
-    pub fn delete_step_smart(
+    pub fn delete_step(
         &mut self,
         use_case_id: String,
         scenario_id: String,
@@ -1047,6 +1047,7 @@ impl ScenarioController {
     ///
     /// # Returns
     /// DisplayResult indicating success
+    #[allow(dead_code)]
     pub fn renumber_steps(
         &mut self,
         use_case_id: String,
@@ -2122,7 +2123,7 @@ mod tests {
 
     #[test]
     #[serial]
-    fn test_insert_step_smart() {
+    fn test_insert_step() {
         let (_temp_dir, mut controller) = setup_test_env();
         let use_case_id = create_test_use_case(&mut controller);
         let mut controller = ScenarioController::new().unwrap();
@@ -2165,7 +2166,7 @@ mod tests {
 
         // Insert step smartly after step 1 (should create 1a)
         let result = controller
-            .insert_step_smart(
+            .insert_step(
                 use_case_id.clone(),
                 scenario_id.clone(),
                 "1".to_string(),
@@ -2186,7 +2187,7 @@ mod tests {
 
     #[test]
     #[serial]
-    fn test_delete_step_smart() {
+    fn test_delete_step() {
         let (_temp_dir, mut controller) = setup_test_env();
         let use_case_id = create_test_use_case(&mut controller);
         let mut controller = ScenarioController::new().unwrap();
@@ -2239,7 +2240,7 @@ mod tests {
 
         // Delete step smartly
         let result = controller
-            .delete_step_smart(use_case_id.clone(), scenario_id.clone(), "2".to_string())
+            .delete_step(use_case_id.clone(), scenario_id.clone(), "2".to_string())
             .unwrap();
 
         assert!(result.is_success());
