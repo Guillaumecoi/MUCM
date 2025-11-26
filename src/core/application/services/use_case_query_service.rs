@@ -95,6 +95,7 @@ mod tests {
             id: id.to_string(),
             title: title.to_string(),
             category: "test".to_string(),
+            category_abbreviation: "TES".to_string(),
             description: "Test description".to_string(),
             priority: "Medium".parse().unwrap(),
             metadata: Metadata::default(),

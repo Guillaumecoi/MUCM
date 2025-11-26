@@ -250,6 +250,7 @@ mod tests {
             id: "UC-TEST-001".to_string(),
             title: "Test Use Case".to_string(),
             category: "Test".to_string(),
+            category_abbreviation: "TES".to_string(),
             description: "Test".to_string(),
             priority: Priority::Medium,
             metadata: Metadata::new(),
