@@ -1,4 +1,3 @@
-use markdown_use_case_manager::config::{Config, ConfigFileManager};
 use markdown_use_case_manager::core::TemplateEngine;
 use serde_json::{json, Value};
 use serial_test::serial;
@@ -8,16 +7,9 @@ use tempfile::TempDir;
 /// Setup test environment with initialized config
 /// Note: Does NOT change directories - runs from workspace root where source-templates exists
 fn setup_test_env() -> TempDir {
-    // Create temp dir but don't cd into it - we need source-templates from workspace root
-    let temp_dir = TempDir::new().unwrap();
-
-    // Just ensure a config exists in the current directory (workspace root)
-    let config = Config::default();
-    if !std::path::Path::new(".mucm-config.toml").exists() {
-        ConfigFileManager::save_in_dir(&config, ".").unwrap();
-    }
-
-    temp_dir
+    // Create temp dir for test artifacts
+    // Config files aren't needed for template rendering tests
+    TempDir::new().unwrap()
 }
 
 /// Create comprehensive test data with all possible fields
