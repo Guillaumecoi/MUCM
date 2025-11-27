@@ -1,4 +1,4 @@
-use markdown_use_case_manager::core::TemplateEngine;
+use mucm::core::TemplateEngine;
 use serde_json::{json, Value};
 use serial_test::serial;
 use std::collections::HashMap;

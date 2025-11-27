@@ -7,7 +7,7 @@
 //! - Markdown regeneration after edits
 //! - TOML persistence verification
 
-use markdown_use_case_manager::{
+use mucm::{
     config::{Config, ConfigFileManager},
     controller::UseCaseController,
 };

@@ -13,7 +13,7 @@
 //! - Custom field type handling (string, number, boolean, array)
 //! - Sommerville-aligned persona fields (via config)
 
-use markdown_use_case_manager::controller::PersonaController;
+use mucm::controller::PersonaController;
 use serial_test::serial;
 use std::{collections::HashMap, env, fs};
 use tempfile::TempDir;
@@ -71,7 +71,7 @@ pain_points = { type = "array", required = false }
 
     // Copy templates to config directory (even though personas don't use methodologies)
     // This ensures the full environment is set up correctly
-    use markdown_use_case_manager::config::Config;
+    use mucm::config::Config;
     Config::copy_templates_to_config_with_language(None).unwrap();
 
     let controller = PersonaController::new().unwrap();

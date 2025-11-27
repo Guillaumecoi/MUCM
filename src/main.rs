@@ -40,7 +40,7 @@
 //! - Generation settings and metadata options
 
 use anyhow::Result;
-use markdown_use_case_manager::cli;
+use mucm::cli;
 
 /// Application entry point.
 ///

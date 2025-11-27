@@ -79,7 +79,7 @@ pub fn select_actor(prompt: &str, include_defaults: bool) -> Result<Option<Strin
 ///
 /// # Examples
 /// ```
-/// # use markdown_use_case_manager::cli::interactive::prompts::parse_actor_id;
+/// # use mucm::cli::interactive::prompts::parse_actor_id;
 /// assert_eq!(parse_actor_id("👤 John Doe (user-123)"), Some("user-123".to_string()));
 /// assert_eq!(parse_actor_id("invalid"), None);
 /// ```
@@ -176,7 +176,7 @@ pub fn select_level(runner: &InteractiveRunner, methodology_name: &str) -> Resul
 ///
 /// # Examples
 /// ```
-/// # use markdown_use_case_manager::cli::interactive::prompts::capitalize_first;
+/// # use mucm::cli::interactive::prompts::capitalize_first;
 /// assert_eq!(capitalize_first("hello"), "Hello");
 /// assert_eq!(capitalize_first("HELLO"), "HELLO");
 /// ```

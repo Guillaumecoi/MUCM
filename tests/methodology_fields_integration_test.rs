@@ -2,8 +2,8 @@
 ///
 /// Tests the complete methodology field workflow from collection to cleanup.
 use anyhow::Result;
-use markdown_use_case_manager::config::{Config, ConfigFileManager};
-use markdown_use_case_manager::core::{MethodologyFieldCollector, UseCaseCoordinator};
+use mucm::config::{Config, ConfigFileManager};
+use mucm::core::{MethodologyFieldCollector, UseCaseCoordinator};
 use serial_test::serial;
 use std::collections::HashMap;
 use std::env;
@@ -94,8 +94,8 @@ fn test_cleanup_orphaned_fields() -> Result<()> {
         .insert("developer".to_string(), orphaned_fields);
 
     // Save modified use case
-    let config = markdown_use_case_manager::config::Config::load()?;
-    let repository = markdown_use_case_manager::core::RepositoryFactory::create(&config)?;
+    let config = mucm::config::Config::load()?;
+    let repository = mucm::core::RepositoryFactory::create(&config)?;
     repository.save(&use_case)?;
 
     // Reload and run cleanup
@@ -145,8 +145,8 @@ fn test_cleanup_dry_run() -> Result<()> {
         .methodology_fields
         .insert("feature".to_string(), orphaned_fields);
 
-    let config = markdown_use_case_manager::config::Config::load()?;
-    let repository = markdown_use_case_manager::core::RepositoryFactory::create(&config)?;
+    let config = mucm::config::Config::load()?;
+    let repository = mucm::core::RepositoryFactory::create(&config)?;
     repository.save(&use_case)?;
 
     // Reload and run dry-run

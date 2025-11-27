@@ -1,13 +1,13 @@
 [package]
-name = "markdown-use-case-manager"
+name = "mucm"
 version = "0.1.0"
 edition = "2021"
 authors = ["Guillaume Coigniez <120651399+Guillaumecoi@users.noreply.github.com>"]
 license = "MIT"
 description = "A lightweight CLI tool for managing use cases in markdown format, designed to keep your documentation close to your code."
-homepage = "https://github.com/GuillaumeCOI/markdown-use-case-manager"
-repository = "https://github.com/GuillaumeCOI/markdown-use-case-manager"
-documentation = "https://github.com/GuillaumeCOI/markdown-use-case-manager/docs"
+homepage = "https://github.com/Guillaumecoi/MUCM"
+repository = "https://github.com/Guillaumecoi/MUCM"
+documentation = "https://github.com/Guillaumecoi/MUCM/docs"
 readme = "README.md"
 keywords = ["markdown", "use-case", "documentation", "cli", "git"]
 categories = ["command-line-utilities", "development-tools", "template-engine"]
@@ -25,7 +25,7 @@ name = "mucm"
 path = "src/main.rs"
 
 [lib]
-name = "markdown_use_case_manager"
+name = "mucm"
 path = "src/lib.rs"
 
 [dependencies]

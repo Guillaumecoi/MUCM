@@ -2,7 +2,7 @@
 //!
 //! Tests scenario references functionality across both TOML and SQLite backends
 
-use markdown_use_case_manager::core::{
+use mucm::core::{
     Actor, ReferenceType, Scenario, ScenarioReference, ScenarioType, SqliteUseCaseRepository,
     UseCase, UseCaseRepository,
 };
@@ -59,12 +59,12 @@ fn create_toml_repository() -> (TempDir, Box<dyn UseCaseRepository>) {
     let temp_dir = TempDir::new().unwrap();
     env::set_current_dir(&temp_dir).unwrap();
 
-    use markdown_use_case_manager::config::ConfigFileManager;
-    let config = markdown_use_case_manager::config::Config::default();
+    use mucm::config::ConfigFileManager;
+    let config = mucm::config::Config::default();
     ConfigFileManager::save_in_dir(&config, ".").unwrap();
 
-    let config = markdown_use_case_manager::config::Config::load().unwrap();
-    let repo = Box::new(markdown_use_case_manager::core::TomlUseCaseRepository::new(
+    let config = mucm::config::Config::load().unwrap();
+    let repo = Box::new(mucm::core::TomlUseCaseRepository::new(
         config,
     )) as Box<dyn UseCaseRepository>;
 

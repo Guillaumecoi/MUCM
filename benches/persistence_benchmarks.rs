@@ -1,6 +1,6 @@
 use criterion::{criterion_group, criterion_main, Criterion};
-use markdown_use_case_manager::config::{Config, StorageBackend};
-use markdown_use_case_manager::core::{RepositoryFactory, UseCase, UseCaseRepository};
+use mucm::config::{Config, StorageBackend};
+use mucm::core::{RepositoryFactory, UseCase, UseCaseRepository};
 use tempfile::TempDir;
 
 /// Create a test use case with the given ID
