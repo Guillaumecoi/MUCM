@@ -7,7 +7,9 @@ use anyhow::Result;
 use inquire::{Select, Text};
 use std::collections::HashMap;
 
-use crate::cli::interactive::{field_helpers::FieldHelpers, runner::InteractiveRunner, ui::UI};
+use crate::cli::interactive::{
+    field_helpers::FieldHelpers, prompts, runner::InteractiveRunner, ui::UI,
+};
 
 /// Actor workflow handler
 pub struct ActorWorkflow;
@@ -126,7 +128,7 @@ impl ActorWorkflow {
         let mut runner = InteractiveRunner::new();
 
         // Get list of actors
-        let mut actor_ids = runner.get_actor_ids()?;
+        let actor_ids = runner.get_actor_ids()?;
 
         if actor_ids.is_empty() {
             UI::show_error("No actors found.")?;
@@ -134,17 +136,12 @@ impl ActorWorkflow {
             return Ok(());
         }
 
-        // Add cancel option
-        actor_ids.push("[Cancel]".to_string());
-
         // Let user select which actor to view
-        let selected_id = Select::new("Select actor to view:", actor_ids)
-            .with_help_message("Choose the actor you want to see details for")
-            .prompt()?;
-
-        if selected_id == "[Cancel]" {
-            return Ok(());
-        }
+        let selected_id =
+            match prompts::select_or_cancel("Select actor to view:", actor_ids, |id| id.clone())? {
+                Some(id) => id,
+                None => return Ok(()),
+            };
 
         runner.show_actor(selected_id)?;
 
@@ -159,7 +156,7 @@ impl ActorWorkflow {
         let mut runner = InteractiveRunner::new();
 
         // Get list of actors
-        let mut actor_ids = runner.get_actor_ids()?;
+        let actor_ids = runner.get_actor_ids()?;
 
         if actor_ids.is_empty() {
             UI::show_error("No actors found.")?;
@@ -167,30 +164,18 @@ impl ActorWorkflow {
             return Ok(());
         }
 
-        // Add cancel option
-        actor_ids.push("[Cancel]".to_string());
-
         // Let user select which actor to delete
-        let selected_id = Select::new("Select actor to delete:", actor_ids)
-            .with_help_message("Choose the actor you want to delete")
-            .prompt()?;
-
-        if selected_id == "[Cancel]" {
-            return Ok(());
-        }
+        let selected_id =
+            match prompts::select_or_cancel("Select actor to delete:", actor_ids, |id| id.clone())?
+            {
+                Some(id) => id,
+                None => return Ok(()),
+            };
 
         // Confirm deletion
-        let confirm = Select::new(
-            &format!("Are you sure you want to delete actor '{}'?", selected_id),
-            vec!["No", "Yes"],
-        )
-        .prompt()?;
-
-        if confirm == "Yes" {
+        if prompts::confirm_delete(&selected_id, "actor")? {
             runner.delete_actor(&selected_id)?;
             UI::show_success("Actor deleted successfully")?;
-        } else {
-            println!("\n✓ Deletion cancelled.");
         }
 
         UI::pause_for_input()?;
@@ -204,7 +189,7 @@ impl ActorWorkflow {
         let mut runner = InteractiveRunner::new();
 
         // Get list of all actors (personas and system actors)
-        let mut actor_ids = runner.get_actor_ids()?;
+        let actor_ids = runner.get_actor_ids()?;
 
         if actor_ids.is_empty() {
             UI::show_error("No actors found. Please create an actor first.")?;
@@ -212,17 +197,12 @@ impl ActorWorkflow {
             return Ok(());
         }
 
-        // Add cancel option
-        actor_ids.push("[Cancel]".to_string());
-
         // Let user select which actor to edit
-        let selected_id = Select::new("Select actor to edit:", actor_ids)
-            .with_help_message("Choose the actor you want to modify")
-            .prompt()?;
-
-        if selected_id == "[Cancel]" {
-            return Ok(());
-        }
+        let selected_id =
+            match prompts::select_or_cancel("Select actor to edit:", actor_ids, |id| id.clone())? {
+                Some(id) => id,
+                None => return Ok(()),
+            };
 
         // Load actor details
         let actor = runner.get_actor_entity(&selected_id)?;
@@ -272,19 +252,17 @@ impl ActorWorkflow {
     ) -> Result<()> {
         UI::show_section_header("Edit Actor Name", "📝")?;
 
-        let new_name = Text::new("Name:")
-            .with_default(&actor.name)
-            .with_help_message("Press Enter to keep current value")
-            .prompt()?;
-
-        if new_name == actor.name {
+        if let Some(new_name) = prompts::edit_field_with_change(
+            "Name:",
+            &actor.name,
+            Some("Press Enter to keep current value"),
+        )? {
+            let result = runner.update_actor_entity_name(actor_id.to_string(), new_name)?;
+            UI::show_success(&result)?;
+        } else {
             UI::show_info("No changes made.")?;
-            return Ok(());
         }
 
-        let result = runner.update_actor_entity_name(actor_id.to_string(), new_name)?;
-
-        UI::show_success(&result)?;
         UI::pause_for_input()?;
         Ok(())
     }
@@ -297,19 +275,17 @@ impl ActorWorkflow {
     ) -> Result<()> {
         UI::show_section_header("Edit Actor Emoji", "🎭")?;
 
-        let new_emoji = Text::new("Emoji:")
-            .with_default(&actor.emoji)
-            .with_help_message("Enter a single emoji character")
-            .prompt()?;
-
-        if new_emoji == actor.emoji {
+        if let Some(new_emoji) = prompts::edit_field_with_change(
+            "Emoji:",
+            &actor.emoji,
+            Some("Enter a single emoji character"),
+        )? {
+            let result = runner.update_actor_entity_emoji(actor_id.to_string(), new_emoji)?;
+            UI::show_success(&result)?;
+        } else {
             UI::show_info("No changes made.")?;
-            return Ok(());
         }
 
-        let result = runner.update_actor_entity_emoji(actor_id.to_string(), new_emoji)?;
-
-        UI::show_success(&result)?;
         UI::pause_for_input()?;
         Ok(())
     }

@@ -436,41 +436,6 @@ pub fn show_result_and_pause(result: &Result<String>) -> Result<()> {
     Ok(())
 }
 
-/// Get formatted list of available use cases for condition references
-///
-/// Fetches all use cases and formats them as "ID - Title" for selection prompts.
-/// Filters out the current use case if provided to prevent self-reference.
-///
-/// # Arguments
-/// * `exclude_use_case_id` - Optional use case ID to exclude (prevents self-reference)
-///
-/// # Returns
-/// * `Ok(Vec<String>)` - Formatted use case list ("UC-001 - Login", etc.)
-/// * `Err` - Error occurred fetching use cases
-pub fn get_available_use_cases_for_reference(
-    exclude_use_case_id: Option<&str>,
-) -> Result<Vec<String>> {
-    use crate::controller::UseCaseController;
-
-    let controller = UseCaseController::new()?;
-    let all_use_cases = controller.get_all_use_cases()?;
-
-    let formatted: Vec<String> = all_use_cases
-        .into_iter()
-        .filter(|uc| {
-            // Exclude the current use case if specified
-            if let Some(exclude_id) = exclude_use_case_id {
-                uc.id != exclude_id
-            } else {
-                true
-            }
-        })
-        .map(|uc| format!("{} - {}", uc.id, uc.title))
-        .collect();
-
-    Ok(formatted)
-}
-
 /// Collect conditions (preconditions or postconditions)
 ///
 /// Unified conditions collection supporting both text-only and use case reference modes.
@@ -479,7 +444,7 @@ pub fn get_available_use_cases_for_reference(
 /// # Arguments
 /// * `condition_type` - "preconditions" or "postconditions" (for display)
 /// * `allow_references` - If true, allows referencing use cases; if false, text-only
-/// * `exclude_use_case_id` - Optional ID to exclude from reference list (prevents self-reference)
+/// * `available_use_cases` - List of use case IDs for reference (format: "ID - Title")
 ///
 /// # Returns
 /// * `Ok(Vec<String>)` - Collected conditions, potentially with references in format:
@@ -490,15 +455,16 @@ pub fn get_available_use_cases_for_reference(
 /// # Examples
 /// ```ignore
 /// // Text-only postconditions
-/// let postconditions = collect_conditions("postconditions", false, None)?;
+/// let postconditions = collect_conditions("postconditions", false, vec![])?;
 ///
-/// // Preconditions with use case references (excluding self)
-/// let preconditions = collect_conditions("preconditions", true, Some("UC-001"))?;
+/// // Preconditions with use case references
+/// let use_cases = vec!["UC-001 - Login".to_string(), "UC-002 - Register".to_string()];
+/// let preconditions = collect_conditions("preconditions", true, use_cases)?;
 /// ```
 pub fn collect_conditions(
     condition_type: &str,
     allow_references: bool,
-    exclude_use_case_id: Option<&str>,
+    available_use_cases: Vec<String>,
 ) -> Result<Vec<String>> {
     let add_conditions = Confirm::new(&format!("Add {}?", condition_type))
         .with_default(false)
@@ -509,16 +475,6 @@ pub fn collect_conditions(
     }
 
     let mut conditions = Vec::new();
-
-    // Fetch available use cases once if references are allowed
-    let available_use_cases = if allow_references {
-        match get_available_use_cases_for_reference(exclude_use_case_id) {
-            Ok(cases) => cases,
-            Err(_) => Vec::new(), // If fetch fails, continue without references
-        }
-    } else {
-        Vec::new()
-    };
 
     loop {
         if allow_references && !available_use_cases.is_empty() {
@@ -543,15 +499,13 @@ pub fn collect_conditions(
 
         // If references allowed, ask if they want to add one
         let final_condition = if allow_references && !available_use_cases.is_empty() {
-            let add_reference = Confirm::new("Add a related use case reference?")
-                .with_default(false)
-                .with_help_message("Link this condition to another use case to show dependencies")
-                .prompt()?;
+            let reference_options = vec!["None - Just text", "Use Case"];
+            let ref_choice = Select::new("Add a reference?", reference_options).prompt()?;
 
-            if add_reference {
+            if ref_choice == "Use Case" {
                 // Select use case to reference
                 let uc_selection =
-                    Select::new("Select related use case:", available_use_cases.clone())
+                    Select::new("Select use case to reference:", available_use_cases.clone())
                         .prompt()?;
 
                 // Parse use case ID
@@ -560,13 +514,9 @@ pub fn collect_conditions(
                     .next()
                     .context("Failed to parse use case ID")?;
 
-                // For preconditions, always use "require" relationship
-                // For other condition types, could ask for relationship type if needed in future
-                let relationship = if condition_type == "preconditions" {
-                    "require"
-                } else {
-                    "depend"
-                };
+                // Ask for relationship type
+                let relationships = vec!["include", "extend", "require", "depend"];
+                let relationship = Select::new("Relationship type:", relationships).prompt()?;
 
                 format!("{}||UC:{}:{}", condition_text, target_id, relationship)
             } else {
