@@ -118,11 +118,11 @@ impl ScenarioWorkflow {
             .prompt()
             .ok();
 
-        // Collect preconditions using the reusable helper
-        let preconditions = super::conditions::ConditionsWorkflow::collect_conditions_with_refs(
+        // Collect preconditions using prompts
+        let preconditions = prompts::collect_conditions(
             "preconditions",
-            "scenario",
-            use_case_id,
+            false, // No references for simpler flow
+            vec![],
         )?;
         let preconditions = if preconditions.is_empty() {
             None
@@ -130,12 +130,8 @@ impl ScenarioWorkflow {
             Some(preconditions)
         };
 
-        // Collect postconditions using the reusable helper
-        let postconditions = super::conditions::ConditionsWorkflow::collect_conditions_with_refs(
-            "postconditions",
-            "scenario",
-            use_case_id,
-        )?;
+        // Collect postconditions using prompts
+        let postconditions = prompts::collect_conditions("postconditions", false, vec![])?;
         let postconditions = if postconditions.is_empty() {
             None
         } else {

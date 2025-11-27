@@ -106,23 +106,19 @@ impl UseCaseWorkflow {
                 use crate::controller::UseCaseController;
                 let mut uc_controller = UseCaseController::new()?;
 
-                // Collect preconditions using the reusable helper
-                let preconditions =
-                    super::conditions::ConditionsWorkflow::collect_conditions_with_refs(
-                        "preconditions",
-                        "use case",
-                        &use_case_id,
-                    )?;
+                // Collect preconditions using prompts
+                let preconditions = prompts::collect_conditions(
+                    "preconditions",
+                    false, // No references for simpler flow
+                    vec![],
+                )?;
 
                 for condition in preconditions {
                     uc_controller.add_precondition(use_case_id.clone(), condition)?;
                 }
 
-                // Collect postconditions (text-only, no references)
-                let postconditions =
-                    super::conditions::ConditionsWorkflow::collect_conditions_text_only(
-                        "postconditions",
-                    )?;
+                // Collect postconditions
+                let postconditions = prompts::collect_conditions("postconditions", false, vec![])?;
 
                 for condition in postconditions {
                     uc_controller.add_postcondition(use_case_id.clone(), condition)?;
