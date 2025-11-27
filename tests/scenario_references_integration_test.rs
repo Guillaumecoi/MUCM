@@ -64,9 +64,8 @@ fn create_toml_repository() -> (TempDir, Box<dyn UseCaseRepository>) {
     ConfigFileManager::save_in_dir(&config, ".").unwrap();
 
     let config = mucm::config::Config::load().unwrap();
-    let repo = Box::new(mucm::core::TomlUseCaseRepository::new(
-        config,
-    )) as Box<dyn UseCaseRepository>;
+    let repo =
+        Box::new(mucm::core::TomlUseCaseRepository::new(config)) as Box<dyn UseCaseRepository>;
 
     (temp_dir, repo)
 }
