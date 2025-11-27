@@ -1,0 +1,273 @@
+name: Integration Tests
+
+on:
+  push:
+    branches: [ main, cli-refactor ]
+  pull_request:
+    branches: [ main, cli-refactor ]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  cli-workflow-test:
+    name: CLI Workflow Test
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache dependencies
+        uses: Swatinem/rust-cache@v2
+
+      - name: Build release binary
+        run: cargo build --release
+
+      - name: Add binary to PATH (Unix)
+        if: runner.os != 'Windows'
+        run: echo "${{ github.workspace }}/target/release" >> $GITHUB_PATH
+
+      - name: Add binary to PATH (Windows)
+        if: runner.os == 'Windows'
+        run: echo "${{ github.workspace }}\target\release" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+        shell: pwsh
+
+      - name: Create test workspace
+        run: |
+          mkdir test-workspace
+          cd test-workspace
+        shell: bash
+
+      - name: Test 1 - Initialize project (TOML backend)
+        working-directory: test-workspace
+        run: |
+          mucm init --backend toml --language rust --methodology developer --default-methodology developer
+        shell: bash
+
+      - name: Verify initialization files
+        working-directory: test-workspace
+        run: |
+          if [ ! -f ".config/.mucm/mucm.toml" ]; then
+            echo "ERROR: mucm.toml not created"
+            exit 1
+          fi
+          if [ ! -d "docs/use-cases" ]; then
+            echo "ERROR: docs/use-cases directory not created"
+            exit 1
+          fi
+          if [ ! -d "tests/use-cases" ]; then
+            echo "ERROR: tests/use-cases directory not created"
+            exit 1
+          fi
+          echo "✓ Initialization successful"
+        shell: bash
+
+      - name: Test 2 - Create actor
+        working-directory: test-workspace
+        run: |
+          mucm actor create webserver --type service --description "Web application server"
+          mucm actor create database --type data-store --description "PostgreSQL database"
+        shell: bash
+
+      - name: Test 3 - List actors
+        working-directory: test-workspace
+        run: |
+          OUTPUT=$(mucm actor list)
+          if ! echo "$OUTPUT" | grep -q "webserver"; then
+            echo "ERROR: webserver actor not found"
+            exit 1
+          fi
+          if ! echo "$OUTPUT" | grep -q "database"; then
+            echo "ERROR: database actor not found"
+            exit 1
+          fi
+          echo "✓ Actors created successfully"
+        shell: bash
+
+      - name: Test 4 - Create use case
+        working-directory: test-workspace
+        run: |
+          mucm create "User Login" --category Authentication --description "User authentication workflow"
+        shell: bash
+
+      - name: Test 5 - List use cases
+        working-directory: test-workspace
+        run: |
+          OUTPUT=$(mucm list)
+          if ! echo "$OUTPUT" | grep -q "UC-AUT-001"; then
+            echo "ERROR: Use case not created with correct ID"
+            exit 1
+          fi
+          if ! echo "$OUTPUT" | grep -q "User Login"; then
+            echo "ERROR: Use case title not found"
+            exit 1
+          fi
+          echo "✓ Use case created successfully"
+        shell: bash
+
+      - name: Test 6 - Add precondition
+        working-directory: test-workspace
+        run: |
+          mucm precondition add UC-AUT-001 "User must have valid credentials"
+        shell: bash
+
+      - name: Test 7 - Add postcondition
+        working-directory: test-workspace
+        run: |
+          mucm postcondition add UC-AUT-001 "User session is established"
+        shell: bash
+
+      - name: Test 8 - List preconditions
+        working-directory: test-workspace
+        run: |
+          OUTPUT=$(mucm precondition list UC-AUT-001)
+          if ! echo "$OUTPUT" | grep -q "valid credentials"; then
+            echo "ERROR: Precondition not added"
+            exit 1
+          fi
+          echo "✓ Preconditions working"
+        shell: bash
+
+      - name: Test 9 - Create scenario
+        working-directory: test-workspace
+        run: |
+          mucm scenario create UC-AUT-001 "Successful Login" --type main-success
+        shell: bash
+
+      - name: Test 10 - Add scenario step
+        working-directory: test-workspace
+        run: |
+          mucm scenario add-step UC-AUT-001 "Successful Login" --actor webserver --action "validates credentials" --receiver database
+        shell: bash
+
+      - name: Test 11 - Show use case details
+        working-directory: test-workspace
+        run: |
+          OUTPUT=$(mucm show UC-AUT-001)
+          if ! echo "$OUTPUT" | grep -q "User Login"; then
+            echo "ERROR: Use case details not showing correctly"
+            exit 1
+          fi
+          echo "✓ Use case details displayed"
+        shell: bash
+
+      - name: Test 12 - Check status
+        working-directory: test-workspace
+        run: |
+          OUTPUT=$(mucm status)
+          if ! echo "$OUTPUT" | grep -q "UC-AUT-001"; then
+            echo "ERROR: Status command failed"
+            exit 1
+          fi
+          echo "✓ Status command working"
+        shell: bash
+
+      - name: Test 13 - Verify markdown generation
+        working-directory: test-workspace
+        run: |
+          if [ ! -f "docs/use-cases/authentication/UC-AUT-001.md" ]; then
+            echo "ERROR: Markdown file not generated"
+            exit 1
+          fi
+          echo "✓ Markdown files generated"
+        shell: bash
+
+      - name: Test 14 - Verify test file generation
+        working-directory: test-workspace
+        run: |
+          if [ ! -f "tests/use-cases/authentication/uc_aut_001.rs" ]; then
+            echo "ERROR: Test file not generated"
+            exit 1
+          fi
+          echo "✓ Test files generated"
+        shell: bash
+
+      - name: Test 15 - Create second use case
+        working-directory: test-workspace
+        run: |
+          mucm create "Password Reset" --category Authentication --description "User password reset workflow"
+        shell: bash
+
+      - name: Test 16 - Add use case reference
+        working-directory: test-workspace
+        run: |
+          mucm reference add UC-AUT-002 UC-AUT-001 dependency "Requires authentication system"
+        shell: bash
+
+      - name: Test 17 - List references
+        working-directory: test-workspace
+        run: |
+          OUTPUT=$(mucm reference list UC-AUT-002)
+          if ! echo "$OUTPUT" | grep -q "UC-AUT-001"; then
+            echo "ERROR: Reference not added"
+            exit 1
+          fi
+          echo "✓ Use case references working"
+        shell: bash
+
+      - name: Test 18 - SQLite backend test (create new project)
+        run: |
+          mkdir test-sqlite
+          cd test-sqlite
+          mucm init --backend sqlite --language rust --methodology developer --default-methodology developer
+        shell: bash
+
+      - name: Test 19 - Create use case in SQLite backend
+        working-directory: test-sqlite
+        run: |
+          mucm create "Data Export" --category DataManagement --description "Export data to CSV"
+          OUTPUT=$(mucm list)
+          if ! echo "$OUTPUT" | grep -q "UC-DAT-001"; then
+            echo "ERROR: SQLite backend not working"
+            exit 1
+          fi
+          echo "✓ SQLite backend working"
+        shell: bash
+
+      - name: Test 20 - Verify SQLite database created
+        working-directory: test-sqlite
+        run: |
+          if [ ! -f ".config/mucm/usecases.db" ]; then
+            echo "ERROR: SQLite database not created"
+            exit 1
+          fi
+          echo "✓ SQLite database created"
+        shell: bash
+
+      - name: Summary
+        if: success()
+        run: |
+          echo "================================"
+          echo "✅ ALL INTEGRATION TESTS PASSED"
+          echo "================================"
+          echo "Platform: ${{ matrix.os }}"
+          echo "Tests completed: 20/20"
+          echo ""
+          echo "Tested features:"
+          echo "  ✓ Project initialization (TOML & SQLite)"
+          echo "  ✓ Actor management"
+          echo "  ✓ Use case creation"
+          echo "  ✓ Preconditions/postconditions"
+          echo "  ✓ Scenario creation and steps"
+          echo "  ✓ Use case references"
+          echo "  ✓ File generation (markdown, tests)"
+          echo "  ✓ List/show/status commands"
+        shell: bash
+
+      - name: Upload test workspace artifacts
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-workspace-${{ matrix.os }}
+          path: |
+            test-workspace/
+            test-sqlite/
+          retention-days: 7
