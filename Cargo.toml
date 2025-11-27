@@ -12,7 +12,12 @@ readme = "README.md"
 keywords = ["markdown", "use-case", "documentation", "cli", "git"]
 categories = ["command-line-utilities", "development-tools", "template-engine"]
 include = [
+    "src/**/*",
     "source-templates/**/*",
+    "Cargo.toml",
+    "Cargo.lock",
+    "README.md",
+    "LICENSE",
 ]
 
 [[bin]]
