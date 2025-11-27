@@ -24,8 +24,6 @@ use anyhow::{Context, Result};
 use inquire::{Confirm, Select, Text};
 
 use crate::cli::interactive::runner::InteractiveRunner;
-use crate::cli::interactive::ui::UI;
-use crate::controller::MethodologyInfo;
 
 /// Select an actor for a scenario step
 ///
@@ -91,35 +89,6 @@ pub fn parse_actor_id(formatted_string: &str) -> Option<String> {
         .nth(1)
         .and_then(|s| s.strip_suffix(')'))
         .map(|s| s.to_string())
-}
-
-/// Select a use case from available use cases
-///
-/// Presents a list of use cases in format "ID - Title" with optional filtering.
-///
-/// # Arguments
-/// * `prompt` - The prompt text to display
-/// * `controller` - Reference to UseCaseController for fetching use cases
-/// * `filter_fn` - Optional filter function to exclude certain use cases
-///
-/// # Returns
-/// * `Ok(String)` - Selected use case ID
-/// * `Err` - User cancelled or error occurred
-pub fn select_use_case(prompt: &str, use_case_ids: Vec<String>) -> Result<String> {
-    if use_case_ids.is_empty() {
-        anyhow::bail!("No use cases available to select from");
-    }
-
-    let selection = Select::new(prompt, use_case_ids).prompt()?;
-
-    // Parse the ID from "ID - Title" format
-    let id = selection
-        .split(" - ")
-        .next()
-        .context("Failed to parse use case ID")?
-        .to_string();
-
-    Ok(id)
 }
 
 /// Select methodology and level
@@ -306,65 +275,6 @@ pub fn select_or_cancel<T: Clone>(
     Ok(Some(selected_item))
 }
 
-/// Collect text items in a loop
-///
-/// Prompts for text input repeatedly, asking "add another?" after each entry.
-/// Exits when user enters empty input or declines to add more.
-///
-/// # Arguments
-/// * `item_name` - Singular name of item (e.g., "tag", "dependency")
-/// * `initial_prompt` - Prompt for the first and subsequent items
-/// * `help` - Optional help message
-///
-/// # Returns
-/// * `Ok(Vec<String>)` - Collected items (may be empty if user declines immediately)
-/// * `Err` - Error occurred during prompts
-///
-/// # Examples
-/// ```ignore
-/// let tags = collect_text_items("tag", "Enter tag:", Some("Keywords for categorization"))?;
-/// ```
-pub fn collect_text_items(
-    item_name: &str,
-    initial_prompt: &str,
-    help: Option<&str>,
-) -> Result<Vec<String>> {
-    let add_first = Confirm::new(&format!("Add {}s?", item_name))
-        .with_default(false)
-        .prompt()?;
-
-    if !add_first {
-        return Ok(Vec::new());
-    }
-
-    let mut items = Vec::new();
-
-    loop {
-        let mut text_prompt = Text::new(initial_prompt);
-        if let Some(help_text) = help {
-            text_prompt = text_prompt.with_help_message(help_text);
-        }
-
-        let text = text_prompt.prompt()?;
-
-        if text.trim().is_empty() {
-            break;
-        }
-
-        items.push(text);
-
-        let add_more = Confirm::new(&format!("Add another {}?", item_name))
-            .with_default(true)
-            .prompt()?;
-
-        if !add_more {
-            break;
-        }
-    }
-
-    Ok(items)
-}
-
 /// Edit a field with change detection
 ///
 /// Prompts to edit a field, showing current value as default.
@@ -404,36 +314,6 @@ pub fn edit_field_with_change(
     } else {
         Ok(None)
     }
-}
-
-/// Show result and pause for user acknowledgment
-///
-/// Displays success or error message based on Result, then pauses for user input.
-/// Provides consistent UX for operation results across all workflows.
-///
-/// # Arguments
-/// * `result` - The result to display (success message or error)
-///
-/// # Returns
-/// * `Ok(())` - Message displayed and user acknowledged
-/// * `Err` - Error occurred during display or pause
-///
-/// # Examples
-/// ```ignore
-/// let result = controller.create_actor(...);
-/// show_result_and_pause(&result)?;
-/// ```
-pub fn show_result_and_pause(result: &Result<String>) -> Result<()> {
-    match result {
-        Ok(message) => {
-            UI::show_success(message)?;
-        }
-        Err(e) => {
-            UI::show_error(&format!("{:#}", e))?;
-        }
-    }
-    UI::pause_for_input()?;
-    Ok(())
 }
 
 /// Collect conditions (preconditions or postconditions)
