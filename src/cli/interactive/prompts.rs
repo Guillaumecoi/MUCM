@@ -560,9 +560,13 @@ pub fn collect_conditions(
                     .next()
                     .context("Failed to parse use case ID")?;
 
-                // Ask for relationship type
-                let relationships = vec!["include", "extend", "require", "depend"];
-                let relationship = Select::new("Relationship type:", relationships).prompt()?;
+                // For preconditions, always use "require" relationship
+                // For other condition types, could ask for relationship type if needed in future
+                let relationship = if condition_type == "preconditions" {
+                    "require"
+                } else {
+                    "depend"
+                };
 
                 format!("{}||UC:{}:{}", condition_text, target_id, relationship)
             } else {
