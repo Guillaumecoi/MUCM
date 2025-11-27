@@ -1,6 +1,24 @@
 
 <div align="center">
   <img src="https://capsule-render.vercel.app/api?type=soft&color=0:667eea,100:764ba2&height=160&section=header&text=Markdown%20Use%20Case%20Manager&fontSize=42&fontColor=ffffff&fontAlignY=40&desc=Documentation%20that%20travels%20with%20your%20code&descSize=26&descAlignY=70" style="border-radius: 25px;">
+
+  <p align="center">
+    <a href="https://github.com/Guillaumecoi/MD-usecase-manager/actions/workflows/ci.yml">
+      <img src="https://github.com/Guillaumecoi/MD-usecase-manager/workflows/CI/badge.svg" alt="CI Status">
+    </a>
+    <a href="https://github.com/Guillaumecoi/MD-usecase-manager/actions/workflows/test.yml">
+      <img src="https://github.com/Guillaumecoi/MD-usecase-manager/workflows/Tests/badge.svg" alt="Test Status">
+    </a>
+    <a href="https://codecov.io/gh/Guillaumecoi/MD-usecase-manager">
+      <img src="https://codecov.io/gh/Guillaumecoi/MD-usecase-manager/branch/main/graph/badge.svg" alt="Coverage">
+    </a>
+    <a href="https://github.com/Guillaumecoi/MD-usecase-manager/actions/workflows/security.yml">
+      <img src="https://github.com/Guillaumecoi/MD-usecase-manager/workflows/Security%20Audit/badge.svg" alt="Security">
+    </a>
+    <a href="LICENSE">
+      <img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License">
+    </a>
+  </p>
 </div>
 
 ## Why This Tool?
@@ -325,7 +343,32 @@ Nextest handles test isolation more effectively than the standard test runner.
 
 ## Contributing
 
-Issues and pull requests welcome!
+We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details on:
+
+- Development setup and workflow
+- Code style and quality standards
+- Testing requirements
+- Commit message conventions
+- Pull request process
+- Versioning strategy
+
+### Quick Start for Contributors
+
+```bash
+# Clone and setup
+git clone https://github.com/Guillaumecoi/MD-usecase-manager.git
+cd MD-usecase-manager
+cargo build
+
+# Run tests
+cargo nextest run
+
+# Check code quality
+cargo fmt --check
+cargo clippy --all-targets --all-features -- -D warnings
+```
+
+Issues and pull requests welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md) before submitting.
 
 ## License
 

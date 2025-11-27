@@ -1,0 +1,30 @@
+name: Coverage
+
+on:
+  push:
+    branches: [ main, cli-refactor ]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  coverage:
+    name: Code Coverage
+    runs-on: ubuntu-latest
+    container:
+      image: xd009642/tarpaulin:develop-nightly
+      options: --security-opt seccomp=unconfined
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Generate coverage
+        run: |
+          cargo tarpaulin --verbose --out Xml --workspace
+
+      - name: Upload to codecov
+        uses: codecov/codecov-action@v4
+        with:
+          files: ./cobertura.xml
+          fail_ci_if_error: false
+          token: ${{ secrets.CODECOV_TOKEN }}
