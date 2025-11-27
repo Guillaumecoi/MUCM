@@ -49,7 +49,7 @@ jobs:
       - name: Test 1 - Initialize project (TOML backend)
         working-directory: test-workspace
         run: |
-          mucm init --backend toml --language rust --methodology developer --default-methodology developer
+          mucm init --storage toml --language rust --methodology developer
         shell: bash
 
       - name: Verify initialization files
@@ -217,7 +217,7 @@ jobs:
         run: |
           mkdir test-sqlite
           cd test-sqlite
-          mucm init --backend sqlite --language rust --methodology developer --default-methodology developer
+          mucm init --storage sqlite --language rust --methodology developer
         shell: bash
 
       - name: Test 19 - Create use case in SQLite backend
