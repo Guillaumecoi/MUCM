@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Questions & Discussions
+    url: https://github.com/Guillaumecoi/MD-usecase-manager/discussions
+    about: Ask questions and discuss ideas with the community
+  - name: Security Vulnerability
+    url: https://github.com/Guillaumecoi/MD-usecase-manager/security/advisories/new
+    about: Report security vulnerabilities privately
