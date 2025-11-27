@@ -102,6 +102,8 @@ jobs:
     name: Publish to crates.io
     needs: build
     runs-on: ubuntu-latest
+    env:
+      CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -139,9 +141,17 @@ jobs:
 
       - name: Publish to crates.io
         if: steps.check_changes.outputs.has_code_changes == 'true'
+        continue-on-error: true
         env:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
-        run: cargo publish --token $CARGO_REGISTRY_TOKEN
+        run: |
+          if [ -n "$CARGO_REGISTRY_TOKEN" ]; then
+            echo "📦 Publishing to crates.io..."
+            cargo publish --token $CARGO_REGISTRY_TOKEN
+          else
+            echo "⚠️  Skipping crates.io publish - CARGO_REGISTRY_TOKEN not configured"
+            echo "💡 Add CARGO_REGISTRY_TOKEN secret to enable automatic publishing"
+          fi
 
       - name: Skip publish (docs only)
         if: steps.check_changes.outputs.has_code_changes == 'false'
