@@ -4,8 +4,9 @@
 //! Provides guided workflows for adding, editing, removing, and reordering conditions.
 
 use anyhow::Result;
-use inquire::{Confirm, Select, Text};
+use inquire::{Select, Text};
 
+use crate::cli::interactive::prompts;
 use crate::cli::interactive::ui::UI;
 use crate::controller::UseCaseController;
 
@@ -280,14 +281,14 @@ impl ConditionsWorkflow {
         UI::show_section_header("Edit Precondition", "✏️")?;
 
         // Select precondition to edit
-        let mut preconditions_with_cancel = preconditions.clone();
-        preconditions_with_cancel.push("[Cancel]".to_string());
-        let selection =
-            Select::new("Select precondition to edit:", preconditions_with_cancel).prompt()?;
-
-        if selection == "[Cancel]" {
-            return Ok(());
-        }
+        let selection = match prompts::select_or_cancel(
+            "Select precondition to edit:",
+            preconditions.clone(),
+            |p| p.clone(),
+        )? {
+            Some(sel) => sel,
+            None => return Ok(()),
+        };
 
         // Find index (extract number from "1. text")
         let index = preconditions
@@ -349,14 +350,14 @@ impl ConditionsWorkflow {
         UI::show_section_header("Remove Precondition", "🗑️")?;
 
         // Select precondition to remove
-        let mut preconditions_with_cancel = preconditions.clone();
-        preconditions_with_cancel.push("[Cancel]".to_string());
-        let selection =
-            Select::new("Select precondition to remove:", preconditions_with_cancel).prompt()?;
-
-        if selection == "[Cancel]" {
-            return Ok(());
-        }
+        let selection = match prompts::select_or_cancel(
+            "Select precondition to remove:",
+            preconditions.clone(),
+            |p| p.clone(),
+        )? {
+            Some(sel) => sel,
+            None => return Ok(()),
+        };
 
         // Find index
         let index = preconditions
@@ -366,16 +367,11 @@ impl ConditionsWorkflow {
             .ok_or_else(|| anyhow::anyhow!("Could not find selected precondition"))?;
 
         // Confirm removal
-        let confirm = Confirm::new(&format!(
-            "Are you sure you want to remove this precondition? ({})",
-            index
-        ))
-        .with_default(false)
-        .prompt()?;
-
-        if !confirm {
-            UI::show_info("Removal cancelled")?;
-            UI::pause_for_input()?;
+        let precondition_text = selection
+            .split_once(". ")
+            .map(|(_, text)| text.trim())
+            .unwrap_or(&selection);
+        if !prompts::confirm_delete(precondition_text, "precondition")? {
             return Ok(());
         }
 
@@ -459,17 +455,9 @@ impl ConditionsWorkflow {
 
     /// Clear all preconditions
     fn clear_preconditions(use_case_id: &str) -> Result<()> {
-        UI::show_section_header("Clear All Preconditions", "⚠️")?;
+        UI::show_section_header("Clear All Preconditions", "🗑️")?;
 
-        let confirm = Confirm::new(
-            "Are you sure you want to clear ALL preconditions? This cannot be undone.",
-        )
-        .with_default(false)
-        .prompt()?;
-
-        if !confirm {
-            UI::show_info("Operation cancelled")?;
-            UI::pause_for_input()?;
+        if !prompts::confirm_delete("all preconditions", "items")? {
             return Ok(());
         }
 
@@ -539,14 +527,14 @@ impl ConditionsWorkflow {
         UI::show_section_header("Edit Postcondition", "✏️")?;
 
         // Select postcondition to edit
-        let mut postconditions_with_cancel = postconditions.clone();
-        postconditions_with_cancel.push("[Cancel]".to_string());
-        let selection =
-            Select::new("Select postcondition to edit:", postconditions_with_cancel).prompt()?;
-
-        if selection == "[Cancel]" {
-            return Ok(());
-        }
+        let selection = match prompts::select_or_cancel(
+            "Select postcondition to edit:",
+            postconditions.clone(),
+            |p| p.clone(),
+        )? {
+            Some(sel) => sel,
+            None => return Ok(()),
+        };
 
         // Find index
         let index = postconditions
@@ -608,17 +596,14 @@ impl ConditionsWorkflow {
         UI::show_section_header("Remove Postcondition", "🗑️")?;
 
         // Select postcondition to remove
-        let mut postconditions_with_cancel = postconditions.clone();
-        postconditions_with_cancel.push("[Cancel]".to_string());
-        let selection = Select::new(
+        let selection = match prompts::select_or_cancel(
             "Select postcondition to remove:",
-            postconditions_with_cancel,
-        )
-        .prompt()?;
-
-        if selection == "[Cancel]" {
-            return Ok(());
-        }
+            postconditions.clone(),
+            |p| p.clone(),
+        )? {
+            Some(sel) => sel,
+            None => return Ok(()),
+        };
 
         // Find index
         let index = postconditions
@@ -628,16 +613,11 @@ impl ConditionsWorkflow {
             .ok_or_else(|| anyhow::anyhow!("Could not find selected postcondition"))?;
 
         // Confirm removal
-        let confirm = Confirm::new(&format!(
-            "Are you sure you want to remove this postcondition? ({})",
-            index
-        ))
-        .with_default(false)
-        .prompt()?;
-
-        if !confirm {
-            UI::show_info("Removal cancelled")?;
-            UI::pause_for_input()?;
+        let postcondition_text = selection
+            .split_once(". ")
+            .map(|(_, text)| text.trim())
+            .unwrap_or(&selection);
+        if !prompts::confirm_delete(postcondition_text, "postcondition")? {
             return Ok(());
         }
 
@@ -723,15 +703,7 @@ impl ConditionsWorkflow {
     fn clear_postconditions(use_case_id: &str) -> Result<()> {
         UI::show_section_header("Clear All Postconditions", "⚠️")?;
 
-        let confirm = Confirm::new(
-            "Are you sure you want to clear ALL postconditions? This cannot be undone.",
-        )
-        .with_default(false)
-        .prompt()?;
-
-        if !confirm {
-            UI::show_info("Operation cancelled")?;
-            UI::pause_for_input()?;
+        if !prompts::confirm_delete("all postconditions", "items")? {
             return Ok(());
         }
 
