@@ -9,5 +9,6 @@ pub mod conditions;
 pub mod config;
 pub mod initialization;
 pub mod methodology;
+pub mod operations;
 pub mod scenario;
 pub mod use_case;

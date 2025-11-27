@@ -4,8 +4,9 @@
 //! Handles UI for adding and removing methodologies, delegating business logic to the controller.
 
 use anyhow::Result;
-use inquire::{Confirm, MultiSelect};
+use inquire::MultiSelect;
 
+use crate::cli::interactive::prompts;
 use crate::cli::interactive::ui::UI;
 use crate::controller::ProjectController;
 
@@ -79,15 +80,8 @@ impl MethodologyWorkflow {
         }
 
         // Confirm removal
-        let confirm = Confirm::new(&format!(
-            "Remove {} methodology(ies) from config?",
-            selected.len()
-        ))
-        .with_default(false)
-        .prompt()?;
-
-        if !confirm {
-            println!("\n  Removal cancelled.\n");
+        let methodology_list = selected.join(", ");
+        if !prompts::confirm_delete(&methodology_list, "methodologies")? {
             return Ok(());
         }
 

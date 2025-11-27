@@ -29,6 +29,7 @@
 // Private modules - used only within CLI interactive
 mod field_helpers;
 mod menus;
+pub mod prompts;
 mod runner;
 mod selectors;
 mod ui;

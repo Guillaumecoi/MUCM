@@ -4,8 +4,9 @@
 //! Provides guided workflows for adding, editing, removing, and reordering conditions.
 
 use anyhow::Result;
-use inquire::{Confirm, Select, Text};
+use inquire::{Select, Text};
 
+use crate::cli::interactive::prompts;
 use crate::cli::interactive::ui::UI;
 use crate::controller::UseCaseController;
 
@@ -13,149 +14,6 @@ use crate::controller::UseCaseController;
 pub struct ConditionsWorkflow;
 
 impl ConditionsWorkflow {
-    /// Collect conditions interactively with optional use case references
-    ///
-    /// This is a reusable helper for collecting conditions (preconditions or postconditions)
-    /// during use case or scenario creation. It prompts for text conditions and optionally
-    /// allows referencing other use cases.
-    ///
-    /// # Arguments
-    /// * `condition_type` - Either "preconditions" or "postconditions"
-    /// * `context_type` - Either "use case" or "scenario" for display
-    /// * `context_id` - The ID of the use case or scenario being created
-    ///
-    /// # Returns
-    /// A vector of condition strings, potentially with use case references in format:
-    /// "text||UC:target_id:relationship" or just "text"
-    /// Collect simple text-only conditions (for postconditions)
-    pub fn collect_conditions_text_only(condition_type: &str) -> Result<Vec<String>> {
-        let add_conditions = Confirm::new(&format!("Add {}?", condition_type))
-            .with_default(false)
-            .prompt()?;
-
-        if !add_conditions {
-            return Ok(Vec::new());
-        }
-
-        let mut conditions = Vec::new();
-        loop {
-            let condition_text = Text::new(&format!(
-                "  {} (or press Enter to finish):",
-                condition_type.trim_end_matches('s')
-            ))
-            .with_help_message("Enter a text description of the resulting state")
-            .prompt()?;
-
-            if condition_text.trim().is_empty() {
-                break;
-            }
-
-            conditions.push(condition_text);
-
-            let add_more = Confirm::new(&format!(
-                "Add another {}?",
-                condition_type.trim_end_matches('s')
-            ))
-            .with_default(true)
-            .prompt()?;
-
-            if !add_more {
-                break;
-            }
-        }
-
-        Ok(conditions)
-    }
-
-    /// Collect conditions with use case references (for preconditions only)
-    pub fn collect_conditions_with_refs(
-        condition_type: &str,
-        context_type: &str,
-        _context_id: &str,
-    ) -> Result<Vec<String>> {
-        let add_conditions = Confirm::new(&format!("Add {}?", condition_type))
-            .with_default(false)
-            .prompt()?;
-
-        if !add_conditions {
-            return Ok(Vec::new());
-        }
-
-        let mut conditions = Vec::new();
-        loop {
-            println!("\n  💡 Tip: You can reference other use cases to show dependencies\n");
-
-            // First ask for the condition text
-            let condition_text = Text::new(&format!(
-                "  {} (or press Enter to finish):",
-                condition_type.trim_end_matches('s')
-            ))
-            .with_help_message("Enter a text description (e.g., 'User must be logged in')")
-            .prompt()?;
-
-            if condition_text.trim().is_empty() {
-                break;
-            }
-
-            // Now ask if they want to add a use case reference
-            let reference_options = vec!["None - Just text", "Use Case"];
-            let reference_type =
-                Select::new("Does this reference another use case?", reference_options)
-                    .with_help_message(&format!(
-                        "Link this {} {} to another use case to show dependencies",
-                        context_type,
-                        condition_type.trim_end_matches('s')
-                    ))
-                    .prompt()?;
-
-            let condition_str = match reference_type {
-                "Use Case" => {
-                    // Get list of use cases
-                    let uc_controller = UseCaseController::new()?;
-                    let use_case_ids = uc_controller
-                        .get_all_use_cases()?
-                        .iter()
-                        .map(|uc| format!("{} - {}", uc.id, uc.title))
-                        .collect::<Vec<_>>();
-
-                    if use_case_ids.is_empty() {
-                        UI::show_warning("No other use cases found. Creating without reference.")?;
-                        condition_text
-                    } else {
-                        let selected = Select::new("Select use case:", use_case_ids)
-                            .with_help_message("Choose which use case this condition references")
-                            .prompt()?;
-
-                        let target_id = selected
-                            .split(" - ")
-                            .next()
-                            .unwrap_or(&selected)
-                            .to_string();
-
-                        // Preconditions and postconditions always use 'requires' relationship
-                        format!("{}||UC:{}:requires", condition_text, target_id)
-                    }
-                }
-                _ => condition_text,
-            };
-
-            conditions.push(condition_str);
-
-            let add_more = Confirm::new(&format!(
-                "Add another {}?",
-                condition_type.trim_end_matches('s')
-            ))
-            .with_default(true)
-            .prompt()?;
-
-            if !add_more {
-                break;
-            }
-        }
-
-        Ok(conditions)
-    }
-
     /// Unified conditions management entry point
     ///
     /// # Arguments
@@ -423,14 +281,14 @@ impl ConditionsWorkflow {
         UI::show_section_header("Edit Precondition", "✏️")?;
 
         // Select precondition to edit
-        let mut preconditions_with_cancel = preconditions.clone();
-        preconditions_with_cancel.push("[Cancel]".to_string());
-        let selection =
-            Select::new("Select precondition to edit:", preconditions_with_cancel).prompt()?;
-
-        if selection == "[Cancel]" {
-            return Ok(());
-        }
+        let selection = match prompts::select_or_cancel(
+            "Select precondition to edit:",
+            preconditions.clone(),
+            |p| p.clone(),
+        )? {
+            Some(sel) => sel,
+            None => return Ok(()),
+        };
 
         // Find index (extract number from "1. text")
         let index = preconditions
@@ -492,14 +350,14 @@ impl ConditionsWorkflow {
         UI::show_section_header("Remove Precondition", "🗑️")?;
 
         // Select precondition to remove
-        let mut preconditions_with_cancel = preconditions.clone();
-        preconditions_with_cancel.push("[Cancel]".to_string());
-        let selection =
-            Select::new("Select precondition to remove:", preconditions_with_cancel).prompt()?;
-
-        if selection == "[Cancel]" {
-            return Ok(());
-        }
+        let selection = match prompts::select_or_cancel(
+            "Select precondition to remove:",
+            preconditions.clone(),
+            |p| p.clone(),
+        )? {
+            Some(sel) => sel,
+            None => return Ok(()),
+        };
 
         // Find index
         let index = preconditions
@@ -509,16 +367,11 @@ impl ConditionsWorkflow {
             .ok_or_else(|| anyhow::anyhow!("Could not find selected precondition"))?;
 
         // Confirm removal
-        let confirm = Confirm::new(&format!(
-            "Are you sure you want to remove this precondition? ({})",
-            index
-        ))
-        .with_default(false)
-        .prompt()?;
-
-        if !confirm {
-            UI::show_info("Removal cancelled")?;
-            UI::pause_for_input()?;
+        let precondition_text = selection
+            .split_once(". ")
+            .map(|(_, text)| text.trim())
+            .unwrap_or(&selection);
+        if !prompts::confirm_delete(precondition_text, "precondition")? {
             return Ok(());
         }
 
@@ -602,17 +455,9 @@ impl ConditionsWorkflow {
 
     /// Clear all preconditions
     fn clear_preconditions(use_case_id: &str) -> Result<()> {
-        UI::show_section_header("Clear All Preconditions", "⚠️")?;
+        UI::show_section_header("Clear All Preconditions", "🗑️")?;
 
-        let confirm = Confirm::new(
-            "Are you sure you want to clear ALL preconditions? This cannot be undone.",
-        )
-        .with_default(false)
-        .prompt()?;
-
-        if !confirm {
-            UI::show_info("Operation cancelled")?;
-            UI::pause_for_input()?;
+        if !prompts::confirm_delete("all preconditions", "items")? {
             return Ok(());
         }
 
@@ -682,14 +527,14 @@ impl ConditionsWorkflow {
         UI::show_section_header("Edit Postcondition", "✏️")?;
 
         // Select postcondition to edit
-        let mut postconditions_with_cancel = postconditions.clone();
-        postconditions_with_cancel.push("[Cancel]".to_string());
-        let selection =
-            Select::new("Select postcondition to edit:", postconditions_with_cancel).prompt()?;
-
-        if selection == "[Cancel]" {
-            return Ok(());
-        }
+        let selection = match prompts::select_or_cancel(
+            "Select postcondition to edit:",
+            postconditions.clone(),
+            |p| p.clone(),
+        )? {
+            Some(sel) => sel,
+            None => return Ok(()),
+        };
 
         // Find index
         let index = postconditions
@@ -751,17 +596,14 @@ impl ConditionsWorkflow {
         UI::show_section_header("Remove Postcondition", "🗑️")?;
 
         // Select postcondition to remove
-        let mut postconditions_with_cancel = postconditions.clone();
-        postconditions_with_cancel.push("[Cancel]".to_string());
-        let selection = Select::new(
+        let selection = match prompts::select_or_cancel(
             "Select postcondition to remove:",
-            postconditions_with_cancel,
-        )
-        .prompt()?;
-
-        if selection == "[Cancel]" {
-            return Ok(());
-        }
+            postconditions.clone(),
+            |p| p.clone(),
+        )? {
+            Some(sel) => sel,
+            None => return Ok(()),
+        };
 
         // Find index
         let index = postconditions
@@ -771,16 +613,11 @@ impl ConditionsWorkflow {
             .ok_or_else(|| anyhow::anyhow!("Could not find selected postcondition"))?;
 
         // Confirm removal
-        let confirm = Confirm::new(&format!(
-            "Are you sure you want to remove this postcondition? ({})",
-            index
-        ))
-        .with_default(false)
-        .prompt()?;
-
-        if !confirm {
-            UI::show_info("Removal cancelled")?;
-            UI::pause_for_input()?;
+        let postcondition_text = selection
+            .split_once(". ")
+            .map(|(_, text)| text.trim())
+            .unwrap_or(&selection);
+        if !prompts::confirm_delete(postcondition_text, "postcondition")? {
             return Ok(());
         }
 
@@ -866,15 +703,7 @@ impl ConditionsWorkflow {
     fn clear_postconditions(use_case_id: &str) -> Result<()> {
         UI::show_section_header("Clear All Postconditions", "⚠️")?;
 
-        let confirm = Confirm::new(
-            "Are you sure you want to clear ALL postconditions? This cannot be undone.",
-        )
-        .with_default(false)
-        .prompt()?;
-
-        if !confirm {
-            UI::show_info("Operation cancelled")?;
-            UI::pause_for_input()?;
+        if !prompts::confirm_delete("all postconditions", "items")? {
             return Ok(());
         }
 
