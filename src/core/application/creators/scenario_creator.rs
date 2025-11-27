@@ -221,6 +221,40 @@ impl ScenarioCreator {
         }
     }
 
+    /// Resequence all numeric steps in a scenario to be sequential starting from 1
+    /// This closes any gaps in step numbering (e.g., [1, 3, 5] becomes [1, 2, 3])
+    pub fn resequence_steps(&self, scenario: &mut Scenario) -> Result<()> {
+        // Collect all numeric steps (steps without suffixes like 1a, 2b, etc.)
+        let mut numeric_steps: Vec<(usize, u32)> = scenario
+            .steps
+            .iter()
+            .enumerate()
+            .filter_map(|(idx, step)| {
+                if let Ok(step_order) = StepOrder::parse(&step.order) {
+                    if step_order.suffix.is_none() {
+                        return Some((idx, step_order.base));
+                    }
+                }
+                None
+            })
+            .collect();
+
+        // Sort by original order
+        numeric_steps.sort_by_key(|(_, base)| *base);
+
+        // Renumber sequentially starting from 1
+        for (new_order, (idx, _old_order)) in numeric_steps.iter().enumerate() {
+            scenario.steps[*idx].order = (new_order + 1).to_string();
+        }
+
+        // Re-sort steps to maintain order
+        scenario
+            .steps
+            .sort_by(|a, b| StepOrder::compare(&a.order, &b.order));
+
+        Ok(())
+    }
+
     /// Create a scenario step with optional receiver
     pub fn create_scenario_step(
         &self,
