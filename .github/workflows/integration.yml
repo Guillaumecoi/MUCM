@@ -2,9 +2,9 @@ name: Integration Tests
 
 on:
   push:
-    branches: [ main, cli-refactor ]
+    branches: [ main, master, cli-refactor ]
   pull_request:
-    branches: [ main, cli-refactor ]
+    branches: [ main, master, cli-refactor ]
 
 env:
   CARGO_TERM_COLOR: always
