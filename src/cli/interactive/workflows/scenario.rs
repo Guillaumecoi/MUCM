@@ -6,7 +6,7 @@
 use anyhow::Result;
 use inquire::{Confirm, Select, Text};
 
-use crate::cli::interactive::{runner::InteractiveRunner, ui::UI};
+use crate::cli::interactive::{prompts, runner::InteractiveRunner, ui::UI};
 use crate::controller::ScenarioController;
 
 /// Scenario workflow handler
@@ -172,7 +172,7 @@ impl ScenarioWorkflow {
         if add_steps && !scenario_id.is_empty() {
             println!("\n  📝 Adding steps to: {}\n", title);
             loop {
-                let actor = Self::select_actor_for_step()?;
+                let actor = prompts::select_actor("Select actor for this step:", true)?;
 
                 let add_receiver = Confirm::new("Add a receiving actor?")
                     .with_default(false)
@@ -180,7 +180,7 @@ impl ScenarioWorkflow {
                     .prompt()?;
 
                 let receiver = if add_receiver {
-                    Self::select_actor_for_step()?
+                    prompts::select_actor("Select actor for this step:", true)?
                 } else {
                     None
                 };
@@ -219,35 +219,6 @@ impl ScenarioWorkflow {
 
     /// Helper to select multiple actors interactively
     /// Helper to select a single actor for a step
-    fn select_actor_for_step() -> Result<Option<String>> {
-        let runner = InteractiveRunner::new();
-        let available_actors = runner.get_available_actors()?;
-
-        // Always add built-in actors at the top
-        let mut all_options = vec![
-            "User".to_string(),
-            "System".to_string(),
-            "Default (Actor)".to_string(),
-        ];
-        all_options.extend(available_actors);
-        let available_actors = all_options;
-
-        let choice = Select::new("Select actor for this step:", available_actors).prompt()?;
-
-        if choice == "Default (Actor)" {
-            Ok(None)
-        } else if choice == "User" || choice == "System" {
-            Ok(Some(choice))
-        } else {
-            // Extract actor ID from display string
-            if let Some(id) = choice.split('(').nth(1).and_then(|s| s.strip_suffix(')')) {
-                Ok(Some(format!("ref:{}", id)))
-            } else {
-                Ok(Some(choice))
-            }
-        }
-    }
-
     /// Edit an existing scenario
     fn edit_scenario(use_case_id: &str) -> Result<()> {
         UI::show_section_header("Edit Scenario", "✏️")?;
@@ -526,7 +497,7 @@ impl ScenarioWorkflow {
 
             match choice {
                 "Add step" => {
-                    let actor = Self::select_actor_for_step()?;
+                    let actor = prompts::select_actor("Select actor for this step:", true)?;
 
                     let add_receiver = Confirm::new("Add a receiving actor?")
                         .with_default(false)
@@ -534,7 +505,7 @@ impl ScenarioWorkflow {
                         .prompt()?;
 
                     let receiver = if add_receiver {
-                        Self::select_actor_for_step()?
+                        prompts::select_actor("Select actor for this step:", true)?
                     } else {
                         None
                     };
@@ -573,7 +544,7 @@ impl ScenarioWorkflow {
                     let step_order: u32 =
                         selected_step.split('.').next().unwrap().trim().parse()?;
 
-                    let actor = Self::select_actor_for_step()?;
+                    let actor = prompts::select_actor("Select actor for this step:", true)?;
                     let new_description = Text::new("Step description:").prompt()?;
 
                     let result = controller.edit_step(
@@ -750,8 +721,8 @@ impl ScenarioWorkflow {
                     };
 
                     // Select primary actor
-                    let primary_actor =
-                        Self::select_actor_for_step()?.unwrap_or_else(|| "User".to_string());
+                    let primary_actor = prompts::select_actor("Select actor for this step:", true)?
+                        .unwrap_or_else(|| "User".to_string());
 
                     // Create the extension scenario
                     let result = controller.create_extension_scenario(
@@ -1171,14 +1142,14 @@ impl ScenarioWorkflow {
             .trim()
             .to_string();
 
-        let actor = Self::select_actor_for_step()?;
+        let actor = prompts::select_actor("Select actor for this step:", true)?;
 
         let add_receiver = Confirm::new("Add a receiving actor?")
             .with_default(false)
             .prompt()?;
 
         let receiver = if add_receiver {
-            Self::select_actor_for_step()?
+            prompts::select_actor("Select actor for this step:", true)?
         } else {
             None
         };
@@ -1380,7 +1351,8 @@ impl ScenarioWorkflow {
             .prompt()?;
 
         // Select primary actor
-        let actor = Self::select_actor_for_step()?.unwrap_or_else(|| "User".to_string());
+        let actor = prompts::select_actor("Select actor for this step:", true)?
+            .unwrap_or_else(|| "User".to_string());
 
         // Create extension
         let result = controller.create_extension_scenario(
@@ -1413,14 +1385,14 @@ impl ScenarioWorkflow {
             if !scenario_id.is_empty() {
                 println!("\n  📝 Adding steps to extension: {}\n", title);
                 loop {
-                    let step_actor = Self::select_actor_for_step()?;
+                    let step_actor = prompts::select_actor("Select actor for this step:", true)?;
 
                     let add_receiver = Confirm::new("Add a receiving actor?")
                         .with_default(false)
                         .prompt()?;
 
                     let receiver = if add_receiver {
-                        Self::select_actor_for_step()?
+                        prompts::select_actor("Select actor for this step:", true)?
                     } else {
                         None
                     };
@@ -1696,14 +1668,15 @@ impl ScenarioWorkflow {
             .to_string();
 
         // Get step details
-        let actor = Self::select_actor_for_step()?.unwrap_or_else(|| "User".to_string());
+        let actor = prompts::select_actor("Select actor for this step:", true)?
+            .unwrap_or_else(|| "User".to_string());
 
         let add_receiver = Confirm::new("Add a receiving actor?")
             .with_default(false)
             .prompt()?;
 
         let receiver = if add_receiver {
-            Self::select_actor_for_step()?
+            prompts::select_actor("Select actor for this step:", true)?
         } else {
             None
         };
