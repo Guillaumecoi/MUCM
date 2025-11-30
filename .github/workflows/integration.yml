@@ -73,8 +73,8 @@ jobs:
       - name: Test 2 - Create actor
         working-directory: test-workspace
         run: |
-          mucm actor create webserver --type service --description "Web application server"
-          mucm actor create database --type data-store --description "PostgreSQL database"
+          mucm actor create-system --actor-type system webserver "Web application server"
+          mucm actor create-system --actor-type database postgres "PostgreSQL database"
         shell: bash
 
       - name: Test 3 - List actors
@@ -85,8 +85,8 @@ jobs:
             echo "ERROR: webserver actor not found"
             exit 1
           fi
-          if ! echo "$OUTPUT" | grep -q "database"; then
-            echo "ERROR: database actor not found"
+          if ! echo "$OUTPUT" | grep -q "postgres"; then
+            echo "ERROR: postgres actor not found"
             exit 1
           fi
           echo "✓ Actors created successfully"
@@ -145,7 +145,7 @@ jobs:
       - name: Test 10 - Add scenario step
         working-directory: test-workspace
         run: |
-          mucm scenario add-step UC-AUT-001 "Successful Login" --actor webserver --action "validates credentials" --receiver database
+          mucm scenario add-step UC-AUT-001 "Successful Login" --actor webserver --action "validates credentials" --receiver postgres
         shell: bash
 
       - name: Test 11 - Show use case details
