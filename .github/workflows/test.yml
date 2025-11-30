@@ -2,9 +2,9 @@ name: Tests
 
 on:
   push:
-    branches: [ main, master, cli-refactor ]
+    branches: [ main, master]
   pull_request:
-    branches: [ main, master, cli-refactor ]
+    branches: [ main, master]
 
 env:
   CARGO_TERM_COLOR: always
