@@ -1037,6 +1037,48 @@ impl UseCaseCoordinator {
 
     // ========== Cleanup Operations ==========
 
+    /// Delete use case files from a specific category directory
+    ///
+    /// Helper method to remove TOML and markdown files when moving a use case
+    /// to a different category.
+    ///
+    /// # Arguments
+    /// * `use_case_id` - The ID of the use case
+    /// * `category` - The category directory to delete from
+    ///
+    /// # Returns
+    /// Ok(()) on success, error if deletion fails
+    fn delete_use_case_files(&self, use_case_id: &str, category: &str) -> Result<()> {
+        use crate::core::to_snake_case;
+        use std::fs;
+        use std::path::Path;
+
+        let category_snake = to_snake_case(category);
+
+        // Delete TOML file
+        let toml_dir = Path::new(&self.config.directories.data_dir).join(&category_snake);
+        let toml_path = toml_dir.join(format!("{}.toml", use_case_id));
+        if toml_path.exists() {
+            fs::remove_file(&toml_path)?;
+        }
+
+        // Delete all markdown files for this use case (could be multiple with multi-view)
+        let md_dir = Path::new(&self.config.directories.use_case_dir).join(&category_snake);
+        if md_dir.exists() {
+            for entry in fs::read_dir(&md_dir)? {
+                let entry = entry?;
+                let filename = entry.file_name();
+                let filename_str = filename.to_string_lossy();
+                // Match files like UC-XXX-001.md or UC-XXX-001-feat-s.md
+                if filename_str.starts_with(use_case_id) && filename_str.ends_with(".md") {
+                    fs::remove_file(entry.path())?;
+                }
+            }
+        }
+
+        Ok(())
+    }
+
     /// Clean up orphaned methodology fields from use cases
     ///
     /// Scans methodology_fields HashMap in each use case and removes entries for
@@ -1099,6 +1141,10 @@ impl UseCaseCoordinator {
             .load_by_id(use_case_id)?
             .ok_or_else(|| anyhow::anyhow!("Use case {} not found", use_case_id))?;
 
+        // Track if category changed (need to move files)
+        let old_category = use_case.category.clone();
+        let category_changed = category.is_some() && category != Some(&old_category);
+
         // Apply updates (only if Some)
         if let Some(t) = title {
             use_case.title = t.to_string();
@@ -1122,6 +1168,11 @@ impl UseCaseCoordinator {
 
         // Touch metadata to update modified timestamp
         use_case.metadata.touch();
+
+        // If category changed, delete old files before saving to new location
+        if category_changed {
+            self.delete_use_case_files(&use_case.id, &old_category)?;
+        }
 
         // Save updated use case (TOML and markdown)
         self.save_use_case_with_views(&use_case)?;
