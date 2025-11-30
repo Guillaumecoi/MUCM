@@ -2245,13 +2245,13 @@ mod tests {
 
         assert!(result.is_success());
 
-        // Verify step was deleted
+        // Verify step was deleted and remaining steps were renumbered to close the gap
         let scenario = controller.get_scenario(&use_case_id, &scenario_id).unwrap();
         assert_eq!(scenario.steps.len(), 2);
         assert_eq!(scenario.steps[0].action, "First action");
         assert_eq!(scenario.steps[0].order, "1");
         assert_eq!(scenario.steps[1].action, "Third action");
-        assert_eq!(scenario.steps[1].order, "3");
+        assert_eq!(scenario.steps[1].order, "2"); // Renumbered from "3" to "2" to close the gap
     }
 
     #[test]
