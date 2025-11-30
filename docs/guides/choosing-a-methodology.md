@@ -1,6 +1,7 @@
 # Choosing a Methodology
 
 MUCM supports four different methodologies, each optimized for different team perspectives and workflows. This guide helps you choose the right one for your project.
+Don't forget this is just a template, Feel free to modify the hbs files and variables to suit your needs!
 
 ## Quick Decision Guide
 

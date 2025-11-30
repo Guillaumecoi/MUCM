@@ -305,12 +305,14 @@ Releases are automated via GitHub Actions:
 
 ## Architecture
 
-The project follows Clean Architecture principles:
+The project follows Clean Architecture principles with clear layer separation. 
 
-- **Core**: Domain entities, use cases, repository interfaces
-- **Controller**: Business logic coordination
-- **Infrastructure**: Persistence (TOML, SQLite), file system
-- **Presentation**: CLI, formatting, output
+For detailed architecture documentation, see [docs/architecture.md](docs/architecture.md), which covers:
+- Clean architecture layers and responsibilities
+- Storage backend implementations (TOML vs SQLite)
+- Template system design
+- Testing strategy
+- Design decisions and future considerations
 
 ## License
 
