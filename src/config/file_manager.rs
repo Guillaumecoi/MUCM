@@ -520,12 +520,12 @@ mod tests {
             fs::set_permissions(&config_path, perms)?;
 
             let result = ConfigFileManager::load();
-            
+
             // Restore permissions for cleanup first
             let mut restore_perms = fs::metadata(&config_path)?.permissions();
             restore_perms.set_mode(0o644);
             let _ = fs::set_permissions(&config_path, restore_perms);
-            
+
             // In Docker/CI (running as root), permission restrictions don't work
             // Skip assertion if we can still read the file (indicates root)
             if result.is_ok() {

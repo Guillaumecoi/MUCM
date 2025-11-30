@@ -83,10 +83,13 @@ mod interactive_runner_tests {
             "Should confirm creation with views info. Message was: {}",
             message
         );
-        
+
         // Verify use case is accessible through listing
         let list_result = runner.list_use_cases();
-        assert!(list_result.is_ok(), "Should be able to list use cases after creation");
+        assert!(
+            list_result.is_ok(),
+            "Should be able to list use cases after creation"
+        );
     }
 
     #[test]
@@ -134,8 +137,8 @@ mod interactive_runner_tests {
         // Initialize project properly (this handles missing templates gracefully)
         let mut runner = InteractiveRunner::new();
         let result = runner.initialize_project(
-            None,  // no language
-            vec!["business".to_string()],  // single methodology
+            None,                         // no language
+            vec!["business".to_string()], // single methodology
             "toml".to_string(),
             "docs/use-cases".to_string(),
             "tests".to_string(),
@@ -143,7 +146,7 @@ mod interactive_runner_tests {
             "use-cases-data".to_string(),
             None,
         );
-        
+
         // If initialization fails (e.g., no source-templates), skip the test
         if result.is_err() {
             return;
@@ -383,7 +386,10 @@ mod persona_workflow_tests {
 
         // Verify persona can be shown through runner interface
         let show_result = runner.show_actor("dev-user".to_string());
-        assert!(show_result.is_ok(), "Should be able to show created persona");
+        assert!(
+            show_result.is_ok(),
+            "Should be able to show created persona"
+        );
     }
 
     #[test]
@@ -582,7 +588,8 @@ mod persona_workflow_tests {
     fn test_persona_operations_both_backends() {
         // Test TOML backend
         {
-            let (_temp_dir, mut runner, _config) = setup_test_env_with_backend(StorageBackend::Toml);
+            let (_temp_dir, mut runner, _config) =
+                setup_test_env_with_backend(StorageBackend::Toml);
 
             let result = runner.create_persona_interactive(
                 "toml-user".to_string(),
@@ -593,7 +600,10 @@ mod persona_workflow_tests {
 
             // Verify through runner interface
             let show_result = runner.show_actor("toml-user".to_string());
-            assert!(show_result.is_ok(), "Should be able to show persona with TOML backend");
+            assert!(
+                show_result.is_ok(),
+                "Should be able to show persona with TOML backend"
+            );
         }
 
         // TODO: SQLite backend test disabled - separate connections don't see each other's changes

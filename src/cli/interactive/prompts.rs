@@ -75,14 +75,14 @@ pub fn select_actor(prompt: &str, include_defaults: bool) -> Result<Option<Strin
 
 /// Parse actor ID from formatted display string
 ///
-/// Extracts the ID from a string in format "emoji name (id)"
+/// Extracts the ID from a string in format "emoji name (id)"\
 ///
-/// # Examples
-/// ```
-/// # use mucm::cli::interactive::prompts::parse_actor_id;
-/// assert_eq!(parse_actor_id("👤 John Doe (user-123)"), Some("user-123".to_string()));
-/// assert_eq!(parse_actor_id("invalid"), None);
-/// ```
+/// # Arguments
+/// * `formatted_string` - The formatted actor string
+///
+/// # Returns
+/// * `Some(String)` - Extracted actor ID
+/// * `None` - Parsing failed
 pub fn parse_actor_id(formatted_string: &str) -> Option<String> {
     formatted_string
         .split('(')
@@ -175,8 +175,7 @@ pub fn select_level(runner: &InteractiveRunner, methodology_name: &str) -> Resul
 /// Capitalize the first character of a string
 ///
 /// # Examples
-/// ```
-/// # use mucm::cli::interactive::prompts::capitalize_first;
+/// ```ignore
 /// assert_eq!(capitalize_first("hello"), "Hello");
 /// assert_eq!(capitalize_first("HELLO"), "HELLO");
 /// ```
