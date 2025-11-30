@@ -51,12 +51,17 @@ mucm create [OPTIONS] <TITLE> --category <CATEGORY>
 **Options:**
 - `-c, --category <CATEGORY>`: Use case category
 - `-d, --description <DESCRIPTION>`: Use case description
-- `-m, --methodology <METHODOLOGY>`: Methodology to use
+- `-m, --methodology <METHODOLOGY>`: Methodology to use (deprecated: use --views for multi-view support)
+- `--views <VIEWS>`: Multiple views as comma-separated methodology:level pairs (e.g., `feature:normal,business:advanced`)
 
 **Examples:**
 ```bash
 mucm create "User Authentication" --category security
 mucm create "Data Export" --category api --description "Export user data in various formats"
+
+# Multi-view support - create use case with multiple methodology perspectives
+mucm create "User Registration" --category auth --views developer:normal,tester:advanced
+mucm create "Payment Processing" --category payment --views business:advanced,feature:normal
 ```
 
 ### `list`
@@ -817,6 +822,37 @@ mucm persona delete <PERSONA_ID>
 **Examples:**
 ```bash
 mucm persona delete power-user-sarah
+```
+
+### `cleanup`
+
+Clean up orphaned methodology fields from TOML files. After changing views or methodologies, 
+use cases may contain fields that are no longer used by any active view. This command removes 
+those unused fields to keep TOML files clean.
+
+```bash
+mucm cleanup [OPTIONS] [USE_CASE_ID]
+```
+
+**Arguments:**
+- `[USE_CASE_ID]`: Use case ID to clean (e.g., UC-SEC-001). If omitted, cleans all use cases
+
+**Options:**
+- `-n, --dry-run`: Show what would be cleaned without making changes
+
+**Examples:**
+```bash
+# Preview cleanup for all use cases
+mucm cleanup --dry-run
+
+# Clean up all use cases
+mucm cleanup
+
+# Clean up specific use case
+mucm cleanup UC-SEC-001
+
+# Preview cleanup for specific use case
+mucm cleanup UC-SEC-001 --dry-run
 ```
 
 ### `interactive`
