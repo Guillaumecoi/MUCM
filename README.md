@@ -1,7 +1,5 @@
 
 <div align="center">
-  <img src="https://capsule-render.vercel.app/api?type=soft&color=0:667eea,100:764ba2&height=160&section=header&text=Markdown%20Use%20Case%20Manager&fontSize=42&fontColor=ffffff&fontAlignY=40&desc=Documentation%20that%20travels%20with%20your%20code&descSize=26&descAlignY=70" style="border-radius: 25px;">
-
   <p align="center">
     <a href="https://github.com/Guillaumecoi/MD-usecase-manager/actions/workflows/ci.yml">
       <img src="https://github.com/Guillaumecoi/MD-usecase-manager/workflows/CI/badge.svg" alt="CI Status">
@@ -19,15 +17,17 @@
       <img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License">
     </a>
   </p>
+
+  <img src="https://capsule-render.vercel.app/api?type=soft&color=0:667eea,100:764ba2&height=160&section=header&text=Markdown%20Use%20Case%20Manager&fontSize=42&fontColor=ffffff&fontAlignY=40&desc=Documentation%20that%20travels%20with%20your%20code&descSize=26&descAlignY=70" style="border-radius: 25px;">
 </div>
 
-## Why This Tool?
+## Why MUCM?
 
-Most use case management happens in external tools like Jira or Confluence, which creates a disconnect between your documentation and code. This tool keeps everything together in your repository as plain markdown files.
+Keep your use case documentation **in your repository**, not scattered across external tools. MUCM generates clean markdown files that live alongside your code—version controlled, searchable, and always in sync.
 
-Your use cases live alongside your code, version-controlled and readable by anyone. No external dependencies, no cloud services, no vendor lock-in. Just markdown files that work with any static site generator or documentation platform.
+**No cloud dependencies. No vendor lock-in. Just markdown.**
 
-Works great for solo developers, small teams, or any project where you want documentation that travels with your code.
+Perfect for teams that value documentation as code and want their requirements to travel with the codebase.
 
 ## Key Features
 
@@ -50,7 +50,7 @@ Works great for solo developers, small teams, or any project where you want docu
 - High-performance database for large projects (100+ use cases)
 - Complex queries and relationship tracking
 - Transaction support for data integrity
-- CLI-driven workflow (not manually editable)
+- CLI-driven workflow (harder to edit manually)
 - Not easily viewable on GitHub/GitLab web interface
 
 ### Flexible Workflow
@@ -65,310 +65,163 @@ Works great for solo developers, small teams, or any project where you want docu
 - **Status tracking** - Progress from planning to deployment with automatic rollup
 - **Markdown export** - Works with any static site generator or documentation platform
 
-## Getting Started
+## Quick Start
 
-### System Installation
+### Installation
 
 ```bash
-git clone https://github.com/GuillaumeCoi/markdown-use-case-manager
+git clone https://github.com/Guillaumecoi/markdown-use-case-manager
 cd markdown-use-case-manager
-cargo install --path .            # Don't forget the dot at the end
+cargo install --path .
 ```
 
-Now you can run the tool with `mucm` from anywhere.
+### Create Your First Project
 
-### Interactive Mode
-
-For the best user experience, use interactive mode:
-
+**Option 1: Interactive Mode (Recommended)**
 ```bash
-mucm -i                          # Start interactive mode
+mucm -i
+# Follow the guided setup wizard
 ```
 
-When you run `mucm -i` without an existing project, it launches a project initialization wizard that guides you through language selection, methodology choices (Developer, Tester, Business, Feature), and storage backend configuration (TOML or SQLite). Once initialized, interactive mode provides menu-driven access to all mucm commands.
-
-### Basic Usage
-
-#### Interactive Mode (Recommended)
-
+**Option 2: CLI Mode**
 ```bash
-# Launch interactive mode
-mucm interactive               # or mucm -i
+# Initialize project
+mucm init --methodology developer
+
+# Create a use case
+mucm create "User Authentication" --category security
+
+# View your work
+mucm list
 ```
 
 ![interactive terminal screenshot](images/interactive.png)
 
-#### Script Mode (Perfect for Automation)
-
-```bash
-# Initialize your project (REQUIRED FIRST STEP)
-mucm init                        # Uses TOML storage (default)
-# or
-mucm init --backend sqlite       # Uses SQLite for larger projects
-
-# Create your first use case  
-mucm create "User Login" --category "Security"
-
-# View your documentation
-mucm list
-mucm status
-```
-
-### Field Management
-
-Manage use case preconditions, postconditions, and references:
-
-```bash
-# Preconditions
-mucm precondition add UC-SEC-001 "User must be authenticated"
-mucm precondition list UC-SEC-001
-mucm precondition remove UC-SEC-001 1
-
-# Postconditions  
-mucm postcondition add UC-SEC-001 "User session is established"
-mucm postcondition list UC-SEC-001
-mucm postcondition remove UC-SEC-001 1
-
-# Use case references
-mucm reference add UC-SEC-001 UC-AUTH-001 dependency "Requires authentication"
-mucm reference list UC-SEC-001
-mucm reference remove UC-SEC-001 UC-AUTH-001
-```
-
-> **Note**: Some commands have changed. Use `mucm --help` or `mucm <command> --help` for current options.
-
-> **⚠️ Important**: You **must** run `mucm init` before using any other commands.
-
 ### What You Get
-
-Creating use cases generates a clean file structure:
 
 ```
 docs/use-cases/
 ├── README.md                    # Auto-generated overview
-├── security/
-│   └── UC-SEC-001.md           # Individual use case 
-└── ...
+└── security/
+    └── UC-SEC-001.md           # Clean markdown documentation
 
 tests/use-cases/
-├── security/
-│   └── uc_sec_001.rs           # Test scaffolding 
-└── ...
+└── security/
+    └── uc_sec_001.rs           # Test scaffolding
 ```
 
-Everything is standard markdown with YAML frontmatter, so it works with any static site generator.
+Standard markdown files that work with any static site generator or documentation platform.
 
-## Status Tracking
+## Core Concepts
 
-Six development statuses that automatically roll up from scenarios to use cases:
-
-```
-PLANNED 📋      → Basic idea documented
-IN_PROGRESS 🔄  → Development started
-IMPLEMENTED ⚡  → Code complete, not tested
-TESTED ✅       → Tested and verified
-DEPLOYED 🚀     → Live in production
-DEPRECATED ⚠️   → No longer maintained
+### Scenarios & Steps
+Break down use cases into scenarios with actor-based steps:
+```bash
+mucm usecase scenario add UC-SEC-001 "Successful login"
+mucm usecase scenario step add UC-SEC-001 "successful-login" \
+  --action "User enters valid credentials" --actor User
 ```
 
-The use case status automatically reflects the minimum status of all its scenarios.
-
-## Extended Metadata
-
-Rich metadata support for professional documentation:
-
-### **Available Fields**
-- **👥 Personas** - Target users and stakeholders
-- **📋 Prerequisites** - System requirements and dependencies  
-- **🔗 Preconditions** - Conditions that must be true before use case execution
-- **✅ Postconditions** - Conditions that will be true after successful completion
-- **🔗 Use Case References** - Relationships to other use cases (dependencies, extensions, etc.)
-- **✍️ Author/Reviewer** - Ownership and review information
-- **💰 Business Value** - Why this use case matters
-- **🔧 Complexity** - Implementation difficulty assessment
-- **📦 Epic** - Project/epic association
-- **✅ Acceptance Criteria** - Definition of "done"
-- **💭 Assumptions & ⚠️ Constraints** - Context and limitations
-
-### **Use Case Dependencies**
-Reference related use cases in prerequisites:
-```markdown
-## Prerequisites
-- User must be logged in (UC-AUTH-001)
-- Payment method configured (UC-PAY-003)
-- Shopping cart not empty (UC-CART-002)
+### Dependencies & References
+Link related use cases:
+```bash
+mucm reference add UC-API-001 UC-AUTH-001 dependency \
+  "API access requires authentication"
 ```
 
-### **Professional Output**
-```markdown
-# UC-AUTH-001: User Authentication
-
-**Author:** John Doe | **Reviewer:** Jane Smith
-**Target Users:** Customer, Admin User
-
-## Business Value
-Secure authentication improves user trust and reduces support tickets
-
-## Prerequisites
-- System is online
-- User registration completed (UC-REG-001)
-
-## Acceptance Criteria
-- Login completes within 5 seconds
-- Multi-factor authentication supported
+### Actors & Personas
+Simple actors for quick scenarios, detailed personas for user context:
+```bash
+mucm actor create AdminUser --function "System administrator"
+mucm persona create "Power User Sarah" --tech-level 8
 ```
 
-## Template Methodologies
+**[→ Full CLI Reference](docs/guides/cli/cli-reference.md)**
 
-Choose from four dynamic template methodologies, each optimized for different team focuses:
+## Methodologies
 
-### Developer
-**Best for**: Engineering teams, technical implementation focus
+Each methodology generates documentation optimized for different audiences:
+
+| Methodology | Focus | Best For |
+|-------------|-------|----------|
+| **Developer** | APIs, data models, technical specs | Engineering teams |
+| **Tester** | Test scenarios, coverage, quality | QA teams |
+| **Business** | ROI, stakeholder value, requirements | Product managers |
+| **Feature** | User stories, acceptance criteria | Agile teams |
+
 ```bash
 mucm init --methodology developer
+# or mix multiple views
+mucm create "Payment" --category billing --views developer:normal,tester:advanced
 ```
 
-### Tester
-**Best for**: QA teams, test-driven development, quality assurance
-```bash
-mucm init --methodology tester
-```
+**[→ Methodology Selection Guide](docs/guides/workflows/choosing-a-methodology.md)**
 
-### Business
-**Best for**: Product managers, stakeholder communication, business requirements
-```bash
-mucm init --methodology business
-```
+## Storage Options
 
-### Feature
-**Best for**: Feature teams, user story focus, agile workflows
-```bash
-mucm init --methodology feature
-```
+**TOML (Recommended)**
+- ✅ Human-readable files in your repository
+- ✅ Git-friendly (easy diffs, code review)
+- ✅ Works great for most projects
 
-Each methodology provides:
-- **Methodology-specific templates** optimized for different team perspectives
-- **Tailored configurations** with recommended settings
-- **Language-specific test templates** (Python, Rust, JavaScript)
-- **Fully customizable** - modify Handlebars templates to match your needs
-
-## Configuration
-
-The tool automatically creates configurations based on your choices:
-
-```toml
-[project]
-name = "My Project"
-description = "Project managed with Markdown Use Case Manager"
-
-[templates]
-methodology = "developer"             # developer, tester, business, or feature
-use_extended_metadata = true          # Extended fields support
-persona_template_enabled = true       # Persona templates
-
-[storage]
-backend = "toml"                      # toml (default) or sqlite
-database_path = ".config/mucm/usecases.db"  # SQLite location (when using sqlite)
-
-[directories]
-use_case_dir = "docs/use-cases"
-test_dir = "tests/use-cases"
-
-[generation]
-test_language = "rust"                # rust, python, javascript, or none
-auto_generate_tests = true
-```
-
-## Template System
-
-All templates are organized by methodology and fully customizable:
-
-```
-source-templates/methodologies/
-├── developer/       # Engineering focus
-├── tester/          # QA and testing focus
-├── business/        # Business analysis
-└── feature/         # Feature/user story focus
-```
-
-Each methodology includes:
-- Use case templates with different detail levels (`uc_normal.hbs`, `uc_advanced.hbs`)
-- Methodology-specific configurations
-- Custom field support
-
-Plus language-specific test templates:
-```
-source-templates/languages/
-├── python/          # Python test templates
-├── rust/            # Rust test templates
-└── javascript/      # JavaScript test templates
-```
-
-## Deployment
-
-Since everything is just markdown, your documentation works everywhere:
-
-- **GitHub/GitLab Pages** - Automatic deployment from your repo
-- **MkDocs** - `mkdocs serve` for instant documentation sites  
-- **Docusaurus** - Modern documentation platform
-- **Jekyll** - GitHub's default static site generator
-- **Hugo** - Fast static site generator
-- **Any markdown processor** - Pandoc, GitBook, etc.
-
-## Development
-
-### Running Tests
-
-The test suite includes integration tests that modify global state (current working directory).
-For best results, use **cargo nextest** which provides superior test isolation:
+**SQLite (⚠️ Experimental)**
+- 🔬 Database storage for 100+ use cases
+- 🔬 Complex queries and better performance
+- ⚠️ Still under active development
 
 ```bash
-# Install nextest (one time)
-cargo install cargo-nextest
-
-# Run tests with nextest (recommended)
-cargo nextest run
-
-# Alternative: run with standard test runner
-cargo test --lib
-
-# If tests fail with cargo test, run modules individually:
-cargo test --lib controller::tests::use_case_controller_tests
-cargo test --lib controller::tests::project_controller_tests
-cargo test --lib cli::interactive::tests
+mucm init --backend sqlite    # Use SQLite backend
 ```
 
-All tests are marked with `#[serial]` to run sequentially and avoid race conditions.
-Nextest handles test isolation more effectively than the standard test runner.
+**[→ Configuration Guide](docs/guides/customization/configuration.md)**
+
+## Customization
+
+Everything is customizable via Handlebars templates:
+
+```
+source-templates/
+├── methodologies/          # Add your own methodology
+│   ├── developer/
+│   ├── tester/
+│   ├── business/
+│   └── feature/
+└── languages/              # Add language support
+    ├── rust/
+    ├── python/
+    └── javascript/
+```
+
+Create custom fields, modify templates, or build entirely new methodologies.
+
+**[→ Template Customization Guide](docs/guides/customization/template-customization.md)**
+
+## Documentation
+
+- **[Getting Started](docs/guides/getting-started.md)** - Installation and first steps
+- **[CLI Reference](docs/guides/cli/cli-reference.md)** - All commands and options
+- **[Interactive Mode](docs/guides/cli/interactive-mode.md)** - Menu-driven interface
+- **[Architecture](docs/architecture.md)** - Technical design and implementation
+- **[Contributing](CONTRIBUTING.md)** - How to contribute
+
+**[→ Full Documentation Index](docs/README.md)**
 
 ## Contributing
 
-We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details on:
-
-- Development setup and workflow
-- Code style and quality standards
-- Testing requirements
-- Commit message conventions
-- Pull request process
-- Versioning strategy
-
-### Quick Start for Contributors
+Contributions welcome! We especially encourage:
+- 🎨 New methodology templates for different industries
+- 🔧 Additional programming language support
+- 📚 Documentation improvements
+- 🐛 Bug reports and fixes
 
 ```bash
-# Clone and setup
 git clone https://github.com/Guillaumecoi/MD-usecase-manager.git
 cd MD-usecase-manager
 cargo build
-
-# Run tests
-cargo nextest run
-
-# Check code quality
-cargo fmt --check
-cargo clippy --all-targets --all-features -- -D warnings
+cargo nextest run    # Requires: cargo install cargo-nextest
 ```
 
-Issues and pull requests welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md) before submitting.
+**[→ Contributing Guide](CONTRIBUTING.md)**
 
 ## License
 
