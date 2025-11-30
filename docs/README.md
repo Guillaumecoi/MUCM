@@ -12,23 +12,26 @@ New to MUCM? Start here:
 
 ## User Guides
 
-### Core Workflows
+### CLI Interfaces
 
-- **[CLI Reference](guides/cli-reference.md)** - Complete command reference
-- **[Configuration Guide](guides/configuration.md)** - Project setup and settings
+- **[CLI Reference](guides/cli/cli-reference.md)** - Complete command reference for standard CLI
+- **[Interactive Mode](guides/cli/interactive-mode.md)** - Menu-driven interface guide
+
+### Workflows
+
 - **[Use Case Management](../README.md#getting-started)** - Creating and managing use cases
-- **[Scenario Management](guides/scenario-management.md)** - Working with scenarios and steps
-- **[Actor Management](guides/actor-management.md)** - Managing actors and personas
+- **[Scenario Management](guides/workflows/scenario-management.md)** - Working with scenarios and steps
+- **[Actor Management](guides/workflows/actor-management.md)** - Managing actors and personas
+- **[Choosing a Methodology](guides/workflows/choosing-a-methodology.md)** - Methodology comparison and selection
 
 ### Customization
 
-- **[Choosing a Methodology](guides/choosing-a-methodology.md)** - Methodology comparison and selection
-- **[Template Customization](guides/template-customization.md)** - Customizing Handlebars templates
-- **[Interactive Mode](guides/interactive-mode.md)** - Menu-driven interface
+- **[Configuration Guide](guides/customization/configuration.md)** - Project setup and settings
+- **[Template Customization](guides/customization/template-customization.md)** - Customizing Handlebars templates
 
 ### Testing
 
-- **[Testing Guide](guides/testing.md)** - Running tests and CI setup
+- **[Testing Guide](guides/testing/testing.md)** - Running tests and CI setup
 
 ## Technical Documentation
 
@@ -87,14 +90,18 @@ docs/
 ├── architecture.md                    # Technical architecture
 └── guides/
     ├── getting-started.md             # Quick start guide
-    ├── cli-reference.md               # Complete CLI reference
-    ├── configuration.md               # Configuration options
-    ├── choosing-a-methodology.md      # Methodology selection
-    ├── interactive-mode.md            # Interactive interface
-    ├── template-customization.md      # Template system
-    ├── actor-management.md            # Actors and personas
-    ├── scenario-management.md         # Scenarios and steps
-    └── testing.md                     # Testing workflows
+    ├── cli/
+    │   ├── cli-reference.md           # Standard CLI reference
+    │   └── interactive-mode.md        # Interactive mode guide
+    ├── workflows/
+    │   ├── choosing-a-methodology.md  # Methodology selection
+    │   ├── actor-management.md        # Actors and personas
+    │   └── scenario-management.md     # Scenarios and steps
+    ├── customization/
+    │   ├── configuration.md           # Configuration options
+    │   └── template-customization.md  # Template system
+    └── testing/
+        └── testing.md                 # Testing workflows
 ```
 
 ## External Resources

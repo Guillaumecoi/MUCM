@@ -275,8 +275,46 @@ Releases are automated via GitHub Actions:
 ### User Documentation
 
 - Update `README.md` for user-facing changes
-- Add guides in `docs/guides/` for new features
-- Update CLI reference in `docs/reference/`
+- Add guides in appropriate `docs/guides/` subdirectory:
+  - `cli/` for CLI and interactive mode documentation
+  - `workflows/` for use case, scenario, actor, and methodology guides
+  - `customization/` for configuration and template guides
+  - `testing/` for testing-related documentation
+- Update CLI reference at `docs/guides/cli/cli-reference.md`
+
+### Template and Methodology Contributions
+
+We welcome and encourage contributions to expand MUCM's template system!
+
+**Adding New Methodologies:**
+- Create directory in `source-templates/methodologies/{methodology-name}/`
+- Add `methodology.toml` with configuration and custom fields
+- Create `uc_normal.hbs` and `uc_advanced.hbs` templates
+- Document the methodology's purpose and target audience
+- Add tests in `tests/template_rendering_tests.rs`
+
+**Adding Programming Languages:**
+- Create directory in `source-templates/languages/{language}/`
+- Add `info.toml` with language configuration
+- Create `test.hbs` template for test generation
+- Follow existing language template patterns (Rust, Python, JavaScript)
+- Test with real use case generation
+
+**Customizing Templates:**
+- Edit `.hbs` files in `source-templates/`
+- Use Handlebars syntax and registered helpers
+- See `docs/guides/customization/template-customization.md` for detailed guide
+- Ensure templates handle missing/optional fields gracefully
+- Test with both minimal and full data sets
+
+**Feel free to:**
+- Propose new methodologies for different industries or workflows
+- Add support for additional programming languages
+- Improve existing templates with better formatting or structure
+- Create alternative scenario visualization templates
+- Enhance template helpers with new functionality
+
+All template and methodology contributions are highly valued!
 
 ## Getting Help
 
