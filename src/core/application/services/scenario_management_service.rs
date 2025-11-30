@@ -587,7 +587,7 @@ impl<'a> ScenarioManagementService<'a> {
         // Remove the step
         use_case.remove_step_from_scenario(scenario_id, step_order)?;
 
-        // Auto-renumber remaining steps to close gaps (renumber all from step "1")
+        // Auto-renumber remaining steps to close gaps
         let scenario_index = use_case
             .scenarios
             .iter()
@@ -596,11 +596,15 @@ impl<'a> ScenarioManagementService<'a> {
 
         // Only renumber if it's a main scenario (numeric steps only)
         if use_case.scenarios[scenario_index].is_main {
-            self.scenario_creator.renumber_steps_from(
-                &mut use_case.scenarios[scenario_index],
-                "1",
-                1,
-            )?;
+            // Renumber steps after the deleted step to close the gap
+            let deleted_order: u32 = step_order.parse().unwrap_or(0);
+            if deleted_order > 0 {
+                self.scenario_creator.renumber_steps_from(
+                    &mut use_case.scenarios[scenario_index],
+                    step_order,
+                    -1, // Decrement by 1 to close the gap
+                )?;
+            }
         }
 
         // Update extension points and get list of invalid extensions
