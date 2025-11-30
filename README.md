@@ -292,7 +292,7 @@ source-templates/methodologies/
 ```
 
 Each methodology includes:
-- Use case templates with different detail levels (`uc_simple.hbs`, `uc_normal.hbs`, `uc_detailed.hbs`)
+- Use case templates with different detail levels (`uc_normal.hbs`, `uc_advanced.hbs`)
 - Methodology-specific configurations
 - Custom field support
 

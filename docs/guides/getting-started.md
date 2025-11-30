@@ -14,15 +14,16 @@ cargo install --path .            # Don't forget the dot!
 
 ## Step 2: Pick Your Methodology
 
-MUCM has 3 different methodologies. Pick one that fits your project:
+MUCM has 4 different methodologies. Pick one that fits your project:
 
 | What's your situation? | Pick this methodology | Command to use |
 |------------------------|----------------------|----------------|
-| I want something simple and quick | **Simple** - Lightweight, flexible approach for rapid development | `mucm init --methodology simple` |
-| I need detailed business analysis | **Business** - Business-focused approach emphasizing stakeholder value | `mucm init --methodology business` |
-| I'm focused on testing and quality | **Testing** - Test-driven approach with comprehensive coverage | `mucm init --methodology testing` |
+| I'm an engineering team focused on technical implementation | **Developer** - Technical focus with API design, data models, and system architecture | `mucm init --methodology developer` |
+| I need detailed business analysis and stakeholder communication | **Business** - Business-focused approach emphasizing stakeholder value and ROI | `mucm init --methodology business` |
+| I'm a QA team focused on testing and quality assurance | **Tester** - Test-driven approach with comprehensive test coverage and quality metrics | `mucm init --methodology tester` |
+| I work with feature teams and user stories | **Feature** - Agile user story format with acceptance criteria and feature focus | `mucm init --methodology feature` |
 
-**Can't decide?** Start with `simple` - it's perfect for most projects and you can always regenerate with a different methodology later.
+**Can't decide?** Start with `developer` for technical projects or `feature` for agile teams - you can always regenerate with a different methodology later.
 
 ### Storage Backend Options
 
@@ -37,10 +38,10 @@ Start with TOML unless you know you'll have a large project. You can always migr
 
 ```bash
 # Set up with your chosen methodology (uses TOML storage by default)
-mucm init --methodology simple
+mucm init --methodology developer
 
 # Or use SQLite for better performance with large projects
-mucm init --methodology simple --backend sqlite
+mucm init --methodology developer --backend sqlite
 
 # Or let MUCM guide you through it
 mucm -i
@@ -50,7 +51,7 @@ mucm -i
 
 ```bash
 # Quick way
-mucm create "User Login" --category "Security" --methodology simple
+mucm create "User Login" --category "Security" --methodology developer
 
 # Let MUCM ask you questions (easier!)
 mucm -i

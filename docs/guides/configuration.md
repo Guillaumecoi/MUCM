@@ -18,7 +18,7 @@ description = "What this project is about"
 author = "Your Name"
 
 [templates]
-methodology = "simple"              # Which style to use
+methodology = "developer"           # Which style to use
 
 [directories]
 use_case_dir = "docs/use-cases"     # Where your use cases go
@@ -38,14 +38,14 @@ author = "You!"                    # Who made it
 ### Pick Your Style
 ```toml
 [templates]
-methodology = "simple"              # Options: simple, cockburn, unified_process, bdd_gherkin
+methodology = "developer"           # Options: developer, tester, business, feature
 ```
 
 **Which one should you pick?**
-- `simple` - You want something quick and easy
-- `cockburn` - You need detailed business analysis
-- `unified_process` - Your company has formal requirements
-- `bdd_gherkin` - You write lots of automated tests
+- `developer` - Engineering teams focused on technical implementation and architecture
+- `tester` - QA teams focused on testing, quality assurance, and test coverage
+- `business` - Product managers and stakeholders focused on business value and requirements
+- `feature` - Agile teams working with user stories and feature development
 
 ### Folder Setup
 ```toml
@@ -105,47 +105,49 @@ database_path = ".config/mucm/usecases.db"  # SQLite database location (only use
 
 ## Common Setups
 
-### I Just Want Simple
+### For Developers and Engineers
 ```toml
 [templates]
-methodology = "simple"
+methodology = "developer"
 
 [generation]
-test_language = "none"                      # No test files
+test_language = "rust"                     # Or python, javascript
+auto_generate_tests = true
 ```
 
-### I'm Building Business Software
+### For Product Managers and Business Analysts
 ```toml
 [templates]
-methodology = "cockburn"
+methodology = "business"
 use_extended_metadata = true               # More detailed fields
 
 [generation]
-test_language = "python"
+test_language = "none"                     # Focus on requirements, not tests
 
 [storage]
 backend = "sqlite"                         # Better for large business projects
 ```
 
-### I Work at a Big Company
+### For QA Teams and Testers
 ```toml
 [templates]
-methodology = "unified_process"
+methodology = "tester"
 use_extended_metadata = true
-
-[validation]
-enforce_required_fields = true             # Make sure all fields are filled
-```
-
-### I Love Testing Everything
-```toml
-[templates]
-methodology = "bdd_gherkin"
 
 [generation]
 test_language = "python"
 auto_generate_tests = true
 test_framework = "pytest"
+```
+
+### For Agile Feature Teams
+```toml
+[templates]
+methodology = "feature"
+
+[generation]
+test_language = "javascript"
+auto_generate_tests = true
 ```
 
 ## Custom Fields
