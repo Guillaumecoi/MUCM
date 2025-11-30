@@ -192,13 +192,12 @@ docs: update contributing guide with commit conventions
 
 1. **Update tests**: Ensure all tests pass
 2. **Update docs**: Update README, docs, or code comments as needed
-3. **Update CHANGELOG**: Add entry under `[Unreleased]` section
 4. **Format and lint**: Run `cargo fmt` and `cargo clippy`
 5. **Commit changes**: Use conventional commit messages
 
 ### Submitting PR
 
-1. **Push your branch**
+1. **Push your branch, or better yet, create a fork and push your branch there**
    ```bash
    git push origin feature/your-feature-name
    ```
@@ -218,7 +217,6 @@ docs: update contributing guide with commit conventions
    - All CI checks must pass (format, lint, tests)
    - At least one approval required
    - No merge conflicts with base branch
-   - CHANGELOG.md updated
 
 ## Versioning Strategy
 
@@ -244,26 +242,6 @@ When the project reaches 1.0:
 - Follow strict semver: `MAJOR.MINOR.PATCH`
 - Document migration guides for breaking changes
 
-## Release Process
-
-Releases are automated via GitHub Actions:
-
-1. **Prepare release**
-   - Update version in `Cargo.toml`
-   - Update `CHANGELOG.md` (move Unreleased to new version)
-   - Commit: `chore: bump version to x.y.z`
-
-2. **Create tag**
-   ```bash
-   git tag -a v0.1.1 -m "Release v0.1.1"
-   git push origin v0.1.1
-   ```
-
-3. **Automated process**
-   - CI builds binaries for Linux, macOS, Windows
-   - GitHub release created with artifacts
-   - Published to crates.io (if code changed)
-
 ## Documentation
 
 ### Code Documentation
@@ -274,13 +252,9 @@ Releases are automated via GitHub Actions:
 
 ### User Documentation
 
-- Update `README.md` for user-facing changes
-- Add guides in appropriate `docs/guides/` subdirectory:
-  - `cli/` for CLI and interactive mode documentation
-  - `workflows/` for use case, scenario, actor, and methodology guides
-  - `customization/` for configuration and template guides
-  - `testing/` for testing-related documentation
-- Update CLI reference at `docs/guides/cli/cli-reference.md`
+- Update `docs/` with new features or changes
+- Maintain guides for installation, configuration, usage
+- Keep README up to date with key features and links
 
 ### Template and Methodology Contributions
 
