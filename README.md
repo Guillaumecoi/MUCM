@@ -29,41 +29,33 @@ Keep your use case documentation **in your repository**, not scattered across ex
 
 Perfect for teams that value documentation as code and want their requirements to travel with the codebase.
 
-## Key Features
+## Features
 
-### Modular Template System
-- **Dynamic methodology templates** - Choose between Developer, Tester, Business, and Feature-focused approaches
-- **Language-specific test generation** - Python, Rust, and JavaScript support with customizable test templates
-- **Fully customizable templates** - Modify Handlebars templates to match your team's needs
-- **Mix and match** - Different methodologies for different use case categories
+### 🎨 Four Methodology Templates
+Choose the perspective that fits your team:
+- **Developer** - API design, data models, technical architecture
+- **Tester** - Test scenarios, coverage metrics, quality assurance
+- **Business** - ROI, stakeholder requirements, business value
+- **Feature** - User stories, acceptance criteria, agile workflows
 
-### Dual Storage Backends
+[→ Choosing a Methodology](docs/guides/workflows/choosing-a-methodology.md)
 
-**TOML (Default)**
-- Human-readable source of truth that lives in your repository
-- View and edit directly in GitHub/GitLab without special tools
-- Perfect for code review and version control
-- Ideal for small to medium projects (< 100 use cases)
-- Manual editing friendly
+### 🗄️ Flexible Storage
+- **TOML (Recommended)** - Human-readable, git-friendly, perfect for most projects  
+- **SQLite (⚠️ Experimental)** - Database storage for 100+ use cases, still under active development
 
-**SQLite**
-- High-performance database for large projects (100+ use cases)
-- Complex queries and relationship tracking
-- Transaction support for data integrity
-- CLI-driven workflow (harder to edit manually)
-- Not easily viewable on GitHub/GitLab web interface
+### 💬 Two Interfaces
+**Interactive Mode** (`mucm -i`) - Menu-driven, great for getting started  
+**CLI Mode** - Fast commands for automation and scripting
 
-### Flexible Workflow
-- **Interactive mode** - Guided workflows with smart suggestions and auto-completion
-- **Script mode** - Automation-friendly for CI/CD pipelines
-- **Field management** - Add, list, and remove preconditions, postconditions, and use case references
-- **Both modes available** - Choose based on your context
+### 📊 Smart Status Tracking
+Six status levels (Planned → Deployed) with automatic rollup from scenarios to use cases
 
-### Professional Documentation
-- **Extended metadata** - Personas, prerequisites, business value, acceptance criteria
-- **Use case dependencies** - Reference and link related use cases
-- **Status tracking** - Progress from planning to deployment with automatic rollup
-- **Markdown export** - Works with any static site generator or documentation platform
+### 🧩 Extensible
+- Custom fields per methodology
+- Handlebars templates you can modify
+- Test generation for Rust, Python, JavaScript
+- Combine multiple methodologies in one use case
 
 ## Quick Start
 
