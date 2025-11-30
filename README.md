@@ -23,9 +23,9 @@
 
 ## Why MUCM?
 
-Keep your use case documentation **in your repository**, not scattered across external tools. MUCM generates clean markdown files that live alongside your code—version controlled, searchable, and always in sync.
+Keep your use case documentation **in your repository**, not scattered across external tools. MUCM stores structured data (TOML/SQLite) and generates clean markdown files that live alongside your code—version controlled, searchable, and always in sync.
 
-**No cloud dependencies. No vendor lock-in. Just markdown.**
+**No cloud dependencies. No vendor lock-in. Your data, your repo.**
 
 Perfect for teams that value documentation as code and want their requirements to travel with the codebase.
 
@@ -40,6 +40,18 @@ Choose the perspective that fits your team:
 
 [→ Choosing a Methodology](docs/guides/workflows/choosing-a-methodology.md)
 
+### 🧩 Extensible
+- Custom fields per methodology
+- Handlebars templates you can modify
+- Test generation for multiple programming languages
+- Combine multiple methodologies in one use case
+
+### 🎭 Scenarios & Actors
+- **Four scenario types**: main, alternative, exception, extension
+- **Extension scenarios**: branch from main flow at specific steps
+- **Rich actors**: personas with backgrounds + system actors (Database, API, etc.)
+- Actor-based steps with emoji identification
+
 ### 🗄️ Flexible Storage
 - **TOML (Recommended)** - Human-readable, git-friendly, perfect for most projects  
 - **SQLite (⚠️ Experimental)** - Database storage for 100+ use cases, still under active development
@@ -50,12 +62,6 @@ Choose the perspective that fits your team:
 
 ### 📊 Smart Status Tracking
 Six status levels (Planned → Deployed) with automatic rollup from scenarios to use cases
-
-### 🧩 Extensible
-- Custom fields per methodology
-- Handlebars templates you can modify
-- Test generation for Rust, Python, JavaScript
-- Combine multiple methodologies in one use case
 
 ## Quick Start
 
@@ -75,6 +81,8 @@ mucm -i
 # Follow the guided setup wizard
 ```
 
+![interactive terminal screenshot](images/interactive.png)
+
 **Option 2: CLI Mode**
 ```bash
 # Initialize project
@@ -86,8 +94,6 @@ mucm create "User Authentication" --category security
 # View your work
 mucm list
 ```
-
-![interactive terminal screenshot](images/interactive.png)
 
 ### What You Get
 
@@ -107,26 +113,17 @@ Standard markdown files that work with any static site generator or documentatio
 ## Core Concepts
 
 ### Scenarios & Steps
-Break down use cases into scenarios with actor-based steps:
-```bash
-mucm usecase scenario add UC-SEC-001 "Successful login"
-mucm usecase scenario step add UC-SEC-001 "successful-login" \
-  --action "User enters valid credentials" --actor User
-```
+Break down use cases into **main** (happy path), **alternative**, **exception**, and **extension** scenarios. Extensions can branch from main scenarios at specific steps and return later. Each scenario contains actor-based steps.
+
+**[→ Scenario Management Guide](docs/guides/workflows/scenario-management.md)**
+
+### Rich Actor System
+Create **personas** (human users with backgrounds, roles, technical experience) and **system actors** (Database, API, ExternalService types) with emoji identification. Reference actors in scenario steps.
+
+**[→ Actor Management Guide](docs/guides/workflows/actor-management.md)**
 
 ### Dependencies & References
-Link related use cases:
-```bash
-mucm reference add UC-API-001 UC-AUTH-001 dependency \
-  "API access requires authentication"
-```
-
-### Actors & Personas
-Simple actors for quick scenarios, detailed personas for user context:
-```bash
-mucm actor create AdminUser --function "System administrator"
-mucm persona create "Power User Sarah" --tech-level 8
-```
+Link scenarios and use cases with relationship types: `depends-on`, `extends`, `includes`, `alternative-to`.
 
 **[→ Full CLI Reference](docs/guides/cli/cli-reference.md)**
 
@@ -207,8 +204,8 @@ Contributions welcome! We especially encourage:
 - 🐛 Bug reports and fixes
 
 ```bash
-git clone https://github.com/Guillaumecoi/MD-usecase-manager.git
-cd MD-usecase-manager
+git clone https://github.com/Guillaumecoi/MUCM.git
+cd MUCM
 cargo build
 cargo nextest run    # Requires: cargo install cargo-nextest
 ```
