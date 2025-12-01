@@ -192,13 +192,12 @@ docs: update contributing guide with commit conventions
 
 1. **Update tests**: Ensure all tests pass
 2. **Update docs**: Update README, docs, or code comments as needed
-3. **Update CHANGELOG**: Add entry under `[Unreleased]` section
 4. **Format and lint**: Run `cargo fmt` and `cargo clippy`
 5. **Commit changes**: Use conventional commit messages
 
 ### Submitting PR
 
-1. **Push your branch**
+1. **Push your branch, or better yet, create a fork and push your branch there**
    ```bash
    git push origin feature/your-feature-name
    ```
@@ -218,7 +217,6 @@ docs: update contributing guide with commit conventions
    - All CI checks must pass (format, lint, tests)
    - At least one approval required
    - No merge conflicts with base branch
-   - CHANGELOG.md updated
 
 ## Versioning Strategy
 
@@ -244,26 +242,6 @@ When the project reaches 1.0:
 - Follow strict semver: `MAJOR.MINOR.PATCH`
 - Document migration guides for breaking changes
 
-## Release Process
-
-Releases are automated via GitHub Actions:
-
-1. **Prepare release**
-   - Update version in `Cargo.toml`
-   - Update `CHANGELOG.md` (move Unreleased to new version)
-   - Commit: `chore: bump version to x.y.z`
-
-2. **Create tag**
-   ```bash
-   git tag -a v0.1.1 -m "Release v0.1.1"
-   git push origin v0.1.1
-   ```
-
-3. **Automated process**
-   - CI builds binaries for Linux, macOS, Windows
-   - GitHub release created with artifacts
-   - Published to crates.io (if code changed)
-
 ## Documentation
 
 ### Code Documentation
@@ -274,9 +252,43 @@ Releases are automated via GitHub Actions:
 
 ### User Documentation
 
-- Update `README.md` for user-facing changes
-- Add guides in `docs/guides/` for new features
-- Update CLI reference in `docs/reference/`
+- Update `docs/` with new features or changes
+- Maintain guides for installation, configuration, usage
+- Keep README up to date with key features and links
+
+### Template and Methodology Contributions
+
+We welcome and encourage contributions to expand MUCM's template system!
+
+**Adding New Methodologies:**
+- Create directory in `source-templates/methodologies/{methodology-name}/`
+- Add `methodology.toml` with configuration and custom fields
+- Create `uc_normal.hbs` and `uc_advanced.hbs` templates
+- Document the methodology's purpose and target audience
+- Add tests in `tests/template_rendering_tests.rs`
+
+**Adding Programming Languages:**
+- Create directory in `source-templates/languages/{language}/`
+- Add `info.toml` with language configuration
+- Create `test.hbs` template for test generation
+- Follow existing language template patterns (Rust, Python, JavaScript)
+- Test with real use case generation
+
+**Customizing Templates:**
+- Edit `.hbs` files in `source-templates/`
+- Use Handlebars syntax and registered helpers
+- See `docs/guides/customization/template-customization.md` for detailed guide
+- Ensure templates handle missing/optional fields gracefully
+- Test with both minimal and full data sets
+
+**Feel free to:**
+- Propose new methodologies for different industries or workflows
+- Add support for additional programming languages
+- Improve existing templates with better formatting or structure
+- Create alternative scenario visualization templates
+- Enhance template helpers with new functionality
+
+All template and methodology contributions are highly valued!
 
 ## Getting Help
 
@@ -305,12 +317,14 @@ Releases are automated via GitHub Actions:
 
 ## Architecture
 
-The project follows Clean Architecture principles:
+The project follows Clean Architecture principles with clear layer separation. 
 
-- **Core**: Domain entities, use cases, repository interfaces
-- **Controller**: Business logic coordination
-- **Infrastructure**: Persistence (TOML, SQLite), file system
-- **Presentation**: CLI, formatting, output
+For detailed architecture documentation, see [docs/architecture.md](docs/architecture.md), which covers:
+- Clean architecture layers and responsibilities
+- Storage backend implementations (TOML vs SQLite)
+- Template system design
+- Testing strategy
+- Design decisions and future considerations
 
 ## License
 

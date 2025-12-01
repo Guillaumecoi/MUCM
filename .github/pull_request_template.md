@@ -58,8 +58,6 @@ $ cargo nextest run
 - [ ] Code passes linting checks (`cargo clippy -- -D warnings`)
 - [ ] All tests pass locally (`cargo nextest run` or `cargo test`)
 - [ ] Documentation updated (if applicable)
-- [ ] CHANGELOG.md updated under `[Unreleased]` section
-- [ ] Commit messages follow conventional commit format
 - [ ] No merge conflicts with base branch
 - [ ] Self-reviewed the code
 
@@ -84,13 +82,3 @@ Describe breaking changes and how to migrate
 ```rust
 // Example usage if needed
 ```
-
----
-
-**PR Checklist for Reviewers:**
-- [ ] Code quality and style
-- [ ] Test coverage adequate
-- [ ] Documentation clear and complete
-- [ ] No security concerns
-- [ ] Performance impact acceptable
-- [ ] Breaking changes justified and documented
