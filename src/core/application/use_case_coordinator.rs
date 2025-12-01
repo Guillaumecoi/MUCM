@@ -7,6 +7,7 @@ use crate::core::application::generators::{
     MarkdownGenerator, OutputManager, OverviewGenerator, TestGenerator,
 };
 use crate::core::application::services;
+use crate::core::application::services::CleanupResult;
 use crate::core::utils::suggest_alternatives;
 use crate::core::{
     domain::{Priority, Scenario, ScenarioReference, ScenarioType, UseCaseReference},
@@ -1097,7 +1098,7 @@ impl UseCaseCoordinator {
         &mut self,
         use_case_id: Option<String>,
         dry_run: bool,
-    ) -> Result<(usize, usize, Vec<(String, Vec<String>)>)> {
+    ) -> Result<CleanupResult> {
         let mut service =
             services::MethodologyFieldCleanupService::new(self.repository.as_ref(), &mut self.use_cases);
         service.cleanup_methodology_fields(use_case_id, dry_run)

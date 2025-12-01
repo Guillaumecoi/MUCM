@@ -2,6 +2,10 @@ use crate::core::{UseCase, UseCaseRepository};
 use anyhow::Result;
 use std::collections::HashSet;
 
+/// Type alias for cleanup result: (cleaned_count, total_checked, details)
+/// Details is a Vec of (use_case_id, removed_fields)
+pub type CleanupResult = (usize, usize, Vec<(String, Vec<String>)>);
+
 /// Service for cleaning up orphaned methodology fields
 pub struct MethodologyFieldCleanupService<'a> {
     repository: &'a dyn UseCaseRepository,
@@ -27,7 +31,7 @@ impl<'a> MethodologyFieldCleanupService<'a> {
         &mut self,
         use_case_id: Option<String>,
         dry_run: bool,
-    ) -> Result<(usize, usize, Vec<(String, Vec<String>)>)> {
+    ) -> Result<CleanupResult> {
         let mut cleaned_count = 0;
         let mut total_checked = 0;
         let mut details = Vec::new();
