@@ -30,13 +30,16 @@ impl TomlMigrator {
     pub fn migrate_actor_ids_v0_2_0(config: &Config, dry_run: bool) -> Result<usize> {
         // Check if migration is needed based on config version
         if config.version.as_str() >= "0.2.0" {
-            println!("✅ Project is already at version {} - no migration needed.", config.version);
+            println!(
+                "✅ Project is already at version {} - no migration needed.",
+                config.version
+            );
             return Ok(0);
         }
 
         // Actor TOML files are in data_dir/actors, not actor_dir (which is for markdown docs)
         let actor_data_dir = Path::new(&config.directories.data_dir).join("actors");
-        
+
         if !actor_data_dir.exists() {
             return Ok(0);
         }
@@ -46,9 +49,7 @@ impl TomlMigrator {
         println!("🔍 Scanning for actors to migrate...");
 
         // Read all TOML files in actor data directory
-        for entry in fs::read_dir(&actor_data_dir)
-            .context("Failed to read actor data directory")?
-        {
+        for entry in fs::read_dir(&actor_data_dir).context("Failed to read actor data directory")? {
             let entry = entry?;
             let path = entry.path();
 
@@ -57,14 +58,15 @@ impl TomlMigrator {
             }
 
             // Read the TOML file
-            let content = fs::read_to_string(&path)
-                .with_context(|| format!("Failed to read {:?}", path))?;
+            let content =
+                fs::read_to_string(&path).with_context(|| format!("Failed to read {:?}", path))?;
 
-            let mut data: toml::Value = toml::from_str(&content)
-                .with_context(|| format!("Failed to parse {:?}", path))?;
+            let mut data: toml::Value =
+                toml::from_str(&content).with_context(|| format!("Failed to parse {:?}", path))?;
 
             // Check if it's a persona
-            let actor_type = data.get("actor_type")
+            let actor_type = data
+                .get("actor_type")
                 .and_then(|v| v.as_str())
                 .unwrap_or("");
 
@@ -74,18 +76,21 @@ impl TomlMigrator {
             }
 
             // Get current ID, name, and function
-            let old_id = data.get("id")
+            let old_id = data
+                .get("id")
                 .and_then(|v| v.as_str())
                 .context("Actor missing id field")?
                 .to_string();
 
-            let name = data.get("name")
+            let name = data
+                .get("name")
                 .and_then(|v| v.as_str())
                 .context("Actor missing name field")?
                 .to_string();
 
             // Check for function at root level or in extra section
-            let function = data.get("function")
+            let function = data
+                .get("function")
                 .and_then(|v| v.as_str())
                 .or_else(|| {
                     data.get("extra")
@@ -122,22 +127,21 @@ impl TomlMigrator {
                 }
 
                 // Write updated content
-                let new_content = toml::to_string_pretty(&data)
-                    .context("Failed to serialize TOML")?;
+                let new_content =
+                    toml::to_string_pretty(&data).context("Failed to serialize TOML")?;
 
                 fs::write(&new_path, new_content)
                     .with_context(|| format!("Failed to write {:?}", new_path))?;
 
                 // Remove old file
-                fs::remove_file(&path)
-                    .with_context(|| format!("Failed to remove {:?}", path))?;
+                fs::remove_file(&path).with_context(|| format!("Failed to remove {:?}", path))?;
 
                 // Also migrate markdown file if it exists
                 let docs_dir = Path::new(&config.directories.actor_dir)
                     .parent()
                     .map(|p| p.to_path_buf())
                     .unwrap_or_else(|| Path::new("docs").to_path_buf());
-                
+
                 let old_md_path = docs_dir.join(format!("{}.md", old_id));
                 let new_md_path = docs_dir.join(format!("{}.md", new_id));
 
@@ -149,18 +153,25 @@ impl TomlMigrator {
         }
 
         if dry_run {
-            println!("\n✅ Dry run complete. {} actor(s) would be migrated.", migrated_count);
+            println!(
+                "\n✅ Dry run complete. {} actor(s) would be migrated.",
+                migrated_count
+            );
             println!("   Run without --dry-run to apply changes.");
         } else if migrated_count > 0 {
-            println!("\n✅ Migrated {} actor(s) to new ID format.", migrated_count);
-            
+            println!(
+                "\n✅ Migrated {} actor(s) to new ID format.",
+                migrated_count
+            );
+
             // Update config version after successful migration
             let config_path = crate::config::Config::config_path();
             if config_path.exists() {
                 let content = fs::read_to_string(&config_path)?;
                 let updated_content = if content.contains("version =") {
                     // Replace existing version
-                    content.lines()
+                    content
+                        .lines()
                         .map(|line| {
                             if line.trim_start().starts_with("version =") {
                                 format!("version = \"{}\"", crate::config::Config::CONFIG_VERSION)
@@ -172,10 +183,17 @@ impl TomlMigrator {
                         .join("\n")
                 } else {
                     // Add version at the top
-                    format!("version = \"{}\"\n\n{}", crate::config::Config::CONFIG_VERSION, content)
+                    format!(
+                        "version = \"{}\"\n\n{}",
+                        crate::config::Config::CONFIG_VERSION,
+                        content
+                    )
                 };
                 fs::write(&config_path, updated_content)?;
-                println!("   Updated config version to {}", crate::config::Config::CONFIG_VERSION);
+                println!(
+                    "   Updated config version to {}",
+                    crate::config::Config::CONFIG_VERSION
+                );
             }
         } else {
             println!("\n✅ No actors need migration.");
@@ -238,7 +256,13 @@ last_updated = true
         Config::load()
     }
 
-    fn create_test_actor(dir: &Path, id: &str, name: &str, function: &str, actor_type: &str) -> Result<()> {
+    fn create_test_actor(
+        dir: &Path,
+        id: &str,
+        name: &str,
+        function: &str,
+        actor_type: &str,
+    ) -> Result<()> {
         let content = format!(
             r#"
 id = "{}"
@@ -265,7 +289,13 @@ updated_at = "2025-12-01T00:00:00Z"
         let actor_data_dir = Path::new(&config.directories.data_dir).join("actors");
 
         // Create old-format persona
-        create_test_actor(&actor_data_dir, "sarah-chen", "Sarah Chen", "Regular Customer", "persona")?;
+        create_test_actor(
+            &actor_data_dir,
+            "sarah-chen",
+            "Sarah Chen",
+            "Regular Customer",
+            "persona",
+        )?;
 
         // Run migration
         let count = TomlMigrator::migrate_actor_ids_v0_2_0(&config, false)?;
@@ -293,7 +323,13 @@ updated_at = "2025-12-01T00:00:00Z"
         let actor_data_dir = Path::new(&config.directories.data_dir).join("actors");
 
         // Create system actor
-        create_test_actor(&actor_data_dir, "database", "Database", "Storage", "database")?;
+        create_test_actor(
+            &actor_data_dir,
+            "database",
+            "Database",
+            "Storage",
+            "database",
+        )?;
 
         // Run migration
         let count = TomlMigrator::migrate_actor_ids_v0_2_0(&config, false)?;
@@ -312,7 +348,13 @@ updated_at = "2025-12-01T00:00:00Z"
         let actor_data_dir = Path::new(&config.directories.data_dir).join("actors");
 
         // Create old-format persona
-        create_test_actor(&actor_data_dir, "john-doe", "John Doe", "Admin User", "persona")?;
+        create_test_actor(
+            &actor_data_dir,
+            "john-doe",
+            "John Doe",
+            "Admin User",
+            "persona",
+        )?;
 
         // Run dry run
         let count = TomlMigrator::migrate_actor_ids_v0_2_0(&config, true)?;

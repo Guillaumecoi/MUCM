@@ -8,10 +8,7 @@ pub struct PreconditionPostconditionService<'a> {
 }
 
 impl<'a> PreconditionPostconditionService<'a> {
-    pub fn new(
-        repository: &'a dyn UseCaseRepository,
-        use_cases: &'a mut Vec<UseCase>,
-    ) -> Self {
+    pub fn new(repository: &'a dyn UseCaseRepository, use_cases: &'a mut Vec<UseCase>) -> Self {
         Self {
             repository,
             use_cases,

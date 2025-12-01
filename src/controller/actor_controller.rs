@@ -1018,7 +1018,7 @@ experience_level = { type = "string", required = false }
         fs::create_dir_all(temp_dir.path().join("docs/actors"))?;
 
         let controller = PersonaController::new()?;
-        
+
         // Create a persona
         let result = controller.create_persona(
             "test-user".to_string(),
@@ -1055,7 +1055,7 @@ experience_level = { type = "string", required = false }
         fs::create_dir_all(temp_dir.path().join("docs/actors"))?;
 
         let controller = ActorController::new()?;
-        
+
         // Create a system actor
         let result = controller.create_system_actor(
             "test-database".to_string(),
@@ -1093,14 +1093,14 @@ experience_level = { type = "string", required = false }
         fs::create_dir_all(temp_dir.path().join("docs/actors"))?;
 
         let controller = ActorController::new()?;
-        
+
         // Create multiple actors
         controller.create_persona(
             "persona1".to_string(),
             "Persona One".to_string(),
             "Role 1".to_string(),
         )?;
-        
+
         controller.create_system_actor(
             "system1".to_string(),
             "System One".to_string(),

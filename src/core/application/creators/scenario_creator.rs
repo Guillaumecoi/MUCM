@@ -22,6 +22,15 @@ pub struct ExtensionScenarioParams {
     pub primary_actor: Actor,
 }
 
+/// Parameters for creating a scenario step
+pub struct StepParams {
+    pub order: String,
+    pub actor: String,
+    pub receiver: Option<String>,
+    pub action: String,
+    pub expected_result: Option<String>,
+}
+
 /// Handles scenario creation and management
 pub struct ScenarioCreator;
 
@@ -78,7 +87,11 @@ impl ScenarioCreator {
         }
 
         // Validate extends_at_step exists in parent
-        if !parent.steps.iter().any(|s| s.order == params.extends_at_step) {
+        if !parent
+            .steps
+            .iter()
+            .any(|s| s.order == params.extends_at_step)
+        {
             anyhow::bail!(
                 "Step '{}' does not exist in parent scenario '{}'",
                 params.extends_at_step,
@@ -97,7 +110,9 @@ impl ScenarioCreator {
             }
 
             // Validate return step is at or after extends step (allow same step for retry)
-            if StepOrder::compare(&params.extends_at_step, return_step) == std::cmp::Ordering::Greater {
+            if StepOrder::compare(&params.extends_at_step, return_step)
+                == std::cmp::Ordering::Greater
+            {
                 anyhow::bail!(
                     "Return step '{}' cannot be before divergence step '{}'",
                     return_step,
@@ -229,26 +244,19 @@ impl ScenarioCreator {
     }
 
     /// Create a scenario step with optional receiver
-    pub fn create_scenario_step(
-        &self,
-        order: String,
-        actor: String,
-        receiver: Option<String>,
-        action: String,
-        expected_result: Option<String>,
-    ) -> ScenarioStep {
-        let actor_enum: Actor = actor.into(); // Convert String to Actor using From<String>
-        let receiver_enum: Option<Actor> = receiver.map(|r| r.into());
+    pub fn create_scenario_step(&self, params: StepParams) -> ScenarioStep {
+        let actor_enum: Actor = params.actor.into(); // Convert String to Actor using From<String>
+        let receiver_enum: Option<Actor> = params.receiver.map(|r| r.into());
 
-        let description = expected_result.unwrap_or_else(|| {
+        let description = params.expected_result.unwrap_or_else(|| {
             if let Some(ref recv) = receiver_enum {
-                format!("{} {} to {}", actor_enum.name(), action, recv.name())
+                format!("{} {} to {}", actor_enum.name(), params.action, recv.name())
             } else {
-                format!("{} {}", actor_enum.name(), action)
+                format!("{} {}", actor_enum.name(), params.action)
             }
         });
 
-        let mut step = ScenarioStep::new(order, actor_enum, action, description);
+        let mut step = ScenarioStep::new(params.order, actor_enum, params.action, description);
         if let Some(recv) = receiver_enum {
             step.set_receiver(recv);
         }

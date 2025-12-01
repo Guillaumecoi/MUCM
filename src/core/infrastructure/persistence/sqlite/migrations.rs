@@ -103,7 +103,7 @@ impl Migrator {
 
     /// Migration 2: Update actor IDs to include function prefix for personas.
     ///
-    /// Changes persona ID format from "name" to "function-name" 
+    /// Changes persona ID format from "name" to "function-name"
     /// (e.g., "sarah-chen" -> "regular-customer-sarah-chen")
     /// System actors remain unchanged (e.g., "database" stays "database")
     fn migrate_to_v2(conn: &Connection) -> Result<()> {
@@ -112,9 +112,8 @@ impl Migrator {
         println!("   🔄 Updating actor ID format...");
 
         // Get all personas (actor_type = 'persona')
-        let mut stmt = conn.prepare(
-            "SELECT id, name, extra FROM actors WHERE actor_type = 'persona'"
-        )?;
+        let mut stmt =
+            conn.prepare("SELECT id, name, extra FROM actors WHERE actor_type = 'persona'")?;
 
         let personas: Vec<(String, String, String)> = stmt
             .query_map([], |row| {
@@ -131,12 +130,10 @@ impl Migrator {
         // Update each persona ID
         for (old_id, name, extra_json) in personas {
             // Parse extra to get function
-            let extra: serde_json::Value = serde_json::from_str(&extra_json)
-                .unwrap_or(serde_json::json!({}));
-            
-            let function = extra.get("function")
-                .and_then(|v| v.as_str())
-                .unwrap_or("");
+            let extra: serde_json::Value =
+                serde_json::from_str(&extra_json).unwrap_or(serde_json::json!({}));
+
+            let function = extra.get("function").and_then(|v| v.as_str()).unwrap_or("");
 
             if function.is_empty() {
                 // Skip if no function defined

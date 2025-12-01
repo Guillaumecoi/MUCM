@@ -2,7 +2,7 @@
 // This orchestrates domain services, manages state, and provides transaction boundaries
 // Controllers (presentation layer) call this coordinator, which delegates to domain services
 use crate::config::Config;
-use crate::core::application::creators::{ScenarioCreator, ScenarioParams, UseCaseCreator};
+use crate::core::application::creators::{ScenarioCreator, ScenarioParams, StepParams, UseCaseCreator};
 use crate::core::application::generators::{
     MarkdownGenerator, OutputManager, OverviewGenerator, TestGenerator,
 };
@@ -367,8 +367,10 @@ impl UseCaseCoordinator {
 
     /// Add a precondition to a use case
     pub fn add_precondition(&mut self, use_case_id: &str, precondition: String) -> Result<()> {
-        let mut service =
-            services::PreconditionPostconditionService::new(self.repository.as_ref(), &mut self.use_cases);
+        let mut service = services::PreconditionPostconditionService::new(
+            self.repository.as_ref(),
+            &mut self.use_cases,
+        );
         service.add_precondition(use_case_id, precondition)
     }
 
@@ -384,15 +386,19 @@ impl UseCaseCoordinator {
 
     /// Remove a precondition from a use case
     pub fn remove_precondition(&mut self, use_case_id: &str, index: usize) -> Result<()> {
-        let mut service =
-            services::PreconditionPostconditionService::new(self.repository.as_ref(), &mut self.use_cases);
+        let mut service = services::PreconditionPostconditionService::new(
+            self.repository.as_ref(),
+            &mut self.use_cases,
+        );
         service.remove_precondition(use_case_id, index)
     }
 
     /// Add a postcondition to a use case
     pub fn add_postcondition(&mut self, use_case_id: &str, postcondition: String) -> Result<()> {
-        let mut service =
-            services::PreconditionPostconditionService::new(self.repository.as_ref(), &mut self.use_cases);
+        let mut service = services::PreconditionPostconditionService::new(
+            self.repository.as_ref(),
+            &mut self.use_cases,
+        );
         service.add_postcondition(use_case_id, postcondition)
     }
 
@@ -408,8 +414,10 @@ impl UseCaseCoordinator {
 
     /// Remove a postcondition from a use case
     pub fn remove_postcondition(&mut self, use_case_id: &str, index: usize) -> Result<()> {
-        let mut service =
-            services::PreconditionPostconditionService::new(self.repository.as_ref(), &mut self.use_cases);
+        let mut service = services::PreconditionPostconditionService::new(
+            self.repository.as_ref(),
+            &mut self.use_cases,
+        );
         service.remove_postcondition(use_case_id, index)
     }
 
@@ -420,8 +428,10 @@ impl UseCaseCoordinator {
         index: usize,
         new_text: String,
     ) -> Result<()> {
-        let mut service =
-            services::PreconditionPostconditionService::new(self.repository.as_ref(), &mut self.use_cases);
+        let mut service = services::PreconditionPostconditionService::new(
+            self.repository.as_ref(),
+            &mut self.use_cases,
+        );
         service.edit_precondition(use_case_id, index, new_text)
     }
 
@@ -432,8 +442,10 @@ impl UseCaseCoordinator {
         index: usize,
         new_text: String,
     ) -> Result<()> {
-        let mut service =
-            services::PreconditionPostconditionService::new(self.repository.as_ref(), &mut self.use_cases);
+        let mut service = services::PreconditionPostconditionService::new(
+            self.repository.as_ref(),
+            &mut self.use_cases,
+        );
         service.edit_postcondition(use_case_id, index, new_text)
     }
 
@@ -444,8 +456,10 @@ impl UseCaseCoordinator {
         from_index: usize,
         to_index: usize,
     ) -> Result<()> {
-        let mut service =
-            services::PreconditionPostconditionService::new(self.repository.as_ref(), &mut self.use_cases);
+        let mut service = services::PreconditionPostconditionService::new(
+            self.repository.as_ref(),
+            &mut self.use_cases,
+        );
         service.reorder_preconditions(use_case_id, from_index, to_index)
     }
 
@@ -456,22 +470,28 @@ impl UseCaseCoordinator {
         from_index: usize,
         to_index: usize,
     ) -> Result<()> {
-        let mut service =
-            services::PreconditionPostconditionService::new(self.repository.as_ref(), &mut self.use_cases);
+        let mut service = services::PreconditionPostconditionService::new(
+            self.repository.as_ref(),
+            &mut self.use_cases,
+        );
         service.reorder_postconditions(use_case_id, from_index, to_index)
     }
 
     /// Clear all preconditions from a use case
     pub fn clear_preconditions(&mut self, use_case_id: &str) -> Result<()> {
-        let mut service =
-            services::PreconditionPostconditionService::new(self.repository.as_ref(), &mut self.use_cases);
+        let mut service = services::PreconditionPostconditionService::new(
+            self.repository.as_ref(),
+            &mut self.use_cases,
+        );
         service.clear_preconditions(use_case_id)
     }
 
     /// Clear all postconditions from a use case
     pub fn clear_postconditions(&mut self, use_case_id: &str) -> Result<()> {
-        let mut service =
-            services::PreconditionPostconditionService::new(self.repository.as_ref(), &mut self.use_cases);
+        let mut service = services::PreconditionPostconditionService::new(
+            self.repository.as_ref(),
+            &mut self.use_cases,
+        );
         service.clear_postconditions(use_case_id)
     }
 
@@ -483,8 +503,10 @@ impl UseCaseCoordinator {
         relationship: String,
         description: Option<String>,
     ) -> Result<()> {
-        let mut service =
-            services::ReferenceManagementService::new(self.repository.as_ref(), &mut self.use_cases);
+        let mut service = services::ReferenceManagementService::new(
+            self.repository.as_ref(),
+            &mut self.use_cases,
+        );
         service.add_reference(use_case_id, target_id, relationship, description)
     }
 
@@ -496,8 +518,10 @@ impl UseCaseCoordinator {
 
     /// Remove a reference from a use case
     pub fn remove_reference(&mut self, use_case_id: &str, target_id: &str) -> Result<()> {
-        let mut service =
-            services::ReferenceManagementService::new(self.repository.as_ref(), &mut self.use_cases);
+        let mut service = services::ReferenceManagementService::new(
+            self.repository.as_ref(),
+            &mut self.use_cases,
+        );
         service.remove_reference(use_case_id, target_id)
     }
 
@@ -556,15 +580,14 @@ impl UseCaseCoordinator {
             &mut self.use_cases,
             &self.scenario_creator,
         );
-        scenario_service.add_scenario_step(
-            use_case_id,
-            scenario_id,
+        let params = StepParams {
             order,
             actor,
             receiver,
             action,
             expected_result,
-        )
+        };
+        scenario_service.add_scenario_step(use_case_id, scenario_id, params)
     }
 
     /// Update the status of a scenario
@@ -841,14 +864,18 @@ impl UseCaseCoordinator {
             &mut self.use_cases,
             &self.scenario_creator,
         );
-        scenario_service.insert_step_with_extension_update(
-            use_case_id,
-            scenario_id,
-            after_step,
+        let params = StepParams {
+            order: String::new(), // Will be determined by the service
             actor,
             receiver,
             action,
             expected_result,
+        };
+        scenario_service.insert_step_with_extension_update(
+            use_case_id,
+            scenario_id,
+            after_step,
+            params,
         )
     }
 
@@ -1109,8 +1136,10 @@ impl UseCaseCoordinator {
         use_case_id: Option<String>,
         dry_run: bool,
     ) -> Result<CleanupResult> {
-        let mut service =
-            services::MethodologyFieldCleanupService::new(self.repository.as_ref(), &mut self.use_cases);
+        let mut service = services::MethodologyFieldCleanupService::new(
+            self.repository.as_ref(),
+            &mut self.use_cases,
+        );
         service.cleanup_methodology_fields(use_case_id, dry_run)
     }
 

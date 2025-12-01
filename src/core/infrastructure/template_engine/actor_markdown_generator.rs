@@ -150,10 +150,9 @@ mod tests {
             "background".to_string(),
             json!("32-year-old marketing professional"),
         );
-        actor.extra.insert(
-            "job_role".to_string(),
-            json!("Digital Marketing Manager"),
-        );
+        actor
+            .extra
+            .insert("job_role".to_string(), json!("Digital Marketing Manager"));
 
         let markdown = generator.generate(&actor).unwrap();
 

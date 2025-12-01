@@ -71,22 +71,12 @@ impl<'a> ScenarioManagementService<'a> {
         &mut self,
         use_case_id: &str,
         scenario_id: &str,
-        order: String,
-        actor: String,
-        receiver: Option<String>,
-        action: String,
-        expected_result: Option<String>,
+        params: crate::core::application::creators::StepParams,
     ) -> Result<()> {
         let index = self.find_use_case_index(use_case_id)?;
         let mut use_case = self.use_cases[index].clone();
 
-        let step = self.scenario_creator.create_scenario_step(
-            order,
-            actor,
-            receiver,
-            action,
-            expected_result,
-        );
+        let step = self.scenario_creator.create_scenario_step(params);
 
         use_case.add_step_to_scenario(scenario_id, step)?;
         self.repository.save(&use_case)?;
@@ -387,9 +377,9 @@ impl<'a> ScenarioManagementService<'a> {
             primary_actor,
         };
 
-        let scenario = self
-            .scenario_creator
-            .create_extension_scenario(&use_case, params, returns_at_step)?;
+        let scenario =
+            self.scenario_creator
+                .create_extension_scenario(&use_case, params, returns_at_step)?;
 
         // Validate the complete scenario flow
         ScenarioFlowValidator::validate_scenario_flow(&scenario, &use_case)?;
@@ -477,10 +467,7 @@ impl<'a> ScenarioManagementService<'a> {
         use_case_id: &str,
         scenario_id: &str,
         after_step: &str,
-        actor: String,
-        receiver: Option<String>,
-        action: String,
-        expected_result: Option<String>,
+        params: crate::core::application::creators::StepParams,
     ) -> Result<String> {
         let index = self.find_use_case_index(use_case_id)?;
         let mut use_case = self.use_cases[index].clone();
@@ -501,14 +488,16 @@ impl<'a> ScenarioManagementService<'a> {
             .scenario_creator
             .suggest_next_step_order(&scenario.steps, after_step);
 
-        // Create the step
-        let step = self.scenario_creator.create_scenario_step(
-            new_step_order.clone(),
-            actor,
-            receiver,
-            action,
-            expected_result,
-        );
+        // Create the step with the suggested order
+        let step_params = crate::core::application::creators::StepParams {
+            order: new_step_order.clone(),
+            actor: params.actor,
+            receiver: params.receiver,
+            action: params.action,
+            expected_result: params.expected_result,
+        };
+
+        let step = self.scenario_creator.create_scenario_step(step_params);
 
         // Clone scenario for extension update before mutation
         let scenario_for_update = use_case
