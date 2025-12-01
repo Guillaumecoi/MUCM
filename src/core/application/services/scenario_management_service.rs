@@ -51,8 +51,7 @@ impl<'a> ScenarioManagementService<'a> {
             crate::core::domain::Actor::User
         };
 
-        let scenario = self.scenario_creator.create_scenario(
-            use_case,
+        let params = crate::core::application::creators::ScenarioParams {
             title,
             scenario_type,
             description,
@@ -60,7 +59,9 @@ impl<'a> ScenarioManagementService<'a> {
             preconditions,
             postconditions,
             actors,
-        );
+        };
+
+        let scenario = self.scenario_creator.create_scenario(use_case, params);
 
         let mut updated_use_case = self.use_cases[index].clone();
         updated_use_case.add_scenario(scenario.clone());
@@ -400,15 +401,17 @@ impl<'a> ScenarioManagementService<'a> {
         let mut use_case = self.use_cases[index].clone();
 
         // Create extension scenario using factory
-        let scenario = self.scenario_creator.create_extension_scenario(
-            &use_case,
-            parent_scenario_id,
+        let params = crate::core::application::creators::ExtensionScenarioParams {
+            parent_scenario_id: parent_scenario_id.to_string(),
             extends_at_step,
-            returns_at_step,
             title,
-            Some(description),
+            description: Some(description),
             primary_actor,
-        )?;
+        };
+
+        let scenario = self
+            .scenario_creator
+            .create_extension_scenario(&use_case, params, returns_at_step)?;
 
         // Validate the complete scenario flow
         ScenarioFlowValidator::validate_scenario_flow(&scenario, &use_case)?;
