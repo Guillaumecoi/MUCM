@@ -63,6 +63,7 @@ impl fmt::Display for Status {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::str::FromStr;
 
     /// Test Status enum variants exist and have correct ordering
     #[test]
