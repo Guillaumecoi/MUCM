@@ -6,8 +6,10 @@
 
 mod actor_repository;
 mod category_repository;
+pub mod migrations;
 mod repository;
 
 pub use actor_repository::TomlActorRepository;
 pub use category_repository::TomlCategoryRepository;
+pub use migrations::TomlMigrator;
 pub use repository::TomlUseCaseRepository;

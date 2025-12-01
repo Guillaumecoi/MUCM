@@ -49,6 +49,8 @@ impl Config {
     pub const CONFIG_DIR: &'static str = ".config/.mucm";
     pub const CONFIG_FILE: &'static str = "mucm.toml";
     pub const TEMPLATES_DIR: &'static str = "template-assets";
+    /// Current config format version
+    pub const CONFIG_VERSION: &'static str = "0.2.0";
 
     /// Create a minimal config for template processing.
     ///
@@ -336,6 +338,7 @@ impl Config {
                 // Fallback: create a minimal default config when source-templates is not available
                 #[allow(deprecated)]
                 return Ok(Config {
+                    version: Self::CONFIG_VERSION.to_string(),
                     project: ProjectConfig {
                         name: "Default Project".to_string(),
                         description: "Default project description".to_string(),

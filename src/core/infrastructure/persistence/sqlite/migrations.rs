@@ -87,6 +87,7 @@ impl Migrator {
     fn run_migration(conn: &Connection, version: i32) -> Result<()> {
         match version {
             1 => Self::migrate_to_v1(conn),
+            2 => Self::migrate_to_v2(conn),
             _ => anyhow::bail!("Unknown migration version: {}", version),
         }
     }
@@ -98,6 +99,95 @@ impl Migrator {
     fn migrate_to_v1(conn: &Connection) -> Result<()> {
         // Migration 1 is the same as Schema::initialize
         Schema::initialize(conn)
+    }
+
+    /// Migration 2: Update actor IDs to include function prefix for personas.
+    ///
+    /// Changes persona ID format from "name" to "function-name" 
+    /// (e.g., "sarah-chen" -> "regular-customer-sarah-chen")
+    /// System actors remain unchanged (e.g., "database" stays "database")
+    fn migrate_to_v2(conn: &Connection) -> Result<()> {
+        use crate::core::utils::slugify_for_id;
+
+        println!("   🔄 Updating actor ID format...");
+
+        // Get all personas (actor_type = 'persona')
+        let mut stmt = conn.prepare(
+            "SELECT id, name, extra FROM actors WHERE actor_type = 'persona'"
+        )?;
+
+        let personas: Vec<(String, String, String)> = stmt
+            .query_map([], |row| {
+                Ok((
+                    row.get::<_, String>(0)?, // id
+                    row.get::<_, String>(1)?, // name
+                    row.get::<_, String>(2)?, // extra (JSON)
+                ))
+            })?
+            .collect::<Result<Vec<_>, _>>()?;
+
+        drop(stmt);
+
+        // Update each persona ID
+        for (old_id, name, extra_json) in personas {
+            // Parse extra to get function
+            let extra: serde_json::Value = serde_json::from_str(&extra_json)
+                .unwrap_or(serde_json::json!({}));
+            
+            let function = extra.get("function")
+                .and_then(|v| v.as_str())
+                .unwrap_or("");
+
+            if function.is_empty() {
+                // Skip if no function defined
+                continue;
+            }
+
+            // Generate new ID: function-name
+            let new_id = format!("{}-{}", slugify_for_id(function), slugify_for_id(&name));
+
+            if new_id == old_id {
+                // Already in correct format
+                continue;
+            }
+
+            println!("      {} -> {}", old_id, new_id);
+
+            // Update actor ID
+            conn.execute(
+                "UPDATE actors SET id = ?1 WHERE id = ?2",
+                [&new_id, &old_id],
+            )?;
+
+            // Update any references in use_case_actors table
+            conn.execute(
+                "UPDATE use_case_actors SET actor_id = ?1 WHERE actor_id = ?2",
+                [&new_id, &old_id],
+            )?;
+
+            // Update any references in scenarios (actors field is JSON array)
+            conn.execute(
+                "UPDATE scenarios 
+                 SET actors = replace(actors, ?1, ?2)
+                 WHERE actors LIKE ?3",
+                [
+                    &format!("\"{}\"", old_id),
+                    &format!("\"{}\"", new_id),
+                    &format!("%\"{}\",%", old_id),
+                ],
+            )?;
+
+            // Update any scenario steps that reference the actor
+            conn.execute(
+                "UPDATE scenario_steps 
+                 SET actor = ?1 
+                 WHERE actor = ?2",
+                [&new_id, &old_id],
+            )?;
+        }
+
+        Schema::set_schema_version(conn, 2)?;
+        Ok(())
     }
 
     // Future migrations will be added here as needed:

@@ -27,7 +27,7 @@ pub use domain::Scenario;
 pub use infrastructure::{
     file_operations, ActorMarkdownGenerator, CustomFieldConfig, DocumentationLevel, FieldResolver,
     LanguageRegistry, Methodology, MethodologyDefinition, MethodologyRegistry, RepositoryFactory,
-    TemplateEngine, UseCaseRepository,
+    TemplateEngine, TomlMigrator, UseCaseRepository,
 };
 
 // Exported for integration tests (appear unused to lib but required by tests/)
