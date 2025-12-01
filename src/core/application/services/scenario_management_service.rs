@@ -34,32 +34,10 @@ impl<'a> ScenarioManagementService<'a> {
     pub fn add_scenario(
         &mut self,
         use_case_id: &str,
-        title: String,
-        scenario_type: ScenarioType,
-        description: Option<String>,
-        preconditions: Vec<String>,
-        postconditions: Vec<String>,
-        actors: Vec<String>,
+        params: crate::core::application::creators::ScenarioParams,
     ) -> Result<String> {
         let index = self.find_use_case_index(use_case_id)?;
         let use_case = &self.use_cases[index];
-
-        // Use first actor as primary actor, default to User if none provided
-        let primary_actor = if let Some(first_actor) = actors.first() {
-            first_actor.clone().into()
-        } else {
-            crate::core::domain::Actor::User
-        };
-
-        let params = crate::core::application::creators::ScenarioParams {
-            title,
-            scenario_type,
-            description,
-            primary_actor,
-            preconditions,
-            postconditions,
-            actors,
-        };
 
         let scenario = self.scenario_creator.create_scenario(use_case, params);
 

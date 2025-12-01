@@ -9,6 +9,7 @@ pub struct ScenarioParams {
     pub primary_actor: Actor,
     pub preconditions: Vec<String>,
     pub postconditions: Vec<String>,
+    #[allow(dead_code)]
     pub actors: Vec<String>,
 }
 
