@@ -15,8 +15,8 @@ pub fn levenshtein_distance(s1: &str, s2: &str) -> usize {
         row[0] = i;
     }
     // Initialize first row
-    for j in 0..=len2 {
-        matrix[0][j] = j;
+    for (j, cell) in matrix[0].iter_mut().enumerate().take(len2 + 1) {
+        *cell = j;
     }
 
     for i in 1..=len1 {
