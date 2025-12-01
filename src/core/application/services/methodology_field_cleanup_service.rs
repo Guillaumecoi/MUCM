@@ -4,13 +4,13 @@ use std::collections::HashSet;
 
 /// Service for cleaning up orphaned methodology fields
 pub struct MethodologyFieldCleanupService<'a> {
-    repository: &'a Box<dyn UseCaseRepository>,
+    repository: &'a dyn UseCaseRepository,
     use_cases: &'a mut Vec<UseCase>,
 }
 
 impl<'a> MethodologyFieldCleanupService<'a> {
     pub fn new(
-        repository: &'a Box<dyn UseCaseRepository>,
+        repository: &'a dyn UseCaseRepository,
         use_cases: &'a mut Vec<UseCase>,
     ) -> Self {
         Self {

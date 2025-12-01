@@ -319,7 +319,7 @@ impl UseCaseCoordinator {
         methodology: &str,
     ) -> Result<()> {
         let regen_service = services::MarkdownRegenerationService::new(
-            &self.repository,
+            self.repository.as_ref(),
             &self.use_cases,
             &self.markdown_generator,
             &self.template_engine,
@@ -330,7 +330,7 @@ impl UseCaseCoordinator {
     /// Regenerate markdown for a single use case
     pub fn regenerate_markdown(&self, use_case_id: &str) -> Result<()> {
         let regen_service = services::MarkdownRegenerationService::new(
-            &self.repository,
+            self.repository.as_ref(),
             &self.use_cases,
             &self.markdown_generator,
             &self.template_engine,
@@ -367,7 +367,7 @@ impl UseCaseCoordinator {
     /// Add a precondition to a use case
     pub fn add_precondition(&mut self, use_case_id: &str, precondition: String) -> Result<()> {
         let mut service =
-            services::PreconditionPostconditionService::new(&self.repository, &mut self.use_cases);
+            services::PreconditionPostconditionService::new(self.repository.as_ref(), &mut self.use_cases);
         service.add_precondition(use_case_id, precondition)
     }
 
@@ -384,14 +384,14 @@ impl UseCaseCoordinator {
     /// Remove a precondition from a use case
     pub fn remove_precondition(&mut self, use_case_id: &str, index: usize) -> Result<()> {
         let mut service =
-            services::PreconditionPostconditionService::new(&self.repository, &mut self.use_cases);
+            services::PreconditionPostconditionService::new(self.repository.as_ref(), &mut self.use_cases);
         service.remove_precondition(use_case_id, index)
     }
 
     /// Add a postcondition to a use case
     pub fn add_postcondition(&mut self, use_case_id: &str, postcondition: String) -> Result<()> {
         let mut service =
-            services::PreconditionPostconditionService::new(&self.repository, &mut self.use_cases);
+            services::PreconditionPostconditionService::new(self.repository.as_ref(), &mut self.use_cases);
         service.add_postcondition(use_case_id, postcondition)
     }
 
@@ -408,7 +408,7 @@ impl UseCaseCoordinator {
     /// Remove a postcondition from a use case
     pub fn remove_postcondition(&mut self, use_case_id: &str, index: usize) -> Result<()> {
         let mut service =
-            services::PreconditionPostconditionService::new(&self.repository, &mut self.use_cases);
+            services::PreconditionPostconditionService::new(self.repository.as_ref(), &mut self.use_cases);
         service.remove_postcondition(use_case_id, index)
     }
 
@@ -420,7 +420,7 @@ impl UseCaseCoordinator {
         new_text: String,
     ) -> Result<()> {
         let mut service =
-            services::PreconditionPostconditionService::new(&self.repository, &mut self.use_cases);
+            services::PreconditionPostconditionService::new(self.repository.as_ref(), &mut self.use_cases);
         service.edit_precondition(use_case_id, index, new_text)
     }
 
@@ -432,7 +432,7 @@ impl UseCaseCoordinator {
         new_text: String,
     ) -> Result<()> {
         let mut service =
-            services::PreconditionPostconditionService::new(&self.repository, &mut self.use_cases);
+            services::PreconditionPostconditionService::new(self.repository.as_ref(), &mut self.use_cases);
         service.edit_postcondition(use_case_id, index, new_text)
     }
 
@@ -444,7 +444,7 @@ impl UseCaseCoordinator {
         to_index: usize,
     ) -> Result<()> {
         let mut service =
-            services::PreconditionPostconditionService::new(&self.repository, &mut self.use_cases);
+            services::PreconditionPostconditionService::new(self.repository.as_ref(), &mut self.use_cases);
         service.reorder_preconditions(use_case_id, from_index, to_index)
     }
 
@@ -456,21 +456,21 @@ impl UseCaseCoordinator {
         to_index: usize,
     ) -> Result<()> {
         let mut service =
-            services::PreconditionPostconditionService::new(&self.repository, &mut self.use_cases);
+            services::PreconditionPostconditionService::new(self.repository.as_ref(), &mut self.use_cases);
         service.reorder_postconditions(use_case_id, from_index, to_index)
     }
 
     /// Clear all preconditions from a use case
     pub fn clear_preconditions(&mut self, use_case_id: &str) -> Result<()> {
         let mut service =
-            services::PreconditionPostconditionService::new(&self.repository, &mut self.use_cases);
+            services::PreconditionPostconditionService::new(self.repository.as_ref(), &mut self.use_cases);
         service.clear_preconditions(use_case_id)
     }
 
     /// Clear all postconditions from a use case
     pub fn clear_postconditions(&mut self, use_case_id: &str) -> Result<()> {
         let mut service =
-            services::PreconditionPostconditionService::new(&self.repository, &mut self.use_cases);
+            services::PreconditionPostconditionService::new(self.repository.as_ref(), &mut self.use_cases);
         service.clear_postconditions(use_case_id)
     }
 
@@ -483,7 +483,7 @@ impl UseCaseCoordinator {
         description: Option<String>,
     ) -> Result<()> {
         let mut service =
-            services::ReferenceManagementService::new(&self.repository, &mut self.use_cases);
+            services::ReferenceManagementService::new(self.repository.as_ref(), &mut self.use_cases);
         service.add_reference(use_case_id, target_id, relationship, description)
     }
 
@@ -496,7 +496,7 @@ impl UseCaseCoordinator {
     /// Remove a reference from a use case
     pub fn remove_reference(&mut self, use_case_id: &str, target_id: &str) -> Result<()> {
         let mut service =
-            services::ReferenceManagementService::new(&self.repository, &mut self.use_cases);
+            services::ReferenceManagementService::new(self.repository.as_ref(), &mut self.use_cases);
         service.remove_reference(use_case_id, target_id)
     }
 
@@ -514,7 +514,7 @@ impl UseCaseCoordinator {
         actors: Vec<String>,
     ) -> Result<String> {
         let mut scenario_service = services::ScenarioManagementService::new(
-            &self.repository,
+            self.repository.as_ref(),
             &mut self.use_cases,
             &self.scenario_creator,
         );
@@ -541,7 +541,7 @@ impl UseCaseCoordinator {
         expected_result: Option<String>,
     ) -> Result<()> {
         let mut scenario_service = services::ScenarioManagementService::new(
-            &self.repository,
+            self.repository.as_ref(),
             &mut self.use_cases,
             &self.scenario_creator,
         );
@@ -564,7 +564,7 @@ impl UseCaseCoordinator {
         new_status: crate::core::Status,
     ) -> Result<()> {
         let mut scenario_service = services::ScenarioManagementService::new(
-            &self.repository,
+            self.repository.as_ref(),
             &mut self.use_cases,
             &self.scenario_creator,
         );
@@ -585,7 +585,7 @@ impl UseCaseCoordinator {
         step_order: &str,
     ) -> Result<()> {
         let mut scenario_service = services::ScenarioManagementService::new(
-            &self.repository,
+            self.repository.as_ref(),
             &mut self.use_cases,
             &self.scenario_creator,
         );
@@ -600,7 +600,7 @@ impl UseCaseCoordinator {
         reference: ScenarioReference,
     ) -> Result<()> {
         let mut scenario_service = services::ScenarioManagementService::new(
-            &self.repository,
+            self.repository.as_ref(),
             &mut self.use_cases,
             &self.scenario_creator,
         );
@@ -616,7 +616,7 @@ impl UseCaseCoordinator {
         relationship: &str,
     ) -> Result<()> {
         let mut scenario_service = services::ScenarioManagementService::new(
-            &self.repository,
+            self.repository.as_ref(),
             &mut self.use_cases,
             &self.scenario_creator,
         );
@@ -660,7 +660,7 @@ impl UseCaseCoordinator {
         status: Option<crate::core::Status>,
     ) -> Result<()> {
         let mut scenario_service = services::ScenarioManagementService::new(
-            &self.repository,
+            self.repository.as_ref(),
             &mut self.use_cases,
             &self.scenario_creator,
         );
@@ -677,7 +677,7 @@ impl UseCaseCoordinator {
     /// Delete a scenario from a use case
     pub fn delete_scenario(&mut self, use_case_id: &str, scenario_id: &str) -> Result<()> {
         let mut scenario_service = services::ScenarioManagementService::new(
-            &self.repository,
+            self.repository.as_ref(),
             &mut self.use_cases,
             &self.scenario_creator,
         );
@@ -694,7 +694,7 @@ impl UseCaseCoordinator {
         new_description: String,
     ) -> Result<()> {
         let mut scenario_service = services::ScenarioManagementService::new(
-            &self.repository,
+            self.repository.as_ref(),
             &mut self.use_cases,
             &self.scenario_creator,
         );
@@ -715,7 +715,7 @@ impl UseCaseCoordinator {
         reorderings: HashMap<String, String>,
     ) -> Result<()> {
         let mut scenario_service = services::ScenarioManagementService::new(
-            &self.repository,
+            self.repository.as_ref(),
             &mut self.use_cases,
             &self.scenario_creator,
         );
@@ -730,7 +730,7 @@ impl UseCaseCoordinator {
         persona_id: &str,
     ) -> Result<()> {
         let mut scenario_service = services::ScenarioManagementService::new(
-            &self.repository,
+            self.repository.as_ref(),
             &mut self.use_cases,
             &self.scenario_creator,
         );
@@ -744,7 +744,7 @@ impl UseCaseCoordinator {
         scenario_id: &str,
     ) -> Result<()> {
         let mut scenario_service = services::ScenarioManagementService::new(
-            &self.repository,
+            self.repository.as_ref(),
             &mut self.use_cases,
             &self.scenario_creator,
         );
@@ -765,7 +765,7 @@ impl UseCaseCoordinator {
         primary_actor: crate::core::Actor,
     ) -> Result<String> {
         let mut scenario_service = services::ScenarioManagementService::new(
-            &self.repository,
+            self.repository.as_ref(),
             &mut self.use_cases,
             &self.scenario_creator,
         );
@@ -790,7 +790,7 @@ impl UseCaseCoordinator {
         condition: String,
     ) -> Result<()> {
         let mut scenario_service = services::ScenarioManagementService::new(
-            &self.repository,
+            self.repository.as_ref(),
             &mut self.use_cases,
             &self.scenario_creator,
         );
@@ -806,7 +806,7 @@ impl UseCaseCoordinator {
         to_step: &str,
     ) -> Result<()> {
         let mut scenario_service = services::ScenarioManagementService::new(
-            &self.repository,
+            self.repository.as_ref(),
             &mut self.use_cases,
             &self.scenario_creator,
         );
@@ -826,7 +826,7 @@ impl UseCaseCoordinator {
         expected_result: Option<String>,
     ) -> Result<String> {
         let mut scenario_service = services::ScenarioManagementService::new(
-            &self.repository,
+            self.repository.as_ref(),
             &mut self.use_cases,
             &self.scenario_creator,
         );
@@ -850,7 +850,7 @@ impl UseCaseCoordinator {
         step_order: &str,
     ) -> Result<Vec<String>> {
         let mut scenario_service = services::ScenarioManagementService::new(
-            &self.repository,
+            self.repository.as_ref(),
             &mut self.use_cases,
             &self.scenario_creator,
         );
@@ -866,7 +866,7 @@ impl UseCaseCoordinator {
         increment: i32,
     ) -> Result<()> {
         let mut scenario_service = services::ScenarioManagementService::new(
-            &self.repository,
+            self.repository.as_ref(),
             &mut self.use_cases,
             &self.scenario_creator,
         );
@@ -876,7 +876,7 @@ impl UseCaseCoordinator {
     /// Validate all scenarios in a use case
     pub fn validate_use_case_scenarios(&mut self, use_case_id: &str) -> Result<()> {
         let scenario_service = services::ScenarioManagementService::new(
-            &self.repository,
+            self.repository.as_ref(),
             &mut self.use_cases,
             &self.scenario_creator,
         );
@@ -1099,7 +1099,7 @@ impl UseCaseCoordinator {
         dry_run: bool,
     ) -> Result<(usize, usize, Vec<(String, Vec<String>)>)> {
         let mut service =
-            services::MethodologyFieldCleanupService::new(&self.repository, &mut self.use_cases);
+            services::MethodologyFieldCleanupService::new(self.repository.as_ref(), &mut self.use_cases);
         service.cleanup_methodology_fields(use_case_id, dry_run)
     }
 

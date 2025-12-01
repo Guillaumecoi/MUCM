@@ -157,7 +157,7 @@ impl ScenarioController {
 
         let parsed_status = status
             .as_ref()
-            .map(|s| Status::from_str(s))
+            .map(|s| s.parse::<Status>())
             .transpose()
             .map_err(|_| anyhow::anyhow!("Invalid status"))?;
 

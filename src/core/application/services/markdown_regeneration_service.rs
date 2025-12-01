@@ -8,7 +8,7 @@ use anyhow::Result;
 /// This service handles regeneration of markdown files from TOML source data.
 /// It generates markdown for individual use cases.
 pub struct MarkdownRegenerationService<'a> {
-    repository: &'a Box<dyn UseCaseRepository>,
+    repository: &'a dyn UseCaseRepository,
     use_cases: &'a [UseCase],
     markdown_generator: &'a MarkdownGenerator,
     template_engine: &'a TemplateEngine,
@@ -16,7 +16,7 @@ pub struct MarkdownRegenerationService<'a> {
 
 impl<'a> MarkdownRegenerationService<'a> {
     pub fn new(
-        repository: &'a Box<dyn UseCaseRepository>,
+        repository: &'a dyn UseCaseRepository,
         use_cases: &'a [UseCase],
         markdown_generator: &'a MarkdownGenerator,
         template_engine: &'a TemplateEngine,

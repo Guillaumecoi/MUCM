@@ -12,14 +12,14 @@ use anyhow::Result;
 /// This service handles CRUD operations for scenarios, scenario steps,
 /// and scenario references.
 pub struct ScenarioManagementService<'a> {
-    repository: &'a Box<dyn UseCaseRepository>,
+    repository: &'a dyn UseCaseRepository,
     use_cases: &'a mut Vec<UseCase>,
     scenario_creator: &'a ScenarioCreator,
 }
 
 impl<'a> ScenarioManagementService<'a> {
     pub fn new(
-        repository: &'a Box<dyn UseCaseRepository>,
+        repository: &'a dyn UseCaseRepository,
         use_cases: &'a mut Vec<UseCase>,
         scenario_creator: &'a ScenarioCreator,
     ) -> Self {

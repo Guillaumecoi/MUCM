@@ -1,15 +1,15 @@
 use crate::core::{UseCase, UseCaseRepository};
 use anyhow::Result;
 
-/// Service for managing preconditions and postconditions on use cases
+/// Service for managing preconditions and postconditions
 pub struct PreconditionPostconditionService<'a> {
-    repository: &'a Box<dyn UseCaseRepository>,
+    repository: &'a dyn UseCaseRepository,
     use_cases: &'a mut Vec<UseCase>,
 }
 
 impl<'a> PreconditionPostconditionService<'a> {
     pub fn new(
-        repository: &'a Box<dyn UseCaseRepository>,
+        repository: &'a dyn UseCaseRepository,
         use_cases: &'a mut Vec<UseCase>,
     ) -> Self {
         Self {

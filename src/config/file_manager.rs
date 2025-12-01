@@ -243,8 +243,8 @@ impl ConfigFileManager {
                         let mut array_end = i;
                         let mut bracket_count = 0;
 
-                        for j in i..lines.len() {
-                            let array_line = lines[j].trim();
+                        for (j, array_line) in lines.iter().enumerate().skip(i) {
+                            let array_line = array_line.trim();
                             bracket_count += array_line.chars().filter(|&c| c == '[').count();
                             bracket_count -= array_line.chars().filter(|&c| c == ']').count();
 

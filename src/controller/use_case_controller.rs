@@ -832,7 +832,7 @@ impl UseCaseController {
         scenario_title: String,
         status: String,
     ) -> Result<DisplayResult> {
-        let status_enum = match Status::from_str(&status) {
+        let status_enum = match status.parse::<Status>() {
             Ok(s) => s,
             Err(e) => return Ok(DisplayResult::error(e)),
         };

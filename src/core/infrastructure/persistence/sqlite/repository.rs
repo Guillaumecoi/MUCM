@@ -132,7 +132,7 @@ impl SqliteUseCaseRepository {
 
             // Parse scenario type and status
             let scenario_type = scenario_type_str.parse().unwrap_or_default();
-            let status = crate::core::domain::Status::from_str(&status_str)
+            let status = status_str.parse()
                 .unwrap_or(crate::core::domain::Status::Planned);
 
             // Load steps
