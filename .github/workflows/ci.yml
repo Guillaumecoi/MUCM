@@ -40,9 +40,8 @@ jobs:
       - name: Cache dependencies
         uses: Swatinem/rust-cache@v2
 
-      - name: Run clippy
-        run: cargo clippy --all-targets --all-features
-        continue-on-error: true  # TODO: Fix clippy warnings in separate PR
+      - name: Run clippy (treat warnings as errors)
+        run: cargo clippy --all-targets --all-features -- -D warnings
 
   check:
     name: Build Check
@@ -60,5 +59,7 @@ jobs:
       - name: Cache dependencies
         uses: Swatinem/rust-cache@v2
 
-      - name: Check compilation
+      - name: Check compilation (treat warnings as errors)
         run: cargo check --all-targets --all-features
+        env:
+          RUSTFLAGS: "-D warnings"
