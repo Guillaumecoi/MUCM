@@ -6,6 +6,18 @@ use anyhow::Result;
 use serde_json::Value;
 use std::collections::HashMap;
 
+/// Parameters for creating a use case
+pub struct UseCaseCreationParams {
+    pub title: String,
+    pub category: String,
+    pub category_abbreviation: String,
+    pub description: Option<String>,
+    pub priority: String,
+    pub methodology: Option<String>,
+    pub methodology_levels: Vec<(String, String)>,
+    pub extra_fields: Option<HashMap<String, String>>,
+}
+
 /// Handles use case creation with methodology support
 pub struct UseCaseCreator {
     config: Config,
