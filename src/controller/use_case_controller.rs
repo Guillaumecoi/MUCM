@@ -27,6 +27,19 @@ use crate::core::{
 };
 use crate::presentation::{StatusFormatter, UseCaseFormatter};
 use anyhow::Result;
+use std::collections::HashMap;
+
+/// Parameters for creating a use case
+pub struct CreateUseCaseParams {
+    pub title: String,
+    pub category: String,
+    pub category_abbreviation: String,
+    pub description: Option<String>,
+    pub methodology: Option<String>,
+    pub views: Option<String>,
+    pub priority: Option<String>,
+    pub extra_fields: Option<HashMap<String, String>>,
+}
 
 /// Controller for use case operations and management.
 ///
@@ -73,23 +86,13 @@ impl UseCaseController {
     ///
     /// # Errors
     /// Returns error if use case creation fails or parameters are invalid
-    pub fn create_use_case(
-        &mut self,
-        title: String,
-        category: String,
-        category_abbreviation: String,
-        description: Option<String>,
-        methodology: Option<String>,
-        views: Option<String>,
-        priority: Option<String>,
-        extra_fields: Option<std::collections::HashMap<String, String>>,
-    ) -> Result<DisplayResult> {
+    pub fn create_use_case(&mut self, params: CreateUseCaseParams) -> Result<DisplayResult> {
         // Determine views string - either from views parameter or from methodology parameter
-        let views_str = if let Some(views_str) = views {
+        let views_str = if let Some(views_str) = params.views {
             views_str
         } else {
             // Convert methodology to views format (methodology:normal)
-            let methodology_str = methodology.unwrap_or_else(|| {
+            let methodology_str = params.methodology.unwrap_or_else(|| {
                 Config::load()
                     .map(|c| c.templates.default_methodology.clone())
                     .unwrap_or_else(|_| "feature".to_string())
@@ -98,23 +101,32 @@ impl UseCaseController {
         };
 
         // All use cases now use the views-based API
-        let result = if priority.is_some() || extra_fields.is_some() {
-            let prio = priority.unwrap_or_else(|| "medium".to_string());
-            let fields = extra_fields.unwrap_or_default();
-            let params = crate::core::CreateUseCaseWithViewsParams {
-                title,
-                category,
-                category_abbreviation,
-                description,
+        let result = if params.priority.is_some() || params.extra_fields.is_some() {
+            let prio = params.priority.unwrap_or_else(|| "medium".to_string());
+            let fields = params.extra_fields.unwrap_or_default();
+            let coord_params = crate::core::CreateUseCaseWithViewsParams {
+                title: params.title,
+                category: params.category,
+                category_abbreviation: params.category_abbreviation,
+                description: params.description,
                 priority: prio,
                 views: views_str.clone(),
                 extra_fields: fields,
             };
             self.app_service
-                .create_use_case_with_views_and_fields(params)
+                .create_use_case_with_views_and_fields(coord_params)
         } else {
+            let coord_params = crate::core::CreateUseCaseWithViewsParams {
+                title: params.title,
+                category: params.category,
+                category_abbreviation: params.category_abbreviation,
+                description: params.description,
+                priority: "medium".to_string(),
+                views: views_str.clone(),
+                extra_fields: HashMap::new(),
+            };
             self.app_service
-                .create_use_case_with_views(title, category, description, &views_str)
+                .create_use_case_with_views_and_fields(coord_params)
         }
         .map(|use_case_id| {
             UseCaseFormatter::display_created(&use_case_id, &views_str);

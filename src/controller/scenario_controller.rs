@@ -1141,18 +1141,17 @@ mod tests {
     fn create_test_use_case(_controller: &mut ScenarioController) -> String {
         // Create a use case to test scenarios with
         let mut use_case_controller = crate::controller::UseCaseController::new().unwrap();
-        let result = use_case_controller
-            .create_use_case(
-                "Test Use Case".to_string(),
-                "test".to_string(),
-                "TES".to_string(),
-                Some("Testing scenarios".to_string()),
-                Some("feature".to_string()),
-                None,
-                None,
-                None,
-            )
-            .unwrap();
+        let params = crate::controller::CreateUseCaseParams {
+            title: "Test Use Case".to_string(),
+            category: "test".to_string(),
+            category_abbreviation: "TES".to_string(),
+            description: Some("Testing scenarios".to_string()),
+            methodology: Some("feature".to_string()),
+            priority: None,
+            views: None,
+            extra_fields: None,
+        };
+        let result = use_case_controller.create_use_case(params).unwrap();
 
         // Extract use case ID from message (format: "Created use case: UC-TES-001 with views: ...")
         // Find the token that starts with "UC-"
@@ -1382,18 +1381,17 @@ mod tests {
 
         // Create first use case
         let mut uc_controller = crate::controller::UseCaseController::new().unwrap();
-        let result = uc_controller
-            .create_use_case(
-                "Test Use Case".to_string(),
-                "test".to_string(),
-                "TES".to_string(),
-                Some("Testing".to_string()),
-                Some("feature".to_string()),
-                None,
-                None,
-                None,
-            )
-            .unwrap();
+        let params = crate::controller::CreateUseCaseParams {
+            title: "Test Use Case".to_string(),
+            category: "test".to_string(),
+            category_abbreviation: "TES".to_string(),
+            description: Some("Testing".to_string()),
+            methodology: Some("feature".to_string()),
+            priority: None,
+            views: None,
+            extra_fields: None,
+        };
+        let result = uc_controller.create_use_case(params).unwrap();
         let use_case_id = result
             .message
             .split_whitespace()
@@ -1402,18 +1400,17 @@ mod tests {
             .to_string();
 
         // Create a second use case to reference
-        let result = uc_controller
-            .create_use_case(
-                "Authentication".to_string(),
-                "auth".to_string(),
-                "AUT".to_string(),
-                Some("Auth use case".to_string()),
-                Some("feature".to_string()),
-                None,
-                None,
-                None,
-            )
-            .unwrap();
+        let params2 = crate::controller::CreateUseCaseParams {
+            title: "Authentication".to_string(),
+            category: "auth".to_string(),
+            category_abbreviation: "AUT".to_string(),
+            description: Some("Auth use case".to_string()),
+            methodology: Some("feature".to_string()),
+            priority: None,
+            views: None,
+            extra_fields: None,
+        };
+        let result = uc_controller.create_use_case(params2).unwrap();
         let auth_use_case_id = result
             .message
             .split_whitespace()

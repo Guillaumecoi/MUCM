@@ -136,16 +136,17 @@ mod interactive_runner_tests {
 
         // Initialize project properly (this handles missing templates gracefully)
         let mut runner = InteractiveRunner::new();
-        let result = runner.initialize_project(
-            None,                         // no language
-            vec!["business".to_string()], // single methodology
-            "toml".to_string(),
-            "docs/use-cases".to_string(),
-            "tests".to_string(),
-            "docs/personas".to_string(),
-            "use-cases-data".to_string(),
-            None,
-        );
+        let params = crate::cli::interactive::runner::InitProjectParams {
+            language: None,
+            methodologies: vec!["business".to_string()],
+            storage: "toml".to_string(),
+            use_case_dir: "docs/use-cases".to_string(),
+            test_dir: "tests".to_string(),
+            persona_dir: "docs/personas".to_string(),
+            data_dir: "use-cases-data".to_string(),
+            scenario_template: None,
+        };
+        let result = runner.initialize_project(params);
 
         // If initialization fails (e.g., no source-templates), skip the test
         if result.is_err() {
@@ -223,16 +224,17 @@ mod workflow_tests {
         let mut runner = InteractiveRunner::new();
 
         // Test initialization through runner interface
-        let result = runner.initialize_project(
-            Some("rust".to_string()),
-            vec!["business".to_string()],
-            "toml".to_string(),
-            "docs/my-use-cases".to_string(),
-            "tests/my-tests".to_string(),
-            "docs/my-personas".to_string(),
-            "my-data".to_string(),
-            None,
-        );
+        let params = crate::cli::interactive::runner::InitProjectParams {
+            language: Some("rust".to_string()),
+            methodologies: vec!["business".to_string()],
+            storage: "toml".to_string(),
+            use_case_dir: "docs/my-use-cases".to_string(),
+            test_dir: "tests/my-tests".to_string(),
+            persona_dir: "docs/my-personas".to_string(),
+            data_dir: "my-data".to_string(),
+            scenario_template: None,
+        };
+        let result = runner.initialize_project(params);
         assert!(result.is_ok(), "Initialization should succeed");
         let message = result.unwrap();
         assert!(

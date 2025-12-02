@@ -19,6 +19,29 @@
 
 use anyhow::Result;
 
+/// Parameters for initializing a project
+pub struct InitProjectParams {
+    pub language: Option<String>,
+    pub methodologies: Vec<String>,
+    pub storage: String,
+    pub use_case_dir: String,
+    pub test_dir: String,
+    pub persona_dir: String,
+    pub data_dir: String,
+    pub scenario_template: Option<String>,
+}
+
+/// Parameters for creating a use case with views and fields
+pub struct CreateUseCaseWithViewsParams {
+    pub title: String,
+    pub category: String,
+    pub category_abbreviation: String,
+    pub description: Option<String>,
+    pub priority: String,
+    pub views: Vec<(String, String)>,
+    pub extra_fields: std::collections::HashMap<String, String>,
+}
+
 use crate::controller::{PersonaController, ProjectController, UseCaseController};
 use crate::core::{FieldCollection, MethodologyFieldCollector};
 
@@ -107,20 +130,10 @@ impl InteractiveRunner {
     }
 
     /// Initialize project for interactive mode.
-    pub fn initialize_project(
-        &mut self,
-        language: Option<String>,
-        methodologies: Vec<String>,
-        storage: String,
-        use_case_dir: String,
-        test_dir: String,
-        persona_dir: String,
-        data_dir: String,
-        scenario_template: Option<String>,
-    ) -> Result<String> {
+    pub fn initialize_project(&mut self, params: InitProjectParams) -> Result<String> {
         // Sanitize inputs: trim whitespace and filter out empty strings
-        let sanitized_language = Self::sanitize_optional_string(language);
-        let sanitized_methodologies: Vec<String> = methodologies
+        let sanitized_language = Self::sanitize_optional_string(params.language);
+        let sanitized_methodologies: Vec<String> = params.methodologies
             .into_iter()
             .filter_map(Self::sanitize_string)
             .collect();
@@ -132,17 +145,18 @@ impl InteractiveRunner {
             .unwrap_or_else(|| "feature".to_string());
 
         // Call the complete initialization method
-        let result = crate::controller::ProjectController::init_project(
-            sanitized_language,
-            Some(sanitized_methodologies),
-            Some(storage),
-            Some(default_methodology),
-            Some(use_case_dir),
-            Some(test_dir),
-            Some(persona_dir),
-            Some(data_dir),
-            scenario_template,
-        )?;
+        let controller_params = crate::controller::InitProjectParams {
+            language: sanitized_language,
+            methodologies: Some(sanitized_methodologies),
+            storage: Some(params.storage),
+            default_methodology: Some(default_methodology.to_string()),
+            use_case_dir: Some(params.use_case_dir),
+            test_dir: Some(params.test_dir),
+            actor_dir: Some(params.persona_dir),
+            data_dir: Some(params.data_dir),
+            default_scenario_template: params.scenario_template,
+        };
+        let result = crate::controller::ProjectController::init_project(controller_params)?;
 
         Ok(result.message)
     }
@@ -171,16 +185,17 @@ impl InteractiveRunner {
             .take(3)
             .collect::<String>()
             .to_uppercase();
-        let result = controller.create_use_case(
+        let params = crate::controller::CreateUseCaseParams {
             title,
             category,
             category_abbreviation,
             description,
-            None,
-            Some(views_string),
-            None,
-            None,
-        )?;
+            methodology: None,
+            priority: None,
+            views: Some(views_string),
+            extra_fields: None,
+        };
+        let result = controller.create_use_case(params)?;
         Ok(result.message)
     }
 
@@ -188,39 +203,34 @@ impl InteractiveRunner {
     /// Returns (use_case_id, message)
     pub fn create_use_case_with_views_and_fields(
         &mut self,
-        title: String,
-        category: String,
-        category_abbreviation: String,
-        description: Option<String>,
-        priority: String,
-        views: Vec<(String, String)>, // Vec of (methodology, level) pairs
-        extra_fields: std::collections::HashMap<String, String>,
+        params: CreateUseCaseWithViewsParams,
     ) -> Result<(String, String)> {
         let controller = self.ensure_use_case_controller()?;
 
         // Format views as "methodology:level,methodology:level"
-        let views_string = views
+        let views_string = params.views
             .iter()
             .map(|(methodology, level)| format!("{}:{}", methodology, level))
             .collect::<Vec<_>>()
             .join(",");
 
-        let result = controller.create_use_case(
-            title.clone(),
-            category,
-            category_abbreviation, // Pass the abbreviation
-            description,
-            None, // methodology
-            Some(views_string),
-            Some(priority),
-            Some(extra_fields),
-        )?;
+        let uc_params = crate::controller::CreateUseCaseParams {
+            title: params.title.clone(),
+            category: params.category,
+            category_abbreviation: params.category_abbreviation,
+            description: params.description,
+            methodology: None,
+            views: Some(views_string),
+            priority: Some(params.priority),
+            extra_fields: Some(params.extra_fields),
+        };
+        let result = controller.create_use_case(uc_params)?;
 
         // Extract use case ID from message (format: "Created use case: UC-XXX-XXX with views: ...")
         let use_case_id = if let Some(id_part) = result.message.split("Created use case: ").nth(1) {
-            id_part.split(" with").next().unwrap_or(&title).to_string()
+            id_part.split(" with").next().unwrap_or(&params.title).to_string()
         } else {
-            title
+            params.title.clone()
         };
 
         Ok((use_case_id, result.message))

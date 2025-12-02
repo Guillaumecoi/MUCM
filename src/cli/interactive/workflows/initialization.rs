@@ -302,16 +302,17 @@ fn create_config_with_directories(
     runner: &mut InteractiveRunner,
     config: ProjectConfig,
 ) -> Result<()> {
-    match runner.initialize_project(
-        config.language,
-        config.selected_methodologies,
-        config.storage_backend,
-        config.use_case_dir,
-        config.test_dir,
-        config.persona_dir,
-        config.data_dir,
-        config.scenario_template,
-    ) {
+    let params = crate::cli::interactive::runner::InitProjectParams {
+        language: config.language,
+        methodologies: config.selected_methodologies,
+        storage: config.storage_backend,
+        use_case_dir: config.use_case_dir,
+        test_dir: config.test_dir,
+        persona_dir: config.persona_dir,
+        data_dir: config.data_dir,
+        scenario_template: config.scenario_template,
+    };
+    match runner.initialize_project(params) {
         Ok(message) => {
             UI::show_success(&message)?;
 
