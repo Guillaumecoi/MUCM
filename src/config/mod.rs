@@ -751,10 +751,28 @@ sequenceDiagram
 
 impl Default for Config {
     fn default() -> Self {
-        // In test mode, ensure minimal templates exist before trying to load
+        // In test mode, ensure minimal templates exist and use simple loading
         #[cfg(test)]
         {
-            let _ = Self::ensure_test_templates();
+            use std::path::Path;
+            
+            // Ensure test templates exist - this creates the minimal config
+            if let Ok(()) = Self::ensure_test_templates() {
+                // Try to load from local source-templates (test environment)
+                // This should always succeed after ensure_test_templates()
+                let config_path = Path::new("source-templates/config.toml");
+                if config_path.exists() {
+                    match std::fs::read_to_string(config_path) {
+                        Ok(content) => {
+                            match toml::from_str::<Config>(&content) {
+                                Ok(config) => return config,
+                                Err(e) => eprintln!("Warning: Failed to parse test config: {}", e),
+                            }
+                        }
+                        Err(e) => eprintln!("Warning: Failed to read test config: {}", e),
+                    }
+                }
+            }
         }
 
         // Load default configuration from source-templates/config.toml
