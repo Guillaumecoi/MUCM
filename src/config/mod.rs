@@ -497,11 +497,11 @@ template_file = "test.hbs"
             )?;
             // Create minimal but valid test template with ID placeholder
             let test_content = if *lang == "rust" {
-                "// Test for {{id}}\n#[test]\nfn test_{{snake_case_id}}() {{\n    // TODO: implement\n}}\n"
+                "// Test for {{id}}\n#[test]\nfn test_{{snake_case_id}}() {\n    // TODO: implement\n}\n"
             } else if *lang == "python" {
                 "# Test for {{id}}\nimport unittest\n\nclass Test{{pascal_case_id}}(unittest.TestCase):\n    def test_case(self):\n        pass\n"
             } else {
-                "// Test for {{id}}\ndescribe('{{id}}', () => {{\n    it('should work', () => {{\n        // TODO: implement\n    }});\n}});\n"
+                "// Test for {{id}}\ndescribe('{{id}}', () => {\n    it('should work', () => {\n        // TODO: implement\n    });\n});\n"
             };
             std::fs::write(lang_dir.join("test.hbs"), test_content)?;
         }
