@@ -1,0 +1,87 @@
+# Codecov configuration for MUCM
+# https://docs.codecov.com/docs/codecov-yaml
+
+# Coverage targets and thresholds
+coverage:
+  status:
+    # Project-wide coverage (all code including CLI)
+    project:
+      default:
+        target: 60%           # Overall minimum coverage
+        threshold: 2%         # Allow 2% drop before failing
+        informational: true   # Don't fail CI, just inform
+    
+    # Core coverage (excluding CLI code)
+    # This is the important one - we enforce 80% here
+    core:
+      target: 80%
+      threshold: 2%
+      paths:
+        - "src/"
+      flags:
+        - core
+    
+    # CLI coverage (informational only)
+    cli:
+      target: auto          # No specific target
+      threshold: 100%       # Never fail
+      informational: true   # Just show the data
+      paths:
+        - "src/cli/"
+      flags:
+        - cli
+    
+    # Patch coverage (new code in PRs)
+    patch:
+      default:
+        target: 80%         # New code must have 80% coverage
+        threshold: 5%
+        only_pulls: true    # Only check on pull requests
+
+# Flag definitions for separating coverage reports
+flags:
+  core:
+    paths:
+      - src/
+    # Exclude CLI directory from core coverage
+    ignore:
+      - src/cli/
+      - src/main.rs
+    carryforward: true
+  
+  cli:
+    paths:
+      - src/cli/
+      - src/main.rs
+    carryforward: true
+
+# Comment on PRs with coverage details
+comment:
+  layout: "header, diff, flags, components, footer"
+  behavior: default
+  require_changes: false
+  require_base: false
+  require_head: true
+  
+# Ignore certain files from coverage
+ignore:
+  - "benches/**/*"
+  - "tests/**/*"
+  - "examples/**/*"
+  - "target/**/*"
+
+# Component-based coverage (optional, for detailed breakdown)
+component_management:
+  individual_components:
+    - component_id: core
+      name: Core (Non-CLI)
+      paths:
+        - src/config/**
+        - src/controller/**
+        - src/core/**
+    
+    - component_id: cli
+      name: CLI Interface
+      paths:
+        - src/cli/**
+        - src/main.rs
