@@ -172,6 +172,8 @@ inherits = ["Normal"]
     }
 
     /// Helper to create test use case params with defaults
+    /// Note: Using #[allow] for test helper - refactoring would require changing many call sites
+    #[allow(clippy::too_many_arguments)]
     fn create_test_params(
         title: String,
         category: String,
@@ -1196,6 +1198,8 @@ inherits = ["Normal"]
     }
 
     /// Helper to create test init project params with defaults
+    /// Note: Using #[allow] for test helper - refactoring would require changing many call sites
+    #[allow(clippy::too_many_arguments)]
     fn create_test_init_params(
         language: Option<String>,
         methodologies: Option<Vec<String>>,

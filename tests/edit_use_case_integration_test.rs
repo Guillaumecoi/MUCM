@@ -51,14 +51,16 @@ fn extract_use_case_id(message: &str) -> String {
 }
 
 /// Test helper: Create use case params for testing
+/// Note: Using #[allow] for test helper - refactoring would require changing many call sites
+#[allow(clippy::too_many_arguments)]
 fn create_test_params(
     title: &str,
     category: &str,
     abbrev: &str,
     description: Option<String>,
     methodology: Option<String>,
-    views: Option<String>,
     priority: Option<String>,
+    views: Option<String>,
     extra_fields: Option<HashMap<String, String>>,
 ) -> CreateUseCaseParams {
     CreateUseCaseParams {

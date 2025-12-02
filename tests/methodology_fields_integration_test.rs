@@ -63,7 +63,7 @@ fn test_methodology_fields_storage() -> Result<()> {
 
     // Verify the structure exists (fields may be empty if no values provided)
     assert!(
-        use_case.methodology_fields.get("business").is_some(),
+        use_case.methodology_fields.contains_key("business"),
         "Business methodology entry should exist in methodology_fields HashMap"
     );
 
