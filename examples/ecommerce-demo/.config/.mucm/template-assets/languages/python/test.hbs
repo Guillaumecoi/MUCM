@@ -1,0 +1,103 @@
+# =============================================================================
+# AUTO-GENERATED TEST DOCUMENTATION
+# Use Case: {{title}} ({{id}})
+# Description: {{description}}
+# Generated at: {{generated_at}}
+# =============================================================================
+
+{{#each scenarios}}
+# ## Scenario: {{title}} ({{id}})
+# **Description:** {{description}}
+# 
+{{/each}}
+# =============================================================================
+# AUTO-GENERATED TEST CODE
+# ⚠️  WARNING: Only modify code between START/END USER IMPLEMENTATION markers!
+# =============================================================================
+
+"""Generated test file for use case: {{title}}
+ID: {{id}}
+Generated at: {{generated_at}}
+"""
+
+import unittest
+
+# =============================================================================
+# START USER IMPLEMENTATION - Add your imports and setup code here
+# =============================================================================
+
+# Add your imports here:
+# import your_module
+# from your_package import SomeClass
+
+# Add test helper functions here if needed
+
+# =============================================================================
+# END USER IMPLEMENTATION
+# =============================================================================
+
+
+class Test{{title_snake_case}}(unittest.TestCase):
+    """
+    Test class for use case: {{title}} ({{id}})
+    Category: {{category}}
+    Description: {{description}}
+    """
+    
+    def setUp(self):
+        """Set up test fixtures before each test method."""
+        # =============================================================================
+        # START USER IMPLEMENTATION - Add your setup code here
+        # =============================================================================
+        
+        # TODO: Add any setup code needed for all tests
+        pass
+        
+        # =============================================================================
+        # END USER IMPLEMENTATION
+        # =============================================================================
+    
+    def tearDown(self):
+        """Clean up after each test method."""
+        # =============================================================================
+        # START USER IMPLEMENTATION - Add your cleanup code here
+        # =============================================================================
+        
+        # TODO: Add any cleanup code needed after tests
+        pass
+        
+        # =============================================================================
+        # END USER IMPLEMENTATION
+        # =============================================================================
+    
+{{#each scenarios}}
+    def test_{{snake_case_id}}(self):
+        """
+        Test for scenario: {{title}} ({{id}})
+        Description: {{description}}
+        """
+        # =============================================================================
+        # START USER IMPLEMENTATION - Feel free to modify the code below this line
+        # =============================================================================
+        
+        # TODO: Implement test for scenario: {{title}}
+        
+        # Arrange
+        # TODO: Set up test data and preconditions
+        
+        # Act
+        # TODO: Execute the scenario steps
+        
+        # Assert
+        # TODO: Verify the results
+        
+        self.fail("Test not implemented yet")
+        
+        # =============================================================================
+        # END USER IMPLEMENTATION - Do not modify anything below this line
+        # =============================================================================
+
+{{/each}}
+
+if __name__ == '__main__':
+    unittest.main()

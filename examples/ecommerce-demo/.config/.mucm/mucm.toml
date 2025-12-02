@@ -1,0 +1,53 @@
+# Project identification and description
+[project]
+name = "My Project"
+description = "A project managed with use case manager"
+
+# File organization - where your use cases, tests, and actors are stored
+[directories]
+use_case_dir = "docs/use-cases"      # Generated markdown use case documentation
+test_dir = "tests/use-cases"         # Generated test files
+actor_dir = "docs/personas"            # Actor markdown files (personas and system actors)
+data_dir = "use-cases-data"          # Source of truth (TOML files and SQLite database)
+
+# Template configuration - which methodologies to use and default choice
+[templates]
+methodologies = ["business", "developer", "feature", "tester"]  # All available methodologies
+default_methodology = "business"
+default_scenario_template = "scenarios/scenario_mermaid.hbs"  # Default scenario template (can be overridden in methodology.toml)
+
+# Code generation settings
+[generation]
+test_language = "python"                # Programming language for tests (rust, python, javascript, or "none")
+auto_generate_tests = false           # Auto-create test files when creating use cases
+overwrite_test_documentation = false  # Allow overwriting existing test docs
+
+# Storage backend - how use case data is persisted
+[storage]
+backend = "toml"                      # Options: "toml" or "sqlite"
+
+# Additional fields available for all use cases (beyond mandatory id/title/category)
+# NOTE: Standard fields like priority are part of the UseCase structure and set automatically.
+# Status is computed from scenarios and should not be set manually.
+# These extra fields can be added by editing TOML files directly or through the interactive CLI.
+# Methodology-specific custom fields are defined in each methodology's config.toml file.
+[extra_fields]
+author = { type = "string", required = false }
+reviewer = { type = "string", required = false }
+
+# Timestamp management - automatically track when use cases are created/modified
+[metadata]
+created = true                        # Auto-set creation timestamp
+last_updated = true                   # Auto-update modification timestamp
+
+# Actor configuration - extend personas with Sommerville-aligned fields
+# Based on software engineering best practices (Sommerville), personas represent
+# archetypal users with specific backgrounds, education, and motivations.
+# These fields help teams build shared understanding of target users.
+[actor.persona_fields]
+background = { type = "text", required = false, description = "Personal circumstances, family, location, and context that shapes their perspective", example = "Age 32, lives in rural Scotland, father runs marine business, mother is community nurse" }
+job_role = { type = "string", required = false, description = "Job title and responsibilities (omit description if commonly known like 'teacher')", example = "Senior IT technician responsible for all school computers" }
+education = { type = "text", required = false, description = "Educational background, degrees, and relevant training or certifications", example = "Degree in English from Glasgow University, retrained as teacher after years as web content author" }
+technical_experience = { type = "string", required = false, description = "Level of technical skills and experience with digital technologies", example = "Confident in all aspects of digital technology, experience as web developer" }
+motivation_for_product = { type = "text", required = false, description = "Why they might be interested in using the product and what they want to do with it (avoid abstract goals)", example = "Wants to use system for project-based teaching where students work together across subject areas" }
+

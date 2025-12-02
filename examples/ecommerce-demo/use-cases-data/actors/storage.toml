@@ -1,0 +1,8 @@
+id = "storage"
+name = "Storage"
+actor_type = "system"
+emoji = "📦"
+
+[metadata]
+created_at = "2025-12-02T19:14:09.727382368Z"
+updated_at = "2025-12-02T19:14:09.727382368Z"

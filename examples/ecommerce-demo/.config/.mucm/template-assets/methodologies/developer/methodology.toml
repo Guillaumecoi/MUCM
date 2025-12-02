@@ -1,0 +1,94 @@
+# Developer Methodology
+# Technical implementation and system design documentation
+
+[methodology]
+name = "developer"
+abbreviation = "dev"
+description = """
+The Developer methodology focuses on technical implementation details and developer-centric documentation.
+Emphasizes APIs, data models, performance, and technical constraints.
+"""
+
+[template]
+preferred_style = "Normal"
+
+[generation]
+auto_generate_tests = true
+overwrite_test_documentation = true
+
+# Two-level system: Normal for everyday use, Advanced for comprehensive documentation
+
+[levels.normal]
+name = "Normal"
+abbreviation = "n"
+filename = "uc_normal.hbs"
+# Uncomment to override the global default_scenario_template from mucm.toml
+# scenario_template = "scenarios/scenario.hbs"
+description = "Standard developer documentation with API design and database schema"
+inherits = []
+
+[levels.normal.custom_fields]
+api_endpoint = { label = "API Endpoint", type = "string", required = false, description = "API endpoint or service URL" }
+database_tables = { label = "Database Tables", type = "array", required = false, description = "Database tables or collections involved" }
+
+[levels.advanced]
+name = "Advanced"
+abbreviation = "a"
+filename = "uc_advanced.hbs"
+# Uncomment to override the global default_scenario_template from mucm.toml
+# scenario_template = "scenarios/scenario.hbs"
+description = "Comprehensive technical specification with performance, security, error handling, and dependencies"
+inherits = ["Normal"]
+
+[levels.advanced.custom_fields]
+# Inherits: api_endpoint, database_tables (from normal)
+performance_requirements = { label = "Performance Requirements", type = "string", required = false, description = "Response times, throughput, or scalability needs" }
+security_considerations = { label = "Security Considerations", type = "string", required = false, description = "Authentication, authorization, or security constraints" }
+technical_dependencies = { label = "Technical Dependencies", type = "array", required = false, description = "External systems, libraries, or services required" }
+error_handling = { label = "Error Handling Strategy", type = "string", required = false, description = "Error handling approach and expected error conditions" }
+
+[usage]
+when_to_use = [
+    "When documenting use cases for development teams and engineers",
+    "When technical implementation details are the primary focus",
+    "When API design, database schemas, and system integration are important",
+    "For technical specification and implementation planning"
+]
+
+key_features = [
+    "Technical-focused: Documents implementation details and code structure",
+    "API-centric: Includes API endpoints, data models, and integration points",
+    "Performance-aware: Considers performance requirements and technical constraints",
+    "Security-conscious: Includes security considerations and requirements"
+]
+
+best_practices = [
+    "Include specific technical requirements and constraints",
+    "Document API contracts and data schemas clearly",
+    "Consider performance, scalability, and security from the start",
+    "Specify error conditions and handling strategies",
+    "List all technical dependencies and integration points",
+    "Use developer-friendly language and technical terminology",
+    "Include code examples or pseudo-code when helpful"
+]
+
+[examples]
+
+[examples.basic]
+title = "User Profile Update"
+api_endpoint = "/api/v1/users/{id}/profile"
+database_tables = ["users", "user_profiles"]
+
+[examples.detailed]
+title = "Real-time Chat System"
+api_endpoint = "/api/v1/chat/messages"
+database_tables = ["messages", "chat_rooms", "user_sessions"]
+performance_requirements = "Sub-100ms message delivery, support 10k concurrent users"
+security_considerations = "End-to-end encryption, rate limiting, spam protection"
+technical_dependencies = ["WebSocket server", "Redis pub/sub", "PostgreSQL", "AWS S3"]
+error_handling = "Connection retry logic, offline message queuing, delivery guarantees"
+
+[related_methodologies]
+business = "For business stakeholder documentation"
+feature = "For product feature specifications"
+tester = "For QA and testing requirements"

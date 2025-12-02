@@ -1,0 +1,4 @@
+name = "python"
+aliases = ["py"]
+file_extension = "py"
+template_file = "test.hbs"

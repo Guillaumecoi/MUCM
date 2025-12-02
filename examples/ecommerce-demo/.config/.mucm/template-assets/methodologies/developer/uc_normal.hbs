@@ -1,0 +1,43 @@
+# Technical Specification: {{title}}
+
+**Use Case ID:** {{id}} | **Status:** {{status}} | **Priority:** {{priority}} | **Created:** {{created_date}}
+
+{{#if description}}
+## Technical Overview
+{{description}}
+
+{{/if}}
+{{#if api_endpoint}}
+### API Endpoint
+{{api_endpoint}}
+
+{{/if}}
+{{#if database_tables}}
+### Database Tables
+{{#each database_tables}}
+- {{this}}
+{{/each}}
+
+{{/if}}
+{{#if preconditions}}
+## Preconditions
+{{#each preconditions}}
+- {{this}}
+{{/each}}
+
+{{/if}}
+{{#if postconditions}}
+## Postconditions
+{{#each postconditions}}
+- {{this}}
+{{/each}}
+
+{{/if}}
+{{> scenario}}
+{{#if use_case_references}}
+## Related Use Cases
+{{#each use_case_references}}
+- **{{relationship}}:** {{target_id}}{{#if description}} - {{description}}{{/if}}
+{{/each}}
+
+{{/if}}

@@ -1,0 +1,33 @@
+# Use Cases Overview
+
+**Project:** {{project_name}}  
+**Generated:** {{generated_date}}
+
+## Summary
+- **Total Use Cases:** {{total_use_cases}}
+- **Total Scenarios:** {{total_scenarios}}
+
+{{#if status_counts}}
+## Status Distribution
+{{#each status_counts}}
+- **{{@key}}:** {{this}}
+{{/each}}
+{{/if}}
+
+{{#if categories}}
+## Categories
+{{#each categories}}
+- {{this}}
+{{/each}}
+{{/if}}
+
+## Use Cases
+{{#each categories}}
+### {{category_name}}
+{{#each use_cases}}
+- **{{id}}**: {{title}}
+  - Status: {{aggregated_status}}
+  - Priority: {{priority}}
+  - Scenarios: {{scenario_count}}
+{{/each}}
+{{/each}}

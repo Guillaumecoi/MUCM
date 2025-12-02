@@ -1,0 +1,88 @@
+# Business Methodology
+# Stakeholder-focused use case documentation
+
+[methodology]
+name = "business"
+abbreviation = "bus"
+description = """
+The Business methodology focuses on documenting use cases from a business stakeholder perspective.
+Emphasizes business value, ROI, and organizational impact over technical details.
+"""
+
+[template]
+preferred_style = "Normal"
+
+[generation]
+auto_generate_tests = false
+overwrite_test_documentation = false
+
+# Two-level system: Normal for everyday use, Advanced for comprehensive documentation
+
+[levels.normal]
+name = "Normal"
+abbreviation = "n"
+filename = "uc_normal.hbs"
+# Uncomment to override the global default_scenario_template from mucm.toml
+# scenario_template = "scenarios/scenario.hbs"
+description = "Standard business documentation covering essential stakeholder needs and business value"
+inherits = []
+
+[levels.normal.custom_fields]
+business_value = { label = "Business Value", type = "text", required = false, description = "Quantifiable business impact and value proposition" }
+roi_estimate = { label = "ROI Estimate", type = "string", required = false, description = "Expected return on investment with timeframe" }
+strategic_priority = { label = "Strategic Priority", type = "string", required = false, description = "Alignment with organizational strategy (Critical, High, Medium, Low)" }
+
+[levels.advanced]
+name = "Advanced"
+abbreviation = "a"
+filename = "uc_advanced.hbs"
+# Uncomment to override the global default_scenario_template from mucm.toml
+# scenario_template = "scenarios/scenario.hbs"
+description = "Comprehensive business case with financial analysis, stakeholder mapping, and detailed planning"
+inherits = ["Normal"]
+
+[levels.advanced.custom_fields]
+# Inherits: business_value, roi_estimate, strategic_priority (from normal)
+cost_estimate = { label = "Cost Estimate", type = "text", required = false, description = "Detailed breakdown of implementation and operational costs" }
+
+[usage]
+when_to_use = [
+    "When documenting use cases for business stakeholders, product managers, or executives",
+    "When business value and ROI are primary concerns",
+    "When stakeholder analysis and business impact assessment are needed",
+    "For requirements gathering and business case development"
+]
+
+key_features = [
+    "Stakeholder-focused: Documents actors, goals, and business relationships",
+    "Business Value: Captures ROI estimates, business value, and cost considerations",
+    "Organizational Context: Includes stakeholder analysis and business impact",
+    "Non-technical: Avoids implementation details in favor of business requirements"
+]
+
+best_practices = [
+    "Focus on business outcomes rather than technical solutions",
+    "Quantify business value and ROI whenever possible",
+    "Identify all affected stakeholders early",
+    "Include both costs and benefits in detailed documentation",
+    "Use business-friendly language, avoid technical jargon",
+    "Align use cases with organizational goals and strategy"
+]
+
+[examples]
+
+[examples.basic]
+title = "Customer Self-Service Portal"
+business_value = "Reduce support costs by 30% while improving customer satisfaction"
+
+[examples.detailed]
+title = "Automated Invoice Processing"
+business_value = "Reduce processing time from 2 days to 2 hours, eliminate 95% of manual data entry errors, improve vendor relations"
+roi_estimate = "180% ROI within 18 months, annual savings of $120,000"
+strategic_priority = "High - supports digital transformation initiative"
+cost_estimate = "$80,000 initial implementation + $15,000 annual maintenance"
+
+[related_methodologies]
+feature = "For product feature specifications"
+developer = "For technical implementation details"
+tester = "For QA and testing requirements"

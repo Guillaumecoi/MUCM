@@ -1,0 +1,75 @@
+# Technical Specification: {{title}}
+
+**Use Case ID:** {{id}}  
+**Implementation Status:** {{status}}  
+**Development Priority:** {{priority}}  
+**Specification Date:** {{created_date}}
+
+---
+
+{{#if description}}
+## Technical Overview
+{{description}}
+
+{{/if}}
+{{#if api_endpoint}}
+### API Endpoint
+{{api_endpoint}}
+
+{{/if}}
+{{#if database_tables}}
+### Database Tables
+{{#each database_tables}}
+- {{this}}
+{{/each}}
+
+{{/if}}
+{{#if performance_requirements}}
+## Performance Requirements
+{{performance_requirements}}
+
+{{/if}}
+{{#if security_considerations}}
+## Security Considerations
+{{security_considerations}}
+
+{{/if}}
+{{#if technical_dependencies}}
+## Technical Dependencies
+{{#each technical_dependencies}}
+- {{this}}
+{{/each}}
+
+{{/if}}
+{{#if error_handling}}
+## Error Handling Strategy
+{{error_handling}}
+
+{{/if}}
+{{#if preconditions}}
+## Preconditions
+{{#each preconditions}}
+- {{this}}
+{{/each}}
+
+{{/if}}
+{{#if postconditions}}
+## Postconditions
+{{#each postconditions}}
+- {{this}}
+{{/each}}
+
+{{/if}}
+{{> scenario}}
+{{#if use_case_references}}
+## Related Use Cases
+{{#each use_case_references}}
+- **{{relationship}}:** {{target_id}}{{#if description}} - {{description}}{{/if}}
+{{/each}}
+
+{{/if}}
+{{#if last_updated}}
+---
+
+**Last Updated:** {{last_updated}}
+{{/if}}

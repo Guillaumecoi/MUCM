@@ -1,0 +1,98 @@
+# Test Specification: {{title}}
+
+**Use Case ID:** {{id}}  
+**Test Status:** {{status}}  
+**Test Priority:** {{priority}}  
+**Test Plan Date:** {{created_date}}
+
+---
+
+{{#if summary}}
+## Test Overview
+
+{{summary}}
+
+{{/if}}
+{{#if test_type}}
+**Test Type:** {{test_type}}  
+{{/if}}
+{{#if test_priority}}
+**Priority:** {{test_priority}}  
+{{/if}}
+{{#if automation_status}}
+**Automation Status:** {{automation_status}}  
+{{/if}}
+{{#if test_environment}}
+**Test Environment:** {{test_environment}}
+
+{{/if}}
+{{#if regression_suite}}
+**Regression Suite:** {{regression_suite}}
+
+{{/if}}
+{{#if performance_baseline}}
+**Performance Baseline:** {{performance_baseline}}
+
+{{/if}}
+{{#if coverage_areas}}
+### Coverage Areas
+{{#each coverage_areas}}
+- {{this}}
+{{/each}}
+
+{{/if}}
+
+{{#if preconditions}}
+## Preconditions
+{{#each preconditions}}
+- {{this}}
+{{/each}}
+
+{{/if}}
+{{#if postconditions}}
+## Postconditions
+{{#each postconditions}}
+- {{this}}
+{{/each}}
+
+{{/if}}
+{{> scenario}}
+{{#if test_data_requirements}}
+## Test Data Requirements
+{{test_data_requirements}}
+
+{{/if}}
+{{#if test_environment}}
+## Test Environment
+{{test_environment}}
+
+{{/if}}
+{{#if regression_suite}}
+## Regression Suite
+{{regression_suite}}
+
+{{/if}}
+{{#if performance_baseline}}
+## Performance Baseline
+{{performance_baseline}}
+
+{{/if}}
+{{#if coverage_areas}}
+## Coverage Areas
+{{#each coverage_areas}}
+- {{this}}
+{{/each}}
+
+{{/if}}
+{{#if use_case_references}}
+## Related Use Cases
+{{#each use_case_references}}
+- **{{relationship}}:** {{target_id}}{{#if description}} - {{description}}{{/if}}
+{{/each}}
+
+{{/if}}
+{{#if last_updated}}
+---
+
+**Last Updated:** {{last_updated}}
+{{/if}}

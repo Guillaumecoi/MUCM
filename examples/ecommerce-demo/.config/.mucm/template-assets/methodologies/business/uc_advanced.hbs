@@ -1,0 +1,63 @@
+# Business Analysis: {{title}}
+
+**Use Case ID:** {{id}}  
+**Analysis Status:** {{status}}  
+**Business Priority:** {{priority}}  
+**Analysis Date:** {{created_date}}
+
+---
+
+{{#if description}}
+## Executive Summary
+{{description}}
+
+{{/if}}
+## Business Case
+
+{{#if business_value}}
+### Business Value
+{{business_value}}
+
+{{/if}}
+{{#if roi_estimate}}
+### ROI Estimate
+{{roi_estimate}}
+
+{{/if}}
+{{#if strategic_priority}}
+### Strategic Priority
+{{strategic_priority}}
+
+{{/if}}
+{{#if cost_estimate}}
+### Cost Estimate
+{{cost_estimate}}
+
+{{/if}}
+{{#if preconditions}}
+## Preconditions
+{{#each preconditions}}
+- {{this}}
+{{/each}}
+
+{{/if}}
+{{#if postconditions}}
+## Postconditions
+{{#each postconditions}}
+- {{this}}
+{{/each}}
+
+{{/if}}
+{{> scenario}}
+{{#if use_case_references}}
+## Related Use Cases
+{{#each use_case_references}}
+- **{{relationship}}:** {{target_id}}{{#if description}} - {{description}}{{/if}}
+{{/each}}
+
+{{/if}}
+{{#if last_updated}}
+---
+
+**Last Updated:** {{last_updated}}
+{{/if}}

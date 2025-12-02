@@ -1,0 +1,49 @@
+# Feature: {{title}}
+
+**ID:** {{id}} | **Status:** {{status}} | **Priority:** {{priority}} | **Created:** {{created_date}}
+
+{{#if description}}
+## Summary
+{{description}}
+
+{{/if}}
+{{#if user_segment}}
+## Target User Segment
+{{user_segment}}
+
+{{/if}}
+{{#if hypothesis}}
+## Product Hypothesis
+{{hypothesis}}
+
+{{/if}}
+{{#if success_metrics}}
+## Success Metrics
+{{#each success_metrics}}
+- {{this}}
+{{/each}}
+
+{{/if}}
+{{#if preconditions}}
+## Preconditions
+{{#each preconditions}}
+- {{this}}
+{{/each}}
+
+{{/if}}
+{{#if postconditions}}
+## Postconditions
+{{#each postconditions}}
+- {{this}}
+{{/each}}
+
+{{/if}}
+{{> scenario}}
+
+{{#if use_case_references}}
+## Related Use Cases
+{{#each use_case_references}}
+- **{{relationship}}:** {{target_id}}{{#if description}} - {{description}}{{/if}}
+{{/each}}
+
+{{/if}}
