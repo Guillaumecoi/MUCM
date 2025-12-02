@@ -7,7 +7,7 @@
       <img src="https://github.com/Guillaumecoi/MUCM/workflows/Tests/badge.svg" alt="Test Status">
     </a>
     <a href="https://codecov.io/gh/Guillaumecoi/MUCM">
-      <img src="https://codecov.io/gh/Guillaumecoi/MUCM/branch/master/graph/badge.svg?flag=core" alt="Core Coverage">
+      <img src="https://codecov.io/gh/Guillaumecoi/MUCM/branch/master/graph/badge.svg" alt="Coverage">
     </a>
     <br>
     <a href="https://github.com/Guillaumecoi/MUCM/actions/workflows/security.yml">

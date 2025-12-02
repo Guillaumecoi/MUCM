@@ -4,38 +4,29 @@
 # Coverage targets and thresholds
 coverage:
   status:
-    # Project-level coverage
+    # Project-level coverage (non-CLI code only)
     project:
-      # Non-CLI coverage (all code except CLI) - This is the main metric
       default:
         target: 80%
         threshold: 2%
-        flags:
-          - non-cli
-      
-      # CLI coverage (informational only)
-      cli:
-        target: auto          # No specific target
-        threshold: 100%       # Never fail
-        informational: true   # Just show the data
-        flags:
-          - cli
     
     # Patch coverage (new code in PRs)
     patch:
       default:
-        target: 80%         # New code must have 80% coverage
+        target: 80%
         threshold: 5%
-        only_pulls: true    # Only check on pull requests
+        only_pulls: true
 
-# Flag definitions for separating coverage reports
-# Note: Files are pre-filtered using lcov before upload
-flags:
-  non-cli:
-    carryforward: true
-  
-  cli:
-    carryforward: true
+# Component-based coverage (free plan alternative to flags)
+component_management:
+  individual_components:
+    - component_id: non-cli
+      name: Non-CLI Code
+      paths:
+        - src/config/**
+        - src/controller/**
+        - src/core/**
+        - src/presentation/**
 
 # Comment on PRs with coverage details
 comment:

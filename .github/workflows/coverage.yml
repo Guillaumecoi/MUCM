@@ -52,49 +52,28 @@ jobs:
           # Create non-CLI coverage (exclude CLI paths)
           lcov --remove lcov-full.info '*/src/cli/*' '*/src/main.rs' --output-file lcov-non-cli.info
           
-          # Create CLI-only coverage (extract only CLI paths)
-          lcov --extract lcov-full.info '*/src/cli/*' '*/src/main.rs' --output-file lcov-cli.info
-          
-          echo "Generated filtered coverage reports:"
-          echo "- lcov-non-cli.info (excludes CLI)"
-          echo "- lcov-cli.info (CLI only)"
+          echo "Generated filtered coverage report (non-CLI only)"
+          lcov --summary lcov-non-cli.info
 
       - name: Display coverage summary
         run: |
           echo "=== Coverage Summary ==="
-          FULL_COVERAGE=$(cargo llvm-cov nextest --all-features --workspace --summary-only | grep -oP '\d+\.\d+(?=% coverage)' || echo "0")
-          echo "📊 Total Coverage: $FULL_COVERAGE%"
+          echo "📊 Non-CLI Coverage (enforced at 80%)"
+          lcov --summary lcov-non-cli.info 2>&1 | grep "lines\|functions"
           echo ""
-          echo "✅ Generated separate filtered coverage reports"
-          echo "ℹ️  Non-CLI coverage enforced at 80%"
-          echo "ℹ️  CLI coverage tracked for informational purposes only"
-          echo ""
+          echo "ℹ️  CLI code excluded from coverage metrics"
 
-      - name: Upload coverage reports as artifact
+      - name: Upload coverage report as artifact
         uses: actions/upload-artifact@v4
         with:
-          name: coverage-reports
-          path: |
-            lcov-non-cli.info
-            lcov-cli.info
+          name: coverage-report
+          path: lcov-non-cli.info
           retention-days: 30
 
-      - name: Upload non-CLI coverage to Codecov
+      - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
         with:
           files: ./lcov-non-cli.info
-          flags: non-cli
           fail_ci_if_error: true
           token: ${{ secrets.CODECOV_TOKEN }}
           verbose: true
-          name: non-cli-coverage
-
-      - name: Upload CLI coverage to Codecov
-        uses: codecov/codecov-action@v4
-        with:
-          files: ./lcov-cli.info
-          flags: cli
-          fail_ci_if_error: false
-          token: ${{ secrets.CODECOV_TOKEN }}
-          verbose: true
-          name: cli-coverage
