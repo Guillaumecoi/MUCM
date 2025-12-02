@@ -1,4 +1,3 @@
-
 <div align="center">
   <p align="center">
     <a href="https://github.com/Guillaumecoi/MUCM/actions/workflows/ci.yml">
@@ -10,8 +9,12 @@
     <a href="https://codecov.io/gh/Guillaumecoi/MUCM">
       <img src="https://codecov.io/gh/Guillaumecoi/MUCM/branch/master/graph/badge.svg?flag=core" alt="Core Coverage">
     </a>
+    <br>
     <a href="https://github.com/Guillaumecoi/MUCM/actions/workflows/security.yml">
       <img src="https://github.com/Guillaumecoi/MUCM/workflows/Security%20Audit/badge.svg" alt="Security">
+    </a>
+    <a href="https://crates.io/crates/mucm">
+      <img src="https://img.shields.io/crates/v/mucm.svg?logo=rust" alt="Crates.io">
     </a>
     <a href="LICENSE">
       <img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License">
