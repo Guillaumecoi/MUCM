@@ -39,7 +39,7 @@ flags:
 
 # Comment on PRs with coverage details
 comment:
-  layout: "header, diff, flags, components, footer"
+  layout: "header, diff, flags, footer"
   behavior: default
   require_changes: false
   require_base: false
@@ -51,19 +51,3 @@ ignore:
   - "tests/**/*"
   - "examples/**/*"
   - "target/**/*"
-
-# Component-based coverage (optional, for detailed breakdown)
-component_management:
-  individual_components:
-    - component_id: non-cli
-      name: Non-CLI Code
-      paths:
-        - src/config/**
-        - src/controller/**
-        - src/core/**
-    
-    - component_id: cli
-      name: CLI Interface
-      paths:
-        - src/cli/**
-        - src/main.rs
