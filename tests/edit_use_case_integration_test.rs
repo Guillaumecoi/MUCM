@@ -24,7 +24,9 @@ fn setup_test_env() -> (TempDir, UseCaseController) {
 
     // Set CARGO_MANIFEST_DIR for template discovery
     let project_root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"));
-    env::set_var("CARGO_MANIFEST_DIR", project_root);
+    unsafe {
+        env::set_var("CARGO_MANIFEST_DIR", project_root);
+    }
 
     // Create minimal source-templates for testing
     common::create_minimal_source_templates(std::path::Path::new(".")).unwrap();
@@ -126,7 +128,8 @@ fn test_complete_use_case_edit_workflow() {
     if !create_result.is_success() {
         eprintln!("Create failed: {}", create_result.message);
     }
-    assert!(create_result.is_success());
+    assert!(create_result.is_success(), "Create result failed: {}", create_result.message);
+    eprintln!("Create message: '{}'", create_result.message);
     let use_case_id = extract_use_case_id(&create_result.message);
 
     // Verify initial state
