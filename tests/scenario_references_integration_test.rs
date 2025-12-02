@@ -10,6 +10,8 @@ use serial_test::serial;
 use std::env;
 use tempfile::TempDir;
 
+mod common;
+
 /// Test helper: Create a test use case with scenarios
 fn create_test_use_case_with_scenarios() -> UseCase {
     let mut use_case = UseCase::new(
@@ -59,6 +61,9 @@ fn create_toml_repository() -> (TempDir, Box<dyn UseCaseRepository>) {
     let temp_dir = TempDir::new().unwrap();
     env::set_current_dir(&temp_dir).unwrap();
 
+    // Create minimal source-templates for testing
+    common::create_minimal_source_templates(std::path::Path::new(".")).unwrap();
+    
     use mucm::config::ConfigFileManager;
     let config = mucm::config::Config::default();
     ConfigFileManager::save_in_dir(&config, ".").unwrap();

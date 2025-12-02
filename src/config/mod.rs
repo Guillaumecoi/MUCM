@@ -419,10 +419,148 @@ impl Config {
 
         Ok(config)
     }
+
+    /// Create minimal source-templates for testing environments
+    /// This is automatically called by Config::default() when templates are not found
+    #[cfg(test)]
+    fn ensure_test_templates() -> std::io::Result<()> {
+        use std::path::Path;
+        
+        // Check if source-templates already exists and has valid config
+        if Path::new("source-templates/config.toml").exists() {
+            // Try to parse it - if it works, we're good
+            if std::fs::read_to_string("source-templates/config.toml")
+                .ok()
+                .and_then(|content| toml::from_str::<Config>(&content).ok())
+                .is_some()
+            {
+                return Ok(());
+            }
+        }
+        
+        // Create minimal templates
+        let templates_dir = Path::new("source-templates");
+        std::fs::create_dir_all(templates_dir)?;
+
+        std::fs::write(
+            templates_dir.join("config.toml"),
+            r#"[project]
+name = "Test Project"
+description = "Test"
+
+[directories]
+use_case_dir = "docs/use-cases"
+test_dir = "tests/use-cases"
+actor_dir = "docs/actors"
+data_dir = "use-cases-data"
+
+[templates]
+methodologies = ["business", "developer", "feature", "tester"]
+default_methodology = "feature"
+default_scenario_template = "scenarios/scenario.hbs"
+
+[generation]
+test_language = "none"
+auto_generate_tests = false
+overwrite_test_documentation = false
+
+[storage]
+backend = "toml"
+
+[metadata]
+created = true
+last_updated = true
+"#,
+        )?;
+
+        // Create minimal language structure
+        for lang in &["rust", "python", "javascript"] {
+            let lang_dir = templates_dir.join("languages").join(lang);
+            std::fs::create_dir_all(&lang_dir)?;
+            let (ext, alias) = if *lang == "python" { 
+                ("py", "py") 
+            } else if *lang == "javascript" { 
+                ("js", "js") 
+            } else { 
+                ("rs", "rs") 
+            };
+            std::fs::write(
+                lang_dir.join("info.toml"),
+                format!(
+                    r#"name = "{}"
+aliases = ["{}"]
+file_extension = "{}"
+template_file = "test.hbs"
+"#,
+                    lang, alias, ext
+                ),
+            )?;
+            // Create minimal but valid test template with ID placeholder
+            let test_content = if *lang == "rust" {
+                "// Test for {{id}}\n#[test]\nfn test_{{snake_case_id}}() {{\n    // TODO: implement\n}}\n"
+            } else if *lang == "python" {
+                "# Test for {{id}}\nimport unittest\n\nclass Test{{pascal_case_id}}(unittest.TestCase):\n    def test_case(self):\n        pass\n"
+            } else {
+                "// Test for {{id}}\ndescribe('{{id}}', () => {{\n    it('should work', () => {{\n        // TODO: implement\n    }});\n}});\n"
+            };
+            std::fs::write(lang_dir.join("test.hbs"), test_content)?;
+        }
+
+        // Create minimal methodology structure
+        for methodology in &["business", "developer", "feature", "tester"] {
+            let method_dir = templates_dir.join("methodologies").join(methodology);
+            std::fs::create_dir_all(&method_dir)?;
+            std::fs::write(
+                method_dir.join("methodology.toml"),
+                format!(
+                    r#"[methodology]
+name = "{}"
+abbreviation = "{}"
+description = "Test {}"
+
+[template]
+preferred_style = "Normal"
+
+[levels.normal]
+name = "Normal"
+abbreviation = "n"
+filename = "uc_normal.hbs"
+description = "Normal level"
+inherits = []
+
+[levels.normal.custom_fields]
+api_endpoint = {{ label = "API Endpoint", type = "string", required = false, description = "Test field" }}
+
+[levels.advanced]
+name = "Advanced"
+abbreviation = "a"
+filename = "uc_advanced.hbs"
+description = "Advanced level"
+inherits = ["Normal"]
+
+[levels.advanced.custom_fields]
+"#,
+                    methodology,
+                    &methodology[..3],
+                    methodology
+                ),
+            )?;
+            std::fs::write(method_dir.join("uc_normal.hbs"), "# Template\n")?;
+            std::fs::write(method_dir.join("uc_advanced.hbs"), "# Template\n")?;
+        }
+
+        Ok(())
+    }
 }
 
 impl Default for Config {
     fn default() -> Self {
+        // In test mode, ensure minimal templates exist before trying to load
+        #[cfg(test)]
+        {
+            let _ = Self::ensure_test_templates();
+        }
+        
         // Load default configuration from source-templates/config.toml
         // This ensures consistency between the template and the default config
         match Self::load_default_from_template() {

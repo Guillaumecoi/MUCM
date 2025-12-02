@@ -9,8 +9,13 @@ use std::collections::HashMap;
 use std::env;
 use tempfile::TempDir;
 
+mod common;
+
 /// Helper to initialize test environment with methodologies
 fn init_test_environment(methodologies: Vec<String>) -> Result<Config> {
+    // Create minimal source-templates for testing
+    common::create_minimal_source_templates(std::path::Path::new("."))?;
+    
     let mut config = Config::default();
     config.templates.methodologies = methodologies.clone();
     if let Some(first) = methodologies.first() {

@@ -15,6 +15,8 @@ use serial_test::serial;
 use std::{collections::HashMap, env, fs};
 use tempfile::TempDir;
 
+mod common;
+
 /// Test helper: Setup test environment with initialized config
 fn setup_test_env() -> (TempDir, UseCaseController) {
     let temp_dir = TempDir::new().unwrap();
@@ -24,6 +26,9 @@ fn setup_test_env() -> (TempDir, UseCaseController) {
     let project_root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"));
     env::set_var("CARGO_MANIFEST_DIR", project_root);
 
+    // Create minimal source-templates for testing
+    common::create_minimal_source_templates(std::path::Path::new(".")).unwrap();
+    
     // Create default config
     let config = Config::default();
     ConfigFileManager::save_in_dir(&config, ".").unwrap();
