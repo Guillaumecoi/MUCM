@@ -41,39 +41,31 @@ jobs:
 
       - name: Generate full coverage report
         run: |
-          cargo llvm-cov nextest --all-features --workspace --lcov --output-path lcov-full.info
+          # Generate complete coverage report - Codecov will filter via flags
+          cargo llvm-cov nextest --all-features --workspace --lcov --output-path lcov.info
 
       - name: Display coverage summary
         run: |
-          echo "=== Full Coverage (All Code) ==="
+          echo "=== Coverage Summary ==="
           FULL_COVERAGE=$(cargo llvm-cov nextest --all-features --workspace --summary-only | grep -oP '\d+\.\d+(?=% coverage)' || echo "0")
           echo "📊 Total Coverage: $FULL_COVERAGE%"
           echo ""
-          
-          echo "=== Core Coverage (Excluding CLI) ==="
-          # This is approximate - actual core coverage is calculated by Codecov
-          echo "ℹ️  Core coverage will be calculated by Codecov based on flags"
+          echo "✅ Generated full coverage report"
+          echo "ℹ️  Codecov will filter via flags: non-cli (80% enforced) and cli (informational)"
           echo ""
-          
-          if (( $(echo "$FULL_COVERAGE < 60.0" | bc -l) )); then
-            echo "⚠️  Overall coverage $FULL_COVERAGE% is below 60% threshold"
-          else
-            echo "✅ Overall coverage $FULL_COVERAGE% meets the 60% threshold"
-          fi
 
-      - name: Upload coverage reports as artifact
+      - name: Upload coverage report as artifact
         uses: actions/upload-artifact@v4
         with:
-          name: coverage-reports
-          path: lcov-full.info
+          name: coverage-report
+          path: lcov.info
           retention-days: 30
 
-      - name: Upload coverage to Codecov
+      - name: Upload coverage to Codecov with flags
         uses: codecov/codecov-action@v4
         with:
-          files: ./lcov-full.info
-          flags: all,core,cli
+          files: ./lcov.info
+          flags: non-cli,cli
           fail_ci_if_error: true
           token: ${{ secrets.CODECOV_TOKEN }}
           verbose: true
-          name: codecov-mucm
