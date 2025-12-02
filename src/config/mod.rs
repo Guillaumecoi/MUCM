@@ -423,7 +423,7 @@ impl Config {
     /// Create minimal source-templates for testing environments
     /// This is automatically called by Config::default() when templates are not found
     #[cfg(test)]
-    fn ensure_test_templates() -> std::io::Result<()> {
+    pub fn ensure_test_templates() -> std::io::Result<()> {
         use std::path::Path;
         
         // Check if source-templates already exists and has valid config
@@ -595,13 +595,154 @@ title = "Test Example"
             )?;
             std::fs::write(
                 method_dir.join("uc_normal.hbs"),
-                "# {{title}}\n\n**ID:** {{id}} | **Status:** {{status}}\n\n{{#if description}}## Description\n{{description}}\n{{/if}}\n",
+                r#"# {{title}}
+
+**ID:** {{id}} | **Status:** {{status}} | **Priority:** {{priority}}
+
+{{#if description}}
+## Description
+{{description}}
+
+{{/if}}
+{{#if preconditions}}
+## Preconditions
+{{#each preconditions}}
+- {{this}}
+{{/each}}
+
+{{/if}}
+{{#if postconditions}}
+## Postconditions
+{{#each postconditions}}
+- {{this}}
+{{/each}}
+
+{{/if}}
+"#,
             )?;
             std::fs::write(
                 method_dir.join("uc_advanced.hbs"),
-                "# {{title}}\n\n**ID:** {{id}} | **Status:** {{status}}\n\n{{#if description}}## Description\n{{description}}\n{{/if}}\n",
+                r#"# {{title}}
+
+**ID:** {{id}} | **Status:** {{status}} | **Priority:** {{priority}}
+
+{{#if description}}
+## Description
+{{description}}
+
+{{/if}}
+{{#if preconditions}}
+## Preconditions
+{{#each preconditions}}
+- {{this}}
+{{/each}}
+
+{{/if}}
+{{#if postconditions}}
+## Postconditions
+{{#each postconditions}}
+- {{this}}
+{{/each}}
+
+{{/if}}
+"#,
             )?;
         }
+
+        // Create scenario templates
+        let scenario_dir = templates_dir.join("scenarios");
+        std::fs::create_dir_all(&scenario_dir)?;
+        std::fs::write(
+            scenario_dir.join("scenario.hbs"),
+            r#"{{#if scenarios}}
+## Scenarios
+
+{{#each scenarios}}
+### {{title}}
+
+**Status:** {{status}}{{#if primary_actor}} | **Actor:** {{primary_actor}}{{/if}}
+
+{{#if preconditions}}
+**Preconditions:**
+{{#each preconditions}}
+- {{this}}
+{{/each}}
+{{/if}}
+
+{{#if steps}}
+**Steps:**
+{{#each steps}}
+{{order}}. {{actor}} {{action}}
+{{/each}}
+{{/if}}
+
+{{/each}}
+{{/if}}
+"#,
+        )?;
+        std::fs::write(
+            scenario_dir.join("scenario_mermaid.hbs"),
+            r#"{{#if scenarios}}
+## Scenarios (Mermaid)
+
+```mermaid
+sequenceDiagram
+{{#each scenarios}}
+    {{#each steps}}
+    {{actor}}->>{{receiver}}: {{action}}
+    {{/each}}
+{{/each}}
+```
+{{/if}}
+"#,
+        )?;
+
+        // Create overview template
+        std::fs::write(
+            templates_dir.join("overview.hbs"),
+            r#"# Use Cases Overview
+
+**Project:** {{project_name}}
+**Generated:** {{generated_date}}
+
+## Summary
+- **Total Use Cases:** {{total_use_cases}}
+- **Total Scenarios:** {{total_scenarios}}
+
+{{#if status_counts}}
+## Status Distribution
+{{#each status_counts}}
+- **{{@key}}:** {{this}}
+{{/each}}
+{{/if}}
+
+{{#if categories}}
+## Use Cases
+{{#each categories}}
+### {{category_name}}
+{{#each use_cases}}
+- **{{id}}**: {{title}} ({{aggregated_status}})
+{{/each}}
+{{/each}}
+{{/if}}
+"#,
+        )?;
+
+        // Create actor template
+        std::fs::write(
+            templates_dir.join("actor.hbs"),
+            r#"# Actor: {{name}}
+
+{{#if description}}
+## Description
+{{description}}
+{{/if}}
+
+{{#if type}}
+**Type:** {{type}}
+{{/if}}
+"#,
+        )?;
 
         Ok(())
     }
