@@ -523,7 +523,9 @@ stakeholder_analysis = { label = "Stakeholder Analysis", type = "text", required
 database_tables = { label = "Database Tables", type = "array", required = false, description = "Test field" }"#,
                     r#"# Inherits: api_endpoint, database_tables
 performance_requirements = { label = "Performance Requirements", type = "string", required = false, description = "Test field" }
-security_considerations = { label = "Security Considerations", type = "string", required = false, description = "Test field" }"#,
+security_considerations = { label = "Security Considerations", type = "string", required = false, description = "Test field" }
+technical_dependencies = { label = "Technical Dependencies", type = "array", required = false, description = "Test field" }
+error_handling = { label = "Error Handling Strategy", type = "string", required = false, description = "Test field" }"#,
                 ),
                 "feature" => (
                     r#"user_segment = { label = "Target User Segment", type = "string", required = false, description = "Test field" }
