@@ -341,7 +341,7 @@ impl Config {
             Ok(dir) => dir,
             Err(_) => {
                 // Fallback: create a minimal default config when source-templates is not available
-                #[allow(deprecated)]
+                #[allow(deprecated)] // Using direct struct construction as fallback when source-templates unavailable
                 return Ok(Config {
                     version: Self::CONFIG_VERSION.to_string(),
                     project: ProjectConfig {

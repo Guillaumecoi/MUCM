@@ -9,6 +9,8 @@ pub struct ScenarioParams {
     pub primary_actor: Actor,
     pub preconditions: Vec<String>,
     pub postconditions: Vec<String>,
+    /// Field for future use - will track all involved actors beyond primary_actor
+    /// Currently passed through but not yet used in scenario rendering
     #[allow(dead_code)]
     pub actors: Vec<String>,
 }

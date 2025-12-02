@@ -1082,7 +1082,6 @@ impl ScenarioController {
     ///
     /// # Returns
     /// DisplayResult indicating success
-    #[allow(dead_code)]
     pub fn renumber_steps(
         &mut self,
         use_case_id: String,

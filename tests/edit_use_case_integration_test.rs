@@ -52,6 +52,8 @@ fn extract_use_case_id(message: &str) -> String {
 
 /// Test helper: Create use case params for testing
 /// Note: Using #[allow] for test helper - refactoring would require changing many call sites
+// Test helper function: many arguments acceptable to keep hundreds of test call sites simple
+// Refactoring this would require changing every test that uses it without benefit
 #[allow(clippy::too_many_arguments)]
 fn create_test_params(
     title: &str,

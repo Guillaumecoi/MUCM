@@ -173,6 +173,7 @@ inherits = ["Normal"]
 
     /// Helper to create test use case params with defaults
     /// Note: Using #[allow] for test helper - refactoring would require changing many call sites
+    // Test helper: many arguments acceptable to keep test call sites simple
     #[allow(clippy::too_many_arguments)]
     fn create_test_params(
         title: String,
@@ -1108,7 +1109,9 @@ inherits = ["Normal"]
 
         // Set CARGO_MANIFEST_DIR to the project root so source-templates can be found
         let project_root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"));
-        env::set_var("CARGO_MANIFEST_DIR", project_root);
+        unsafe {
+            env::set_var("CARGO_MANIFEST_DIR", project_root);
+        }
 
         temp_dir
     }
@@ -1199,6 +1202,7 @@ inherits = ["Normal"]
 
     /// Helper to create test init project params with defaults
     /// Note: Using #[allow] for test helper - refactoring would require changing many call sites
+    // Test helper: many arguments acceptable to keep test call sites simple
     #[allow(clippy::too_many_arguments)]
     fn create_test_init_params(
         language: Option<String>,

@@ -11,7 +11,7 @@ use anyhow::Result;
 /// - RepositoryFactory returns trait objects
 /// - UseCaseCoordinator stores it as a field
 /// - All service layers use it via trait objects
-#[allow(unused)]
+#[allow(unused)] // Used extensively via Box<dyn UseCaseRepository> (dynamic dispatch)
 pub trait UseCaseRepository {
     /// Save only the TOML file (source of truth)
     /// Use this when you want to save the use case data without generating markdown yet
