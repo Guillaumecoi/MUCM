@@ -1,13 +1,19 @@
 name: Tests
 
 on:
+  workflow_call:
   push:
     branches: [ main, master]
   pull_request:
     branches: [ main, master]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 env:
   CARGO_TERM_COLOR: always
+  RUSTFLAGS: '-D warnings'
 
 jobs:
   test:
@@ -26,12 +32,8 @@ jobs:
       - name: Install cargo-nextest
         uses: taiki-e/install-action@cargo-nextest
 
-      - name: Run unit tests
-        run: cargo nextest run --lib --no-fail-fast
-        continue-on-error: true
-
-      - name: Run integration tests
-        run: cargo nextest run --test '*' --no-fail-fast
+      - name: Run all tests
+        run: cargo nextest run --all-targets --no-fail-fast
 
       - name: Upload test results
         if: always()

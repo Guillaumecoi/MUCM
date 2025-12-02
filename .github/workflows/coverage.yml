@@ -1,10 +1,15 @@
 name: Coverage
 
 on:
+  workflow_call:
   push:
     branches: [ main, master ]
   pull_request:
     branches: [ main, master ]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 env:
   CARGO_TERM_COLOR: always
@@ -37,6 +42,17 @@ jobs:
       - name: Generate coverage with llvm-cov
         run: |
           cargo llvm-cov nextest --all-features --workspace --lcov --output-path lcov.info
+
+      - name: Check coverage threshold
+        run: |
+          COVERAGE=$(cargo llvm-cov nextest --all-features --workspace --summary-only | grep -oP '\d+\.\d+(?=% coverage)' || echo "0")
+          echo "Coverage: $COVERAGE%"
+          if (( $(echo "$COVERAGE < 60.0" | bc -l) )); then
+            echo "⚠️  Coverage $COVERAGE% is below 60% threshold"
+            echo "This is a warning only - not failing the build"
+          else
+            echo "✅ Coverage $COVERAGE% meets the 60% threshold"
+          fi
 
       - name: Upload coverage reports as artifact
         uses: actions/upload-artifact@v4
