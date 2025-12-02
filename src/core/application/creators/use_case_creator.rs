@@ -13,9 +13,27 @@ pub struct UseCaseCreationParams {
     pub category_abbreviation: String,
     pub description: Option<String>,
     pub priority: String,
-    pub methodology: Option<String>,
-    pub methodology_levels: Vec<(String, String)>,
-    pub extra_fields: Option<HashMap<String, String>>,
+    pub existing_use_cases: Vec<UseCase>,
+}
+
+/// Extended parameters with methodology configuration
+pub struct UseCaseWithMethodologyParams {
+    pub base: UseCaseCreationParams,
+    pub methodology: String,
+}
+
+/// Extended parameters with custom fields
+pub struct UseCaseWithCustomFieldsParams {
+    pub base: UseCaseCreationParams,
+    pub methodology: String,
+    pub user_fields: HashMap<String, String>,
+}
+
+/// Extended parameters with multiple views
+pub struct UseCaseWithViewsParams {
+    pub base: UseCaseCreationParams,
+    pub views: Vec<(String, String)>,
+    pub extra_fields: HashMap<String, String>,
 }
 
 /// Handles use case creation with methodology support
@@ -35,44 +53,38 @@ impl UseCaseCreator {
     /// Create a use case with methodology-specific custom fields
     pub fn create_use_case_with_methodology(
         &self,
-        title: String,
-        category: String,
-        category_abbreviation: String,
-        description: Option<String>,
-        priority: String,
-        methodology: &str,
-        existing_use_cases: &[UseCase],
+        params: UseCaseWithMethodologyParams,
         repository: &dyn UseCaseRepository,
     ) -> Result<UseCase> {
         let use_case_id = self.use_case_service.generate_unique_use_case_id(
-            &category,
-            &category_abbreviation,
-            existing_use_cases,
+            &params.base.category,
+            &params.base.category_abbreviation,
+            &params.base.existing_use_cases,
             &self.config.directories.use_case_dir,
         );
-        let description = description.unwrap_or_default();
+        let description = params.base.description.unwrap_or_default();
 
         // Create base use case with explicit abbreviation
         let mut use_case = UseCase::new(
             use_case_id.clone(),
-            title,
-            category.clone(),
-            category_abbreviation.clone(),
+            params.base.title,
+            params.base.category.clone(),
+            params.base.category_abbreviation.clone(),
             description,
-            priority,
+            params.base.priority,
         )
         .map_err(|e: String| anyhow::anyhow!(e))?;
 
         // Add default view (methodology:normal)
         use_case.add_view(MethodologyView::new(
-            methodology.to_string(),
+            params.methodology.clone(),
             "normal".to_string(),
         ));
 
         // Collect and store methodology fields for this view
         let collector = MethodologyFieldCollector::new()?;
         let collection = collector
-            .collect_fields_for_views(&[(methodology.to_string(), "normal".to_string())])?;
+            .collect_fields_for_views(&[(params.methodology.clone(), "normal".to_string())])?;
 
         // Store fields grouped by methodology
         if !collection.fields.is_empty() {
@@ -86,7 +98,7 @@ impl UseCaseCreator {
             }
             use_case
                 .methodology_fields
-                .insert(methodology.to_string(), methodology_fields);
+                .insert(params.methodology.clone(), methodology_fields);
         }
 
         // Step 1: Save TOML first (source of truth)
@@ -102,51 +114,44 @@ impl UseCaseCreator {
 
     pub fn create_use_case_with_custom_fields(
         &self,
-        title: String,
-        category: String,
-        category_abbreviation: String,
-        description: Option<String>,
-        priority: String,
-        methodology: &str,
-        user_fields: std::collections::HashMap<String, String>,
-        existing_use_cases: &[UseCase],
+        params: UseCaseWithCustomFieldsParams,
         repository: &dyn UseCaseRepository,
     ) -> Result<UseCase> {
         let use_case_id = self.use_case_service.generate_unique_use_case_id(
-            &category,
-            &category_abbreviation,
-            existing_use_cases,
+            &params.base.category,
+            &params.base.category_abbreviation,
+            &params.base.existing_use_cases,
             &self.config.directories.use_case_dir,
         );
-        let description = description.unwrap_or_default();
+        let description = params.base.description.unwrap_or_default();
 
         // Create base use case with explicit abbreviation
         let mut use_case = UseCase::new(
             use_case_id.clone(),
-            title,
-            category.clone(),
-            category_abbreviation.clone(),
+            params.base.title,
+            params.base.category.clone(),
+            params.base.category_abbreviation.clone(),
             description,
-            priority,
+            params.base.priority,
         )
         .map_err(|e: String| anyhow::anyhow!(e))?;
 
         // Add default view (methodology:normal)
         use_case.add_view(MethodologyView::new(
-            methodology.to_string(),
+            params.methodology.clone(),
             "normal".to_string(),
         ));
 
         // Collect methodology fields
         let collector = MethodologyFieldCollector::new()?;
         let collection = collector
-            .collect_fields_for_views(&[(methodology.to_string(), "normal".to_string())])?;
+            .collect_fields_for_views(&[(params.methodology.clone(), "normal".to_string())])?;
 
         // Store fields grouped by methodology, with user overrides
         let mut methodology_fields = HashMap::new();
         for (field_name, field_config) in collection.fields {
             // Use user-provided value if available, otherwise use default
-            let value = if let Some(user_value) = user_fields.get(&field_name) {
+            let value = if let Some(user_value) = params.user_fields.get(&field_name) {
                 serde_json::Value::String(user_value.clone())
             } else if let Some(default) = field_config.default {
                 serde_json::Value::String(default)
@@ -157,7 +162,7 @@ impl UseCaseCreator {
         }
 
         // Add any user fields that weren't in the methodology definition
-        for (key, value) in user_fields {
+        for (key, value) in params.user_fields {
             methodology_fields
                 .entry(key)
                 .or_insert(serde_json::Value::String(value));
@@ -166,7 +171,7 @@ impl UseCaseCreator {
         if !methodology_fields.is_empty() {
             use_case
                 .methodology_fields
-                .insert(methodology.to_string(), methodology_fields);
+                .insert(params.methodology.clone(), methodology_fields);
         }
 
         // Step 1: Save TOML first (source of truth)
@@ -186,23 +191,23 @@ impl UseCaseCreator {
     /// stores them in methodology_fields structure, and handles user value overrides.
     pub fn create_use_case_with_views(
         &self,
-        title: String,
-        category: String,
-        category_abbreviation: String,
-        description: Option<String>,
-        priority: String,
-        views: Vec<MethodologyView>,
-        user_fields: HashMap<String, String>,
-        existing_use_cases: &[UseCase],
+        params: UseCaseWithViewsParams,
         repository: &dyn UseCaseRepository,
     ) -> Result<UseCase> {
         let use_case_id = self.use_case_service.generate_unique_use_case_id(
-            &category,
-            &category_abbreviation,
-            existing_use_cases,
+            &params.base.category,
+            &params.base.category_abbreviation,
+            &params.base.existing_use_cases,
             &self.config.directories.use_case_dir,
         );
-        let description = description.unwrap_or_default();
+        let description = params.base.description.unwrap_or_default();
+
+        // Convert view tuples to MethodologyView objects
+        let views: Vec<MethodologyView> = params
+            .views
+            .iter()
+            .map(|(methodology, level)| MethodologyView::new(methodology.clone(), level.clone()))
+            .collect();
 
         // Collect fields from all methodology views using the collector
         // If collector fails (e.g., in test environment without methodologies), use empty fields
@@ -229,7 +234,8 @@ impl UseCaseCreator {
         }
 
         // Apply user-provided values to the collected fields
-        let methodology_field_values = collector.apply_user_values(&field_collection, user_fields);
+        let methodology_field_values =
+            collector.apply_user_values(&field_collection, params.extra_fields);
 
         // Group fields by methodology for storage in methodology_fields
         let mut methodology_fields: HashMap<String, HashMap<String, Value>> = HashMap::new();
@@ -257,11 +263,11 @@ impl UseCaseCreator {
         // Create the use case with explicit abbreviation from parameter
         let mut use_case = UseCase::new(
             use_case_id.clone(),
-            title,
-            category.clone(),
-            category_abbreviation.clone(),
+            params.base.title,
+            params.base.category.clone(),
+            params.base.category_abbreviation.clone(),
             description,
-            priority,
+            params.base.priority,
         )
         .map_err(|e| anyhow::anyhow!(e))?;
 

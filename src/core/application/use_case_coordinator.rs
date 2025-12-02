@@ -184,17 +184,28 @@ impl UseCaseCoordinator {
             .take(3)
             .collect::<String>()
             .to_uppercase();
-        let use_case = self.use_case_creator.create_use_case_with_views(
-            title,
-            category,
-            category_abbreviation,
-            description,
-            "Medium".to_string(), // Default priority for create_use_case_with_views
-            view_list,
-            HashMap::new(), // No user fields provided
-            &self.use_cases,
-            self.repository.as_ref(),
-        )?;
+
+        let view_tuples: Vec<(String, String)> = view_list
+            .iter()
+            .map(|v| (v.methodology.clone(), v.level.clone()))
+            .collect();
+
+        let params = crate::core::application::creators::UseCaseWithViewsParams {
+            base: crate::core::application::creators::UseCaseCreationParams {
+                title,
+                category,
+                category_abbreviation,
+                description,
+                priority: "Medium".to_string(),
+                existing_use_cases: self.use_cases.clone(),
+            },
+            views: view_tuples,
+            extra_fields: HashMap::new(),
+        };
+
+        let use_case = self
+            .use_case_creator
+            .create_use_case_with_views(params, self.repository.as_ref())?;
 
         let use_case_id = use_case.id.clone();
 
@@ -252,17 +263,27 @@ impl UseCaseCoordinator {
         }
 
         // Use the new create_use_case_with_views method that properly handles methodology_fields
-        let use_case = self.use_case_creator.create_use_case_with_views(
-            title,
-            category,
-            category_abbreviation,
-            description,
-            priority,
-            view_list,
+        let view_tuples: Vec<(String, String)> = view_list
+            .iter()
+            .map(|v| (v.methodology.clone(), v.level.clone()))
+            .collect();
+
+        let params = crate::core::application::creators::UseCaseWithViewsParams {
+            base: crate::core::application::creators::UseCaseCreationParams {
+                title,
+                category,
+                category_abbreviation,
+                description,
+                priority,
+                existing_use_cases: self.use_cases.clone(),
+            },
+            views: view_tuples,
             extra_fields,
-            &self.use_cases,
-            self.repository.as_ref(),
-        )?;
+        };
+
+        let use_case = self
+            .use_case_creator
+            .create_use_case_with_views(params, self.repository.as_ref())?;
 
         let use_case_id = use_case.id.clone();
 
@@ -974,16 +995,22 @@ impl UseCaseCoordinator {
             .take(3)
             .collect::<String>()
             .to_uppercase();
-        let use_case = self.use_case_creator.create_use_case_with_methodology(
-            title,
-            category,
-            category_abbreviation,
-            description,
-            "Medium".to_string(), // Default priority for internal helper
-            methodology,
-            &self.use_cases,
-            self.repository.as_ref(),
-        )?;
+
+        let params = crate::core::application::creators::UseCaseWithMethodologyParams {
+            base: crate::core::application::creators::UseCaseCreationParams {
+                title,
+                category,
+                category_abbreviation,
+                description,
+                priority: "Medium".to_string(),
+                existing_use_cases: self.use_cases.clone(),
+            },
+            methodology: methodology.to_string(),
+        };
+
+        let use_case = self
+            .use_case_creator
+            .create_use_case_with_methodology(params, self.repository.as_ref())?;
 
         // Generate markdown from TOML data
         let markdown_content = self.markdown_generator.generate(&use_case, None, None)?;
@@ -1007,17 +1034,23 @@ impl UseCaseCoordinator {
             .take(3)
             .collect::<String>()
             .to_uppercase();
-        let use_case = self.use_case_creator.create_use_case_with_custom_fields(
-            title,
-            category,
-            category_abbreviation,
-            description,
-            "Medium".to_string(), // Default priority for internal helper
-            methodology,
-            extra_fields,
-            &self.use_cases,
-            self.repository.as_ref(),
-        )?;
+
+        let params = crate::core::application::creators::UseCaseWithCustomFieldsParams {
+            base: crate::core::application::creators::UseCaseCreationParams {
+                title,
+                category,
+                category_abbreviation,
+                description,
+                priority: "Medium".to_string(),
+                existing_use_cases: self.use_cases.clone(),
+            },
+            methodology: methodology.to_string(),
+            user_fields: extra_fields,
+        };
+
+        let use_case = self
+            .use_case_creator
+            .create_use_case_with_custom_fields(params, self.repository.as_ref())?;
 
         // Generate markdown from TOML data
         let markdown_content = self.markdown_generator.generate(&use_case, None, None)?;
