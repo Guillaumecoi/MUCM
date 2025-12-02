@@ -10,24 +10,26 @@ coverage:
         target: 60%           # Overall minimum coverage
         threshold: 2%         # Allow 2% drop before failing
         informational: true   # Don't fail CI, just inform
-        flags:
-          - all
     
     # Core coverage (excluding CLI code)
     # This is the important one - we enforce 80% here
     core:
       target: 80%
       threshold: 2%
+      paths:
+        - "src/"
       flags:
-        - core              # Uses core flag definition below
+        - core
     
     # CLI coverage (informational only)
     cli:
       target: auto          # No specific target
       threshold: 100%       # Never fail
       informational: true   # Just show the data
+      paths:
+        - "src/cli/"
       flags:
-        - cli               # Uses cli flag definition below
+        - cli
     
     # Patch coverage (new code in PRs)
     patch:
@@ -38,14 +40,10 @@ coverage:
 
 # Flag definitions for separating coverage reports
 flags:
-  all:
-    # Covers everything
-    carryforward: true
-    
   core:
     paths:
       - src/
-    # Exclude CLI directory and main.rs from core coverage
+    # Exclude CLI directory from core coverage
     ignore:
       - src/cli/
       - src/main.rs
