@@ -119,16 +119,20 @@ fn test_complete_use_case_edit_workflow() {
         "AUT",
         Some("User login workflow".to_string()),
         Some("business".to_string()),
-        Some("low".to_string()),  // priority
-        None,  // views
-        None,  // extra_fields
+        Some("low".to_string()), // priority
+        None,                    // views
+        None,                    // extra_fields
     );
     let create_result = controller.create_use_case(params).unwrap();
 
     if !create_result.is_success() {
         eprintln!("Create failed: {}", create_result.message);
     }
-    assert!(create_result.is_success(), "Create result failed: {}", create_result.message);
+    assert!(
+        create_result.is_success(),
+        "Create result failed: {}",
+        create_result.message
+    );
     eprintln!("Create message: '{}'", create_result.message);
     let use_case_id = extract_use_case_id(&create_result.message);
 
@@ -282,9 +286,9 @@ fn test_partial_field_updates() {
         "ORI",
         Some("Original description".to_string()),
         Some("business".to_string()),
-        Some("medium".to_string()),  // priority
-        None,  // views
-        None,  // extra_fields
+        Some("medium".to_string()), // priority
+        None,                       // views
+        None,                       // extra_fields
     );
     let create_result = controller.create_use_case(params).unwrap();
 
