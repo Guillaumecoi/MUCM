@@ -4,32 +4,22 @@
 # Coverage targets and thresholds
 coverage:
   status:
-    # Project-wide coverage (all code including CLI)
+    # Project-level coverage
     project:
+      # Non-CLI coverage (all code except CLI) - This is the main metric
       default:
-        target: 60%           # Overall minimum coverage
-        threshold: 2%         # Allow 2% drop before failing
-        informational: true   # Don't fail CI, just inform
-    
-    # Core coverage (excluding CLI code)
-    # This is the important one - we enforce 80% here
-    core:
-      target: 80%
-      threshold: 2%
-      paths:
-        - "src/"
-      flags:
-        - core
-    
-    # CLI coverage (informational only)
-    cli:
-      target: auto          # No specific target
-      threshold: 100%       # Never fail
-      informational: true   # Just show the data
-      paths:
-        - "src/cli/"
-      flags:
-        - cli
+        target: 80%
+        threshold: 2%
+        flags:
+          - non-cli
+      
+      # CLI coverage (informational only)
+      cli:
+        target: auto          # No specific target
+        threshold: 100%       # Never fail
+        informational: true   # Just show the data
+        flags:
+          - cli
     
     # Patch coverage (new code in PRs)
     patch:
@@ -40,10 +30,10 @@ coverage:
 
 # Flag definitions for separating coverage reports
 flags:
-  core:
+  non-cli:
     paths:
       - src/
-    # Exclude CLI directory from core coverage
+    # Exclude CLI directory
     ignore:
       - src/cli/
       - src/main.rs
@@ -73,8 +63,8 @@ ignore:
 # Component-based coverage (optional, for detailed breakdown)
 component_management:
   individual_components:
-    - component_id: core
-      name: Core (Non-CLI)
+    - component_id: non-cli
+      name: Non-CLI Code
       paths:
         - src/config/**
         - src/controller/**
