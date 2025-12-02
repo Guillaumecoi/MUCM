@@ -44,11 +44,26 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::str::FromStr;
 
+/// Parameters for creating a Config with custom directories
+pub struct ConfigParams {
+    pub test_language: Option<String>,
+    pub methodologies: Vec<String>,
+    pub default_methodology: Option<String>,
+    pub storage: String,
+    pub use_case_dir: String,
+    pub test_dir: String,
+    pub actor_dir: String,
+    pub data_dir: String,
+    pub default_scenario_template: Option<String>,
+}
+
 impl Config {
     // Constants
     pub const CONFIG_DIR: &'static str = ".config/.mucm";
     pub const CONFIG_FILE: &'static str = "mucm.toml";
     pub const TEMPLATES_DIR: &'static str = "template-assets";
+    /// Current config format version
+    pub const CONFIG_VERSION: &'static str = "0.2.0";
 
     /// Create a minimal config for template processing.
     ///
@@ -140,29 +155,21 @@ impl Config {
     /// # Returns
     /// A Config instance with custom directories
     pub fn for_template_with_methodologies_storage_and_directories(
-        test_language: Option<String>,
-        methodologies: Vec<String>,
-        default_methodology: Option<String>,
-        storage: String,
-        use_case_dir: String,
-        test_dir: String,
-        actor_dir: String,
-        data_dir: String,
-        default_scenario_template: Option<String>,
+        params: crate::config::ConfigParams,
     ) -> Self {
         let mut config = Self::for_template_with_methodologies_and_storage(
-            test_language,
-            methodologies,
-            default_methodology,
-            storage,
-            default_scenario_template,
+            params.test_language,
+            params.methodologies,
+            params.default_methodology,
+            params.storage,
+            params.default_scenario_template,
         );
 
         // Update directories
-        config.directories.use_case_dir = use_case_dir;
-        config.directories.test_dir = test_dir;
-        config.directories.actor_dir = actor_dir.clone();
-        config.directories.data_dir = data_dir;
+        config.directories.use_case_dir = params.use_case_dir;
+        config.directories.test_dir = params.test_dir;
+        config.directories.actor_dir = params.actor_dir.clone();
+        config.directories.data_dir = params.data_dir;
 
         config
     }
@@ -335,7 +342,9 @@ impl Config {
             Err(_) => {
                 // Fallback: create a minimal default config when source-templates is not available
                 #[allow(deprecated)]
+                // Using direct struct construction as fallback when source-templates unavailable
                 return Ok(Config {
+                    version: Self::CONFIG_VERSION.to_string(),
                     project: ProjectConfig {
                         name: "Default Project".to_string(),
                         description: "Default project description".to_string(),
@@ -411,10 +420,359 @@ impl Config {
 
         Ok(config)
     }
+
+    /// Create minimal source-templates for testing environments
+    /// This is automatically called by Config::default() when templates are not found
+    #[cfg(test)]
+    pub fn ensure_test_templates() -> std::io::Result<()> {
+        use std::path::Path;
+
+        // Check if source-templates already exists and has valid config
+        if Path::new("source-templates/config.toml").exists() {
+            // Try to parse it - if it works, we're good
+            if std::fs::read_to_string("source-templates/config.toml")
+                .ok()
+                .and_then(|content| toml::from_str::<Config>(&content).ok())
+                .is_some()
+            {
+                return Ok(());
+            }
+        }
+
+        // Create minimal templates
+        let templates_dir = Path::new("source-templates");
+        std::fs::create_dir_all(templates_dir)?;
+
+        std::fs::write(
+            templates_dir.join("config.toml"),
+            r#"[project]
+name = "Test Project"
+description = "Test"
+
+[directories]
+use_case_dir = "docs/use-cases"
+test_dir = "tests/use-cases"
+actor_dir = "docs/actors"
+data_dir = "use-cases-data"
+
+[templates]
+methodologies = ["business", "developer", "feature", "tester"]
+default_methodology = "feature"
+default_scenario_template = "scenarios/scenario.hbs"
+
+[generation]
+test_language = "none"
+auto_generate_tests = false
+overwrite_test_documentation = false
+
+[storage]
+backend = "toml"
+
+[metadata]
+created = true
+last_updated = true
+"#,
+        )?;
+
+        // Create minimal language structure
+        for lang in &["rust", "python", "javascript"] {
+            let lang_dir = templates_dir.join("languages").join(lang);
+            std::fs::create_dir_all(&lang_dir)?;
+            let (ext, alias) = if *lang == "python" {
+                ("py", "py")
+            } else if *lang == "javascript" {
+                ("js", "js")
+            } else {
+                ("rs", "rs")
+            };
+            std::fs::write(
+                lang_dir.join("info.toml"),
+                format!(
+                    r#"name = "{}"
+aliases = ["{}"]
+file_extension = "{}"
+template_file = "test.hbs"
+"#,
+                    lang, alias, ext
+                ),
+            )?;
+            // Create minimal but valid test template with ID placeholder
+            let test_content = if *lang == "rust" {
+                "// Test for {{id}}\n#[test]\nfn test_{{snake_case_id}}() {\n    // TODO: implement\n}\n"
+            } else if *lang == "python" {
+                "# Test for {{id}}\nimport unittest\n\nclass Test{{pascal_case_id}}(unittest.TestCase):\n    def test_case(self):\n        pass\n"
+            } else {
+                "// Test for {{id}}\ndescribe('{{id}}', () => {\n    it('should work', () => {\n        // TODO: implement\n    });\n});\n"
+            };
+            std::fs::write(lang_dir.join("test.hbs"), test_content)?;
+        }
+
+        // Create minimal methodology structure with unique fields per methodology
+        for methodology in &["business", "developer", "feature", "tester"] {
+            let method_dir = templates_dir.join("methodologies").join(methodology);
+            std::fs::create_dir_all(&method_dir)?;
+
+            let (normal_fields, advanced_fields) = match *methodology {
+                "business" => (
+                    r#"business_value = { label = "Business Value", type = "text", required = false, description = "Test field" }
+roi_estimate = { label = "ROI Estimate", type = "string", required = false, description = "Test field" }"#,
+                    r#"# Inherits: business_value, roi_estimate
+stakeholder_analysis = { label = "Stakeholder Analysis", type = "text", required = false, description = "Test field" }"#,
+                ),
+                "developer" => (
+                    r#"api_endpoint = { label = "API Endpoint", type = "string", required = false, description = "Test field" }
+database_tables = { label = "Database Tables", type = "array", required = false, description = "Test field" }"#,
+                    r#"# Inherits: api_endpoint, database_tables
+performance_requirements = { label = "Performance Requirements", type = "string", required = false, description = "Test field" }
+security_considerations = { label = "Security Considerations", type = "string", required = false, description = "Test field" }
+technical_dependencies = { label = "Technical Dependencies", type = "array", required = false, description = "Test field" }
+error_handling = { label = "Error Handling Strategy", type = "string", required = false, description = "Test field" }"#,
+                ),
+                "feature" => (
+                    r#"user_segment = { label = "Target User Segment", type = "string", required = false, description = "Test field" }
+success_metrics = { label = "Success Metrics", type = "array", required = false, description = "Test field" }
+hypothesis = { label = "Product Hypothesis", type = "text", required = false, description = "Test field" }"#,
+                    r#"# Inherits: user_segment, success_metrics, hypothesis
+mockups = { label = "Mockups/Wireframes", type = "string", required = false, description = "Test field" }"#,
+                ),
+                "tester" => (
+                    r#"test_type = { label = "Test Type", type = "string", required = true, description = "Test field" }
+test_priority = { label = "Test Priority", type = "string", required = false, description = "Test field" }"#,
+                    r#"# Inherits: test_type, test_priority
+test_coverage = { label = "Test Coverage", type = "string", required = false, description = "Test field" }"#,
+                ),
+                _ => ("", ""),
+            };
+
+            std::fs::write(
+                method_dir.join("methodology.toml"),
+                format!(
+                    r#"[methodology]
+name = "{}"
+abbreviation = "{}"
+description = "Test {}"
+
+[template]
+preferred_style = "Normal"
+
+[levels.normal]
+name = "Normal"
+abbreviation = "n"
+filename = "uc_normal.hbs"
+description = "Normal level"
+inherits = []
+
+[levels.normal.custom_fields]
+{}
+
+[levels.advanced]
+name = "Advanced"
+abbreviation = "a"
+filename = "uc_advanced.hbs"
+description = "Advanced level"
+inherits = ["Normal"]
+
+[levels.advanced.custom_fields]
+{}
+
+[usage]
+when_to_use = ["For testing purposes"]
+key_features = ["Test feature"]
+best_practices = ["Test practice"]
+
+[examples]
+
+[examples.basic]
+title = "Test Example"
+
+[related_methodologies]
+"#,
+                    methodology,
+                    &methodology[..3],
+                    methodology,
+                    normal_fields,
+                    advanced_fields,
+                ),
+            )?;
+            std::fs::write(
+                method_dir.join("uc_normal.hbs"),
+                r#"# {{title}}
+
+**ID:** {{id}} | **Status:** {{status}} | **Priority:** {{priority}}
+
+{{#if description}}
+## Description
+{{description}}
+
+{{/if}}
+{{#if preconditions}}
+## Preconditions
+{{#each preconditions}}
+- {{this}}
+{{/each}}
+
+{{/if}}
+{{#if postconditions}}
+## Postconditions
+{{#each postconditions}}
+- {{this}}
+{{/each}}
+
+{{/if}}
+"#,
+            )?;
+            std::fs::write(
+                method_dir.join("uc_advanced.hbs"),
+                r#"# {{title}}
+
+**ID:** {{id}} | **Status:** {{status}} | **Priority:** {{priority}}
+
+{{#if description}}
+## Description
+{{description}}
+
+{{/if}}
+{{#if preconditions}}
+## Preconditions
+{{#each preconditions}}
+- {{this}}
+{{/each}}
+
+{{/if}}
+{{#if postconditions}}
+## Postconditions
+{{#each postconditions}}
+- {{this}}
+{{/each}}
+
+{{/if}}
+"#,
+            )?;
+        }
+
+        // Create scenario templates
+        let scenario_dir = templates_dir.join("scenarios");
+        std::fs::create_dir_all(&scenario_dir)?;
+        std::fs::write(
+            scenario_dir.join("scenario.hbs"),
+            r#"{{#if scenarios}}
+## Scenarios
+
+{{#each scenarios}}
+### {{title}}
+
+**Status:** {{status}}{{#if primary_actor}} | **Actor:** {{primary_actor}}{{/if}}
+
+{{#if preconditions}}
+**Preconditions:**
+{{#each preconditions}}
+- {{this}}
+{{/each}}
+{{/if}}
+
+{{#if steps}}
+**Steps:**
+{{#each steps}}
+{{order}}. {{actor}} {{action}}
+{{/each}}
+{{/if}}
+
+{{/each}}
+{{/if}}
+"#,
+        )?;
+        std::fs::write(
+            scenario_dir.join("scenario_mermaid.hbs"),
+            r#"{{#if scenarios}}
+## Scenarios (Mermaid)
+
+```mermaid
+sequenceDiagram
+{{#each scenarios}}
+    {{#each steps}}
+    {{actor}}->>{{receiver}}: {{action}}
+    {{/each}}
+{{/each}}
+```
+{{/if}}
+"#,
+        )?;
+
+        // Create overview template
+        std::fs::write(
+            templates_dir.join("overview.hbs"),
+            r#"# Use Cases Overview
+
+**Project:** {{project_name}}
+**Generated:** {{generated_date}}
+
+## Summary
+- **Total Use Cases:** {{total_use_cases}}
+- **Total Scenarios:** {{total_scenarios}}
+
+{{#if status_counts}}
+## Status Distribution
+{{#each status_counts}}
+- **{{@key}}:** {{this}}
+{{/each}}
+{{/if}}
+
+{{#if categories}}
+## Use Cases
+{{#each categories}}
+### {{category_name}}
+{{#each use_cases}}
+- **{{id}}**: {{title}} ({{aggregated_status}})
+{{/each}}
+{{/each}}
+{{/if}}
+"#,
+        )?;
+
+        // Create actor template
+        std::fs::write(
+            templates_dir.join("actor.hbs"),
+            r#"# Actor: {{name}}
+
+{{#if description}}
+## Description
+{{description}}
+{{/if}}
+
+{{#if type}}
+**Type:** {{type}}
+{{/if}}
+"#,
+        )?;
+
+        Ok(())
+    }
 }
 
 impl Default for Config {
     fn default() -> Self {
+        // In test mode, ensure minimal templates exist and use simple loading
+        #[cfg(test)]
+        {
+            use std::path::Path;
+
+            // Ensure test templates exist - this creates the minimal config
+            if let Ok(()) = Self::ensure_test_templates() {
+                // Try to load from local source-templates (test environment)
+                // This should always succeed after ensure_test_templates()
+                let config_path = Path::new("source-templates/config.toml");
+                if config_path.exists() {
+                    match std::fs::read_to_string(config_path) {
+                        Ok(content) => match toml::from_str::<Config>(&content) {
+                            Ok(config) => return config,
+                            Err(e) => eprintln!("Warning: Failed to parse test config: {}", e),
+                        },
+                        Err(e) => eprintln!("Warning: Failed to read test config: {}", e),
+                    }
+                }
+            }
+        }
+
         // Load default configuration from source-templates/config.toml
         // This ensures consistency between the template and the default config
         match Self::load_default_from_template() {
@@ -833,7 +1191,9 @@ mod tests {
             .and_then(|p| p.parent()) // target
             .and_then(|p| p.parent()) // project root
             .ok_or_else(|| anyhow::anyhow!("Could not determine project root"))?;
-        std::env::set_var("CARGO_MANIFEST_DIR", project_root);
+        unsafe {
+            std::env::set_var("CARGO_MANIFEST_DIR", project_root);
+        }
 
         let mut config = Config::default();
         config.project.name = "Test Project".to_string();
@@ -855,7 +1215,9 @@ mod tests {
         assert_eq!(loaded_config.generation.test_language, "javascript");
 
         // Clean up
-        std::env::remove_var("CARGO_MANIFEST_DIR");
+        unsafe {
+            std::env::remove_var("CARGO_MANIFEST_DIR");
+        }
 
         Ok(())
     }

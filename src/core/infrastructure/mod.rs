@@ -13,6 +13,7 @@ pub use methodologies::{
 };
 pub use persistence::{
     file_operations, RepositoryFactory, SqliteActorRepository, SqliteUseCaseRepository,
-    TomlActorRepository, TomlCategoryRepository, TomlUseCaseRepository, UseCaseRepository,
+    TomlActorRepository, TomlCategoryRepository, TomlMigrator, TomlUseCaseRepository,
+    UseCaseRepository,
 };
-pub use template_engine::TemplateEngine;
+pub use template_engine::{ActorMarkdownGenerator, TemplateEngine};

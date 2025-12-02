@@ -37,9 +37,11 @@ mod tests;
 // Re-export commonly used controllers
 pub use actor_controller::{ActorController, PersonaController};
 pub use category_controller::CategoryController;
-pub use project_controller::ProjectController;
-pub use scenario_controller::ScenarioController;
-pub use use_case_controller::UseCaseController;
+pub use project_controller::{InitProjectParams, ProjectController};
+pub use scenario_controller::{
+    CreateExtensionParams, CreateScenarioParams, InsertStepParams, ScenarioController,
+};
+pub use use_case_controller::{CreateUseCaseParams, UseCaseController};
 
 // Re-export DTOs for use in CLI layer
 pub use dto::{DisplayResult, MethodologyInfo};

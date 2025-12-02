@@ -206,8 +206,14 @@ pub fn prompt_methodology_fields(
                             None
                         }
                     }
-                    "string" | _ => {
+                    "string" => {
                         // Default: string input
+                        Text::new(&prompt_text)
+                            .with_help_message(help_msg)
+                            .prompt_skippable()?
+                    }
+                    _ => {
+                        // Unknown field type defaults to string input
                         Text::new(&prompt_text)
                             .with_help_message(help_msg)
                             .prompt_skippable()?
@@ -309,7 +315,7 @@ pub fn create_or_select_category() -> Result<(String, String)> {
                         category_controller.create_category(full_name.clone(), new_abbr.clone())?;
                     UI::show_success(&result.message)?;
 
-                    return Ok((full_name, new_abbr));
+                    Ok((full_name, new_abbr))
                 }
                 "Edit abbreviation manually" => {
                     // Let user enter a different abbreviation
@@ -340,9 +346,9 @@ pub fn create_or_select_category() -> Result<(String, String)> {
                         .create_category(full_name.clone(), new_abbreviation.clone())?;
                     UI::show_success(&result.message)?;
 
-                    return Ok((full_name, new_abbreviation));
+                    Ok((full_name, new_abbreviation))
                 }
-                "Cancel" | _ => {
+                _ => {
                     anyhow::bail!("Category creation cancelled");
                 }
             }
@@ -352,7 +358,7 @@ pub fn create_or_select_category() -> Result<(String, String)> {
                 category_controller.create_category(full_name.clone(), abbreviation.clone())?;
             UI::show_success(&result.message)?;
 
-            return Ok((full_name, abbreviation));
+            Ok((full_name, abbreviation))
         }
     } else {
         // Parse existing category selection

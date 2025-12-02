@@ -6,5 +6,8 @@
 mod scenario_creator;
 mod use_case_creator;
 
-pub use scenario_creator::ScenarioCreator;
-pub use use_case_creator::UseCaseCreator;
+pub use scenario_creator::{ExtensionScenarioParams, ScenarioCreator, ScenarioParams, StepParams};
+pub use use_case_creator::{
+    UseCaseCreationParams, UseCaseCreator, UseCaseWithCustomFieldsParams,
+    UseCaseWithMethodologyParams, UseCaseWithViewsParams,
+};

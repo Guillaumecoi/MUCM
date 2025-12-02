@@ -10,6 +10,7 @@ mod cleanup;
 mod fields;
 mod language;
 mod methodology;
+mod migrate;
 mod project;
 mod usecase;
 
@@ -26,5 +27,6 @@ pub use language::handle_languages_command;
 pub use methodology::{
     handle_list_methodologies_command, handle_methodology_info_command, handle_regenerate_command,
 };
+pub use migrate::handle_migrate_command;
 pub use project::{handle_init_command, handle_status_command};
 pub use usecase::{handle_create_command, handle_list_command, handle_usecase_scenario_command};

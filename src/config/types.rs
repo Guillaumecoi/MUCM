@@ -163,6 +163,9 @@ mod storage_backend_tests {
 /// ```
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Config {
+    /// Config file format version for migration tracking
+    #[serde(default = "default_config_version")]
+    pub version: String,
     /// Basic project information and metadata
     pub project: ProjectConfig,
     /// Directory paths for use cases, tests, and actors
@@ -180,6 +183,11 @@ pub struct Config {
     /// Actor configuration with custom persona fields
     #[serde(default, alias = "persona")]
     pub actor: ActorConfig,
+}
+
+/// Default config version for deserialization
+fn default_config_version() -> String {
+    "0.1.0".to_string()
 }
 
 /// Project-level configuration settings.

@@ -4,15 +4,12 @@ use anyhow::Result;
 
 /// Service for managing references between use cases
 pub struct ReferenceManagementService<'a> {
-    repository: &'a Box<dyn UseCaseRepository>,
+    repository: &'a dyn UseCaseRepository,
     use_cases: &'a mut Vec<UseCase>,
 }
 
 impl<'a> ReferenceManagementService<'a> {
-    pub fn new(
-        repository: &'a Box<dyn UseCaseRepository>,
-        use_cases: &'a mut Vec<UseCase>,
-    ) -> Self {
+    pub fn new(repository: &'a dyn UseCaseRepository, use_cases: &'a mut Vec<UseCase>) -> Self {
         Self {
             repository,
             use_cases,

@@ -30,7 +30,7 @@ use interactive::run_interactive_session;
 use standard::{
     handle_actor_command, handle_cleanup_command, handle_create_command, handle_init_command,
     handle_languages_command, handle_list_command, handle_list_methodologies_command,
-    handle_methodology_info_command, handle_postcondition_add_command,
+    handle_methodology_info_command, handle_migrate_command, handle_postcondition_add_command,
     handle_postcondition_list_command, handle_postcondition_remove_command,
     handle_precondition_add_command, handle_precondition_list_command,
     handle_precondition_remove_command, handle_reference_add_command,
@@ -239,6 +239,10 @@ pub fn run() -> Result<()> {
             dry_run,
         } => {
             execute_command(|| handle_cleanup_command(&mut runner, use_case_id, dry_run));
+            Ok(())
+        }
+        Commands::Migrate { dry_run } => {
+            execute_command(|| handle_migrate_command(dry_run));
             Ok(())
         }
         Commands::Interactive => {

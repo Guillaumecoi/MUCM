@@ -57,8 +57,14 @@ impl ActorWorkflow {
             )
             .prompt()?;
 
-        // Auto-generate ID from name
-        let id = slugify_for_id(&name);
+        // Auto-generate ID from function and name for better organization
+        // For personas: combine function + name (e.g., "regular-customer-sarah-chen")
+        // For system actors: use name only (e.g., "payment-gateway")
+        let id = if actor_type == "Persona" {
+            format!("{}-{}", slugify_for_id(&function), slugify_for_id(&name))
+        } else {
+            slugify_for_id(&name)
+        };
 
         // Show the generated ID to the user
         println!("  Generated ID: {}", id);

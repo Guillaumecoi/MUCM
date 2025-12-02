@@ -94,15 +94,16 @@ pub fn handle_usecase_scenario_command(
             description,
             persona,
         } => {
-            let result = controller.create_scenario(
+            let params = crate::controller::CreateScenarioParams {
                 use_case_id,
                 title,
                 scenario_type,
                 description,
-                persona,
-                None, // preconditions
-                None, // postconditions
-            )?;
+                persona_id: persona,
+                preconditions: None,
+                postconditions: None,
+            };
+            let result = controller.create_scenario(params)?;
             DisplayResultFormatter::display(&result);
         }
         UseCaseScenarioCommands::Edit {

@@ -116,6 +116,18 @@ pub enum Commands {
         #[arg(long, short = 'n')]
         dry_run: bool,
     },
+    /// Migrate data to new format (v0.2.0: actor ID format change)
+    ///
+    /// Updates actor files to the new ID naming convention where personas use
+    /// "function-name" format (e.g., "regular-customer-sarah-chen") instead of
+    /// just name. System actors remain unchanged.
+    ///
+    /// This command is safe to run multiple times - already migrated actors will be skipped.
+    Migrate {
+        /// Dry run mode - show what would be changed without modifying files
+        #[arg(long, short = 'n')]
+        dry_run: bool,
+    },
     /// Enter interactive mode
     Interactive,
 }

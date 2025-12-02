@@ -58,24 +58,43 @@ fn create_main_menu_options() -> Vec<MenuOption<CliRunner>> {
             Ok(false) // Don't exit
         }),
         MenuOption::new("📄 Regenerate All Documentation", |_| {
-            use crate::controller::UseCaseController;
+            use crate::controller::{ActorController, UseCaseController};
 
-            let mut controller = match UseCaseController::new() {
+            UI::show_info("Regenerating all documentation...")?;
+
+            // Regenerate use case documentation
+            let mut uc_controller = match UseCaseController::new() {
                 Ok(c) => c,
                 Err(e) => {
-                    UI::show_error(&format!("Failed to initialize controller: {}", e))?;
+                    UI::show_error(&format!("Failed to initialize use case controller: {}", e))?;
                     return Ok(false);
                 }
             };
 
-            UI::show_info("Regenerating all documentation...")?;
-
-            match controller.regenerate_all_markdown() {
+            match uc_controller.regenerate_all_markdown() {
                 Ok(result) => {
                     UI::show_success(&result.message)?;
                 }
                 Err(e) => {
-                    UI::show_error(&format!("Error regenerating documentation: {}", e))?;
+                    UI::show_error(&format!("Error regenerating use case documentation: {}", e))?;
+                }
+            }
+
+            // Regenerate actor documentation
+            let actor_controller = match ActorController::new() {
+                Ok(c) => c,
+                Err(e) => {
+                    UI::show_error(&format!("Failed to initialize actor controller: {}", e))?;
+                    return Ok(false);
+                }
+            };
+
+            match actor_controller.regenerate_all_actor_markdown() {
+                Ok(result) => {
+                    UI::show_success(&result.message)?;
+                }
+                Err(e) => {
+                    UI::show_error(&format!("Error regenerating actor documentation: {}", e))?;
                 }
             }
 

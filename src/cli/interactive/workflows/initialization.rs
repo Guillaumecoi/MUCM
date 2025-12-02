@@ -12,6 +12,20 @@ use crate::cli::interactive::selectors::{
 };
 use crate::cli::interactive::ui::UI;
 
+/// Configuration parameters for project initialization
+struct ProjectConfig {
+    language: Option<String>,
+    selected_methodologies: Vec<String>,
+    default_methodology: String,
+    storage_backend: String,
+    use_case_dir: String,
+    test_dir: String,
+    persona_dir: String,
+    data_dir: String,
+    scenario_template: Option<String>,
+    create_standard_actors: bool,
+}
+
 /// Handle project initialization workflow
 pub struct Initialization;
 
@@ -210,18 +224,31 @@ impl Initialization {
             Some("scenarios/scenario.hbs".to_string())
         };
 
+        // Ask if they want to create standard system actors
+        let create_actors =
+            Confirm::new("Create standard system actors (Database, API, Web Server, etc.)?")
+                .with_default(true)
+                .with_help_message(
+                    "These are commonly used external systems that interact with your use cases",
+                )
+                .prompt()?;
+
+        // Build project config
+        let config = ProjectConfig {
+            language: language.clone(),
+            selected_methodologies: selected_methodologies.clone(),
+            default_methodology: default_methodology.clone(),
+            storage_backend: storage_backend.to_string(),
+            use_case_dir: use_case_dir.clone(),
+            test_dir: test_dir.clone(),
+            persona_dir: persona_dir.clone(),
+            data_dir: data_dir.clone(),
+            scenario_template: scenario_template.clone(),
+            create_standard_actors: create_actors,
+        };
+
         // Show summary
-        show_configuration_summary(
-            &language,
-            &selected_methodologies,
-            &default_methodology,
-            storage_backend,
-            &use_case_dir,
-            &test_dir,
-            &persona_dir,
-            &data_dir,
-            &scenario_template,
-        )?;
+        show_configuration_summary(&config)?;
 
         // Confirm settings
         let confirm = Confirm::new("Are these settings correct?")
@@ -236,100 +263,67 @@ impl Initialization {
             return Self::run_initialization_wizard();
         }
 
-        // Ask if they want to create standard system actors
-        let create_actors =
-            Confirm::new("Create standard system actors (Database, API, Web Server, etc.)?")
-                .with_default(true)
-                .with_help_message(
-                    "These are commonly used external systems that interact with your use cases",
-                )
-                .prompt()?;
-
         // Create config with directories
-        create_config_with_directories(
-            &mut runner,
-            language,
-            selected_methodologies,
-            storage_backend,
-            use_case_dir.clone(),
-            test_dir.clone(),
-            persona_dir.clone(),
-            data_dir.clone(),
-            scenario_template,
-            create_actors,
-        )?;
+        create_config_with_directories(&mut runner, config)?;
 
         Ok(())
     }
 }
 
 /// Show configuration summary
-fn show_configuration_summary(
-    language: &Option<String>,
-    selected_methodologies: &[String],
-    default_methodology: &str,
-    storage_backend: &str,
-    use_case_dir: &str,
-    test_dir: &str,
-    persona_dir: &str,
-    data_dir: &str,
-    scenario_template: &Option<String>,
-) -> Result<()> {
+fn show_configuration_summary(config: &ProjectConfig) -> Result<()> {
     println!("\n✨ Configuration Summary:");
     println!(
         "   Language: {}",
-        language.as_ref().unwrap_or(&"none".to_string())
+        config.language.as_ref().unwrap_or(&"none".to_string())
     );
-    println!("   Methodologies: {}", selected_methodologies.join(", "));
-    println!("   Default: {}", default_methodology);
-    println!("   Storage: {}", storage_backend);
+    println!(
+        "   Methodologies: {}",
+        config.selected_methodologies.join(", ")
+    );
+    println!("   Default: {}", config.default_methodology);
+    println!("   Storage: {}", config.storage_backend);
     println!(
         "   Scenario Template: {}",
-        scenario_template
+        config
+            .scenario_template
             .as_ref()
             .unwrap_or(&"scenarios/scenario.hbs".to_string())
     );
-    println!("   Use case dir: {}", use_case_dir);
-    println!("   Test dir: {}", test_dir);
-    println!("   Persona dir: {}", persona_dir);
-    println!("   Data dir: {}\n", data_dir);
+    println!("   Use case dir: {}", config.use_case_dir);
+    println!("   Test dir: {}", config.test_dir);
+    println!("   Persona dir: {}", config.persona_dir);
+    println!("   Data dir: {}\n", config.data_dir);
     Ok(())
 }
 
 /// Create project configuration with directories
 fn create_config_with_directories(
     runner: &mut InteractiveRunner,
-    language: Option<String>,
-    selected_methodologies: Vec<String>,
-    storage_backend: &str,
-    use_case_dir: String,
-    test_dir: String,
-    persona_dir: String,
-    data_dir: String,
-    scenario_template: Option<String>,
-    create_standard_actors: bool,
+    config: ProjectConfig,
 ) -> Result<()> {
-    match runner.initialize_project(
-        language,
-        selected_methodologies,
-        storage_backend.to_string(),
-        use_case_dir,
-        test_dir,
-        persona_dir,
-        data_dir,
-        scenario_template,
-    ) {
+    let params = crate::cli::interactive::runner::InitProjectParams {
+        language: config.language,
+        methodologies: config.selected_methodologies,
+        storage: config.storage_backend,
+        use_case_dir: config.use_case_dir,
+        test_dir: config.test_dir,
+        persona_dir: config.persona_dir,
+        data_dir: config.data_dir,
+        scenario_template: config.scenario_template,
+    };
+    match runner.initialize_project(params) {
         Ok(message) => {
             UI::show_success(&message)?;
 
             // Save the preference in config
-            if let Ok(mut config) = crate::config::Config::load() {
-                config.actor.auto_create_standard_actors = create_standard_actors;
-                let _ = crate::config::Config::save_config_only(&config);
+            if let Ok(mut loaded_config) = crate::config::Config::load() {
+                loaded_config.actor.auto_create_standard_actors = config.create_standard_actors;
+                let _ = crate::config::Config::save_config_only(&loaded_config);
             }
 
             // Create actors if requested
-            if create_standard_actors {
+            if config.create_standard_actors {
                 use crate::controller::ActorController;
                 let actor_controller = ActorController::new()?;
                 let result = actor_controller.init_standard_actors()?;

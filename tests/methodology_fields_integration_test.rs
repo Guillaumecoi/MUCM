@@ -9,8 +9,13 @@ use std::collections::HashMap;
 use std::env;
 use tempfile::TempDir;
 
+mod common;
+
 /// Helper to initialize test environment with methodologies
 fn init_test_environment(methodologies: Vec<String>) -> Result<Config> {
+    // Create minimal source-templates for testing
+    common::create_minimal_source_templates(std::path::Path::new("."))?;
+
     let mut config = Config::default();
     config.templates.methodologies = methodologies.clone();
     if let Some(first) = methodologies.first() {
@@ -58,7 +63,7 @@ fn test_methodology_fields_storage() -> Result<()> {
 
     // Verify the structure exists (fields may be empty if no values provided)
     assert!(
-        use_case.methodology_fields.get("business").is_some(),
+        use_case.methodology_fields.contains_key("business"),
         "Business methodology entry should exist in methodology_fields HashMap"
     );
 

@@ -1,6 +1,38 @@
 use crate::core::domain::{Actor, Scenario, ScenarioStep, ScenarioType, StepOrder, UseCase};
 use anyhow::{Context, Result};
 
+/// Parameters for creating a scenario
+pub struct ScenarioParams {
+    pub title: String,
+    pub scenario_type: ScenarioType,
+    pub description: Option<String>,
+    pub primary_actor: Actor,
+    pub preconditions: Vec<String>,
+    pub postconditions: Vec<String>,
+    /// Field for future use - will track all involved actors beyond primary_actor
+    /// Currently passed through but not yet used in scenario rendering
+    #[allow(dead_code)]
+    pub actors: Vec<String>,
+}
+
+/// Parameters for creating an extension scenario
+pub struct ExtensionScenarioParams {
+    pub parent_scenario_id: String,
+    pub extends_at_step: String,
+    pub title: String,
+    pub description: Option<String>,
+    pub primary_actor: Actor,
+}
+
+/// Parameters for creating a scenario step
+pub struct StepParams {
+    pub order: String,
+    pub actor: String,
+    pub receiver: Option<String>,
+    pub action: String,
+    pub expected_result: Option<String>,
+}
+
 /// Handles scenario creation and management
 pub struct ScenarioCreator;
 
@@ -10,32 +42,22 @@ impl ScenarioCreator {
     }
 
     /// Create a new scenario for a use case
-    pub fn create_scenario(
-        &self,
-        use_case: &UseCase,
-        title: String,
-        scenario_type: ScenarioType,
-        description: Option<String>,
-        primary_actor: Actor,
-        preconditions: Vec<String>,
-        postconditions: Vec<String>,
-        _actors: Vec<String>,
-    ) -> Scenario {
+    pub fn create_scenario(&self, use_case: &UseCase, params: ScenarioParams) -> Scenario {
         let scenario_id = use_case.next_scenario_id();
 
         let mut scenario = Scenario::new(
             scenario_id,
-            title,
-            description.unwrap_or_default(),
-            scenario_type,
-            primary_actor,
+            params.title,
+            params.description.unwrap_or_default(),
+            params.scenario_type,
+            params.primary_actor,
         );
 
         // Add preconditions and postconditions
-        for precondition in preconditions {
+        for precondition in params.preconditions {
             scenario.add_precondition(precondition.into());
         }
-        for postcondition in postconditions {
+        for postcondition in params.postconditions {
             scenario.add_postcondition(postcondition.into());
         }
 
@@ -46,36 +68,36 @@ impl ScenarioCreator {
     pub fn create_extension_scenario(
         &self,
         use_case: &UseCase,
-        parent_scenario_id: &str,
-        extends_at_step: String,
+        params: ExtensionScenarioParams,
         returns_at_step: Option<String>,
-        title: String,
-        description: Option<String>,
-        primary_actor: Actor,
     ) -> Result<Scenario> {
         // Validate parent scenario exists and is a main scenario
         let parent = use_case
             .scenarios
             .iter()
-            .find(|s| s.id == parent_scenario_id)
+            .find(|s| s.id == params.parent_scenario_id)
             .context(format!(
                 "Parent scenario '{}' not found",
-                parent_scenario_id
+                params.parent_scenario_id
             ))?;
 
         if !parent.is_main {
             anyhow::bail!(
                 "Cannot extend non-main scenario '{}'. Extensions can only extend main scenarios.",
-                parent_scenario_id
+                params.parent_scenario_id
             );
         }
 
         // Validate extends_at_step exists in parent
-        if !parent.steps.iter().any(|s| s.order == extends_at_step) {
+        if !parent
+            .steps
+            .iter()
+            .any(|s| s.order == params.extends_at_step)
+        {
             anyhow::bail!(
                 "Step '{}' does not exist in parent scenario '{}'",
-                extends_at_step,
-                parent_scenario_id
+                params.extends_at_step,
+                params.parent_scenario_id
             );
         }
 
@@ -85,16 +107,18 @@ impl ScenarioCreator {
                 anyhow::bail!(
                     "Return step '{}' does not exist in parent scenario '{}'",
                     return_step,
-                    parent_scenario_id
+                    params.parent_scenario_id
                 );
             }
 
             // Validate return step is at or after extends step (allow same step for retry)
-            if StepOrder::compare(&extends_at_step, return_step) == std::cmp::Ordering::Greater {
+            if StepOrder::compare(&params.extends_at_step, return_step)
+                == std::cmp::Ordering::Greater
+            {
                 anyhow::bail!(
                     "Return step '{}' cannot be before divergence step '{}'",
                     return_step,
-                    extends_at_step
+                    params.extends_at_step
                 );
             }
         }
@@ -103,16 +127,16 @@ impl ScenarioCreator {
 
         let mut scenario = Scenario::new(
             scenario_id,
-            title,
-            description.unwrap_or_default(),
+            params.title,
+            params.description.unwrap_or_default(),
             ScenarioType::Extension,
-            primary_actor,
+            params.primary_actor,
         );
 
         // Mark as extension and link to parent
         scenario.is_main = false;
-        scenario.extends_scenario_id = Some(parent_scenario_id.to_string());
-        scenario.extends_at_step = Some(extends_at_step);
+        scenario.extends_scenario_id = Some(params.parent_scenario_id.clone());
+        scenario.extends_at_step = Some(params.extends_at_step);
         scenario.returns_at_step = returns_at_step;
 
         Ok(scenario)
@@ -222,26 +246,19 @@ impl ScenarioCreator {
     }
 
     /// Create a scenario step with optional receiver
-    pub fn create_scenario_step(
-        &self,
-        order: String,
-        actor: String,
-        receiver: Option<String>,
-        action: String,
-        expected_result: Option<String>,
-    ) -> ScenarioStep {
-        let actor_enum: Actor = actor.into(); // Convert String to Actor using From<String>
-        let receiver_enum: Option<Actor> = receiver.map(|r| r.into());
+    pub fn create_scenario_step(&self, params: StepParams) -> ScenarioStep {
+        let actor_enum: Actor = params.actor.into(); // Convert String to Actor using From<String>
+        let receiver_enum: Option<Actor> = params.receiver.map(|r| r.into());
 
-        let description = expected_result.unwrap_or_else(|| {
+        let description = params.expected_result.unwrap_or_else(|| {
             if let Some(ref recv) = receiver_enum {
-                format!("{} {} to {}", actor_enum.name(), action, recv.name())
+                format!("{} {} to {}", actor_enum.name(), params.action, recv.name())
             } else {
-                format!("{} {}", actor_enum.name(), action)
+                format!("{} {}", actor_enum.name(), params.action)
             }
         });
 
-        let mut step = ScenarioStep::new(order, actor_enum, action, description);
+        let mut step = ScenarioStep::new(params.order, actor_enum, params.action, description);
         if let Some(recv) = receiver_enum {
             step.set_receiver(recv);
         }

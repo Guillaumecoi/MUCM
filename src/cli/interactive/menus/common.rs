@@ -10,6 +10,9 @@
 use anyhow::Result;
 use inquire::Select;
 
+/// Type alias for menu action closure
+pub type MenuAction<T> = Box<dyn Fn(&mut T) -> Result<bool>>;
+
 /// A menu option with display text and associated action
 ///
 /// Pairs human-readable text with an executable closure that receives
@@ -19,7 +22,7 @@ pub struct MenuOption<T> {
     pub display_text: String,
     /// The action to execute when this option is selected.
     /// Receives a mutable reference to the context and returns whether to exit the menu.
-    pub action: Box<dyn Fn(&mut T) -> Result<bool>>,
+    pub action: MenuAction<T>,
 }
 
 impl<T> MenuOption<T> {

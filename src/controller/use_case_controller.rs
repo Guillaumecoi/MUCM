@@ -27,6 +27,19 @@ use crate::core::{
 };
 use crate::presentation::{StatusFormatter, UseCaseFormatter};
 use anyhow::Result;
+use std::collections::HashMap;
+
+/// Parameters for creating a use case
+pub struct CreateUseCaseParams {
+    pub title: String,
+    pub category: String,
+    pub category_abbreviation: String,
+    pub description: Option<String>,
+    pub methodology: Option<String>,
+    pub views: Option<String>,
+    pub priority: Option<String>,
+    pub extra_fields: Option<HashMap<String, String>>,
+}
 
 /// Controller for use case operations and management.
 ///
@@ -73,23 +86,13 @@ impl UseCaseController {
     ///
     /// # Errors
     /// Returns error if use case creation fails or parameters are invalid
-    pub fn create_use_case(
-        &mut self,
-        title: String,
-        category: String,
-        category_abbreviation: String,
-        description: Option<String>,
-        methodology: Option<String>,
-        views: Option<String>,
-        priority: Option<String>,
-        extra_fields: Option<std::collections::HashMap<String, String>>,
-    ) -> Result<DisplayResult> {
+    pub fn create_use_case(&mut self, params: CreateUseCaseParams) -> Result<DisplayResult> {
         // Determine views string - either from views parameter or from methodology parameter
-        let views_str = if let Some(views_str) = views {
+        let views_str = if let Some(views_str) = params.views {
             views_str
         } else {
             // Convert methodology to views format (methodology:normal)
-            let methodology_str = methodology.unwrap_or_else(|| {
+            let methodology_str = params.methodology.unwrap_or_else(|| {
                 Config::load()
                     .map(|c| c.templates.default_methodology.clone())
                     .unwrap_or_else(|_| "feature".to_string())
@@ -98,21 +101,32 @@ impl UseCaseController {
         };
 
         // All use cases now use the views-based API
-        let result = if priority.is_some() || extra_fields.is_some() {
-            let prio = priority.unwrap_or_else(|| "medium".to_string());
-            let fields = extra_fields.unwrap_or_default();
-            self.app_service.create_use_case_with_views_and_fields(
-                title,
-                category,
-                category_abbreviation,
-                description,
-                prio,
-                &views_str,
-                fields,
-            )
-        } else {
+        let result = if params.priority.is_some() || params.extra_fields.is_some() {
+            let prio = params.priority.unwrap_or_else(|| "medium".to_string());
+            let fields = params.extra_fields.unwrap_or_default();
+            let coord_params = crate::core::CreateUseCaseWithViewsParams {
+                title: params.title,
+                category: params.category,
+                category_abbreviation: params.category_abbreviation,
+                description: params.description,
+                priority: prio,
+                views: views_str.clone(),
+                extra_fields: fields,
+            };
             self.app_service
-                .create_use_case_with_views(title, category, description, &views_str)
+                .create_use_case_with_views_and_fields(coord_params)
+        } else {
+            let coord_params = crate::core::CreateUseCaseWithViewsParams {
+                title: params.title,
+                category: params.category,
+                category_abbreviation: params.category_abbreviation,
+                description: params.description,
+                priority: "medium".to_string(),
+                views: views_str.clone(),
+                extra_fields: HashMap::new(),
+            };
+            self.app_service
+                .create_use_case_with_views_and_fields(coord_params)
         }
         .map(|use_case_id| {
             UseCaseFormatter::display_created(&use_case_id, &views_str);
@@ -748,15 +762,15 @@ impl UseCaseController {
             _ => return Ok(DisplayResult::error(format!("Invalid scenario type: {}. Must be 'main', 'alternative', 'exception', or 'extension'", scenario_type))),
         };
 
-        match self.app_service.add_scenario(
-            &use_case_id,
+        let params = crate::core::AddScenarioParams {
             title,
-            scenario_type_enum,
+            scenario_type: scenario_type_enum,
             description,
-            vec![], // empty preconditions for now
-            vec![], // empty postconditions for now
-            vec![], // empty actors for now
-        ) {
+            preconditions: vec![],
+            postconditions: vec![],
+            actors: vec![],
+        };
+        match self.app_service.add_scenario(&use_case_id, params) {
             Ok(scenario_id) => Ok(DisplayResult::success(format!(
                 "Added scenario '{}' to use case: {}",
                 scenario_id, use_case_id
@@ -795,15 +809,17 @@ impl UseCaseController {
         let action = step; // Use the step as the action
         let expected_result = None; // No expected result for now
 
-        match self.app_service.add_scenario_step(
-            &use_case_id,
-            &scenario_title,
-            order_val,
+        let params = crate::core::AddScenarioStepParams {
+            order: order_val,
             actor,
             receiver,
             action,
             expected_result,
-        ) {
+        };
+        match self
+            .app_service
+            .add_scenario_step(&use_case_id, &scenario_title, params)
+        {
             Ok(_) => Ok(DisplayResult::success(format!(
                 "Added step to scenario '{}' in use case: {}",
                 scenario_title, use_case_id
@@ -832,7 +848,7 @@ impl UseCaseController {
         scenario_title: String,
         status: String,
     ) -> Result<DisplayResult> {
-        let status_enum = match Status::from_str(&status) {
+        let status_enum = match status.parse::<Status>() {
             Ok(s) => s,
             Err(e) => return Ok(DisplayResult::error(e)),
         };

@@ -18,8 +18,8 @@
 use crate::config::Config;
 use crate::controller::dto::DisplayResult;
 use crate::core::{
-    ActorEntity, ActorRepository, ActorType, Persona, PersonaRepository, SqliteActorRepository,
-    TomlActorRepository,
+    ActorEntity, ActorMarkdownGenerator, ActorRepository, ActorType, Persona, PersonaRepository,
+    SqliteActorRepository, TomlActorRepository,
 };
 use anyhow::{Context, Result};
 use std::collections::HashMap;
@@ -133,6 +133,11 @@ impl ActorController {
         // Save the persona
         self.persona_repository.save(&persona)?;
 
+        // Generate markdown documentation
+        if let Err(e) = self.generate_actor_markdown(&id) {
+            eprintln!("Warning: Failed to generate actor markdown: {}", e);
+        }
+
         Ok(DisplayResult::success(format!(
             "✅ Created persona: {} {} ({})",
             persona
@@ -196,6 +201,11 @@ impl ActorController {
 
         // Save the actor
         self.actor_repository.save_actor(&actor)?;
+
+        // Generate markdown documentation
+        if let Err(e) = self.generate_actor_markdown(&id) {
+            eprintln!("Warning: Failed to generate actor markdown: {}", e);
+        }
 
         Ok(DisplayResult::success(format!(
             "✅ Created system actor: {} {} ({})",
@@ -595,6 +605,65 @@ impl ActorController {
             crate::config::StorageBackend::Sqlite
         )
     }
+
+    // ========== Markdown Generation Methods ==========
+
+    /// Generate and save markdown documentation for a single actor.
+    ///
+    /// Creates markdown documentation using the actor.hbs template and saves it
+    /// to the appropriate location in the docs directory.
+    ///
+    /// # Arguments
+    /// * `actor_id` - The ID of the actor to generate documentation for
+    ///
+    /// # Returns
+    /// Ok(()) on success
+    ///
+    /// # Errors
+    /// Returns error if actor not found or markdown generation fails
+    pub fn generate_actor_markdown(&self, actor_id: &str) -> Result<()> {
+        // Load the actor
+        let actor = self
+            .actor_repository
+            .load_actor_by_id(actor_id)?
+            .with_context(|| format!("Actor '{}' not found", actor_id))?;
+
+        // Generate markdown
+        let generator = ActorMarkdownGenerator::new()?;
+        let markdown = generator.generate(&actor)?;
+
+        // Save markdown
+        self.actor_repository
+            .save_actor_markdown(actor_id, &markdown)?;
+
+        Ok(())
+    }
+
+    /// Regenerate markdown documentation for all actors.
+    ///
+    /// Generates fresh markdown documentation for all actors (personas and system actors)
+    /// in the project. Useful after template changes or bulk actor updates.
+    ///
+    /// # Returns
+    /// DisplayResult with count of regenerated actor docs
+    ///
+    /// # Errors
+    /// Returns error if markdown generation fails
+    pub fn regenerate_all_actor_markdown(&self) -> Result<DisplayResult> {
+        let actors = self.actor_repository.load_all_actors()?;
+        let generator = ActorMarkdownGenerator::new()?;
+
+        for actor in &actors {
+            let markdown = generator.generate(actor)?;
+            self.actor_repository
+                .save_actor_markdown(&actor.id, &markdown)?;
+        }
+
+        Ok(DisplayResult::success(format!(
+            "✅ Regenerated documentation for {} actor(s)",
+            actors.len()
+        )))
+    }
 }
 
 #[cfg(test)]
@@ -935,6 +1004,122 @@ experience_level = { type = "string", required = false }
             values.get("department"),
             Some(&serde_json::Value::String("Marketing".to_string()))
         );
+
+        Ok(())
+    }
+
+    #[test]
+    #[serial]
+    fn test_persona_markdown_generation() -> Result<()> {
+        let temp_dir = TempDir::new()?;
+        create_test_config(&temp_dir)?;
+
+        // Create necessary directories
+        fs::create_dir_all(temp_dir.path().join("docs/actors"))?;
+
+        let controller = PersonaController::new()?;
+
+        // Create a persona
+        let result = controller.create_persona(
+            "test-user".to_string(),
+            "Test User".to_string(),
+            "Software Engineer".to_string(),
+        )?;
+
+        assert!(result.success);
+
+        // Check that markdown file was created
+        let markdown_path = temp_dir.path().join("docs/actors/test-user.md");
+        assert!(
+            markdown_path.exists(),
+            "Markdown file should be created at {:?}",
+            markdown_path
+        );
+
+        // Read and verify markdown content
+        let markdown_content = fs::read_to_string(&markdown_path)?;
+        assert!(markdown_content.contains("# 🙂 Test User"));
+        assert!(markdown_content.contains("**ID:** `test-user`"));
+        assert!(markdown_content.contains("**Type:** Persona"));
+
+        Ok(())
+    }
+
+    #[test]
+    #[serial]
+    fn test_system_actor_markdown_generation() -> Result<()> {
+        let temp_dir = TempDir::new()?;
+        create_test_config(&temp_dir)?;
+
+        // Create necessary directories
+        fs::create_dir_all(temp_dir.path().join("docs/actors"))?;
+
+        let controller = ActorController::new()?;
+
+        // Create a system actor
+        let result = controller.create_system_actor(
+            "test-database".to_string(),
+            "Test Database".to_string(),
+            "database".to_string(),
+            Some("💾".to_string()),
+        )?;
+
+        assert!(result.success);
+
+        // Check that markdown file was created
+        let markdown_path = temp_dir.path().join("docs/actors/test-database.md");
+        assert!(
+            markdown_path.exists(),
+            "Markdown file should be created at {:?}",
+            markdown_path
+        );
+
+        // Read and verify markdown content
+        let markdown_content = fs::read_to_string(&markdown_path)?;
+        assert!(markdown_content.contains("# 💾 Test Database"));
+        assert!(markdown_content.contains("**ID:** `test-database`"));
+        assert!(markdown_content.contains("**Type:** Database"));
+
+        Ok(())
+    }
+
+    #[test]
+    #[serial]
+    fn test_regenerate_all_actor_markdown() -> Result<()> {
+        let temp_dir = TempDir::new()?;
+        create_test_config(&temp_dir)?;
+
+        // Create necessary directories
+        fs::create_dir_all(temp_dir.path().join("docs/actors"))?;
+
+        let controller = ActorController::new()?;
+
+        // Create multiple actors
+        controller.create_persona(
+            "persona1".to_string(),
+            "Persona One".to_string(),
+            "Role 1".to_string(),
+        )?;
+
+        controller.create_system_actor(
+            "system1".to_string(),
+            "System One".to_string(),
+            "system".to_string(),
+            None,
+        )?;
+
+        // Delete markdown files to test regeneration
+        let _ = fs::remove_file(temp_dir.path().join("docs/actors/persona1.md"));
+        let _ = fs::remove_file(temp_dir.path().join("docs/actors/system1.md"));
+
+        // Regenerate all markdown
+        let result = controller.regenerate_all_actor_markdown()?;
+        assert!(result.success);
+        assert!(result.message.contains("2 actor(s)"));
+
+        // Verify both markdown files were regenerated
+        assert!(temp_dir.path().join("docs/actors/persona1.md").exists());
+        assert!(temp_dir.path().join("docs/actors/system1.md").exists());
 
         Ok(())
     }

@@ -9,11 +9,13 @@
 
 use mucm::{
     config::{Config, ConfigFileManager},
-    controller::UseCaseController,
+    controller::{CreateUseCaseParams, UseCaseController},
 };
 use serial_test::serial;
 use std::{collections::HashMap, env, fs};
 use tempfile::TempDir;
+
+mod common;
 
 /// Test helper: Setup test environment with initialized config
 fn setup_test_env() -> (TempDir, UseCaseController) {
@@ -22,7 +24,12 @@ fn setup_test_env() -> (TempDir, UseCaseController) {
 
     // Set CARGO_MANIFEST_DIR for template discovery
     let project_root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"));
-    env::set_var("CARGO_MANIFEST_DIR", project_root);
+    unsafe {
+        env::set_var("CARGO_MANIFEST_DIR", project_root);
+    }
+
+    // Create minimal source-templates for testing
+    common::create_minimal_source_templates(std::path::Path::new(".")).unwrap();
 
     // Create default config
     let config = Config::default();
@@ -43,6 +50,33 @@ fn extract_use_case_id(message: &str) -> String {
         .expect("Should have a use case ID in the message")
         .trim_end_matches(|c: char| !c.is_alphanumeric() && c != '-')
         .to_string()
+}
+
+/// Test helper: Create use case params for testing
+/// Note: Using #[allow] for test helper - refactoring would require changing many call sites
+// Test helper function: many arguments acceptable to keep hundreds of test call sites simple
+// Refactoring this would require changing every test that uses it without benefit
+#[allow(clippy::too_many_arguments)]
+fn create_test_params(
+    title: &str,
+    category: &str,
+    abbrev: &str,
+    description: Option<String>,
+    methodology: Option<String>,
+    priority: Option<String>,
+    views: Option<String>,
+    extra_fields: Option<HashMap<String, String>>,
+) -> CreateUseCaseParams {
+    CreateUseCaseParams {
+        title: title.to_string(),
+        category: category.to_string(),
+        category_abbreviation: abbrev.to_string(),
+        description,
+        methodology,
+        views,
+        priority,
+        extra_fields,
+    }
 }
 
 /// Test helper: Read TOML file content
@@ -79,20 +113,27 @@ fn test_complete_use_case_edit_workflow() {
     let (temp_dir, mut controller) = setup_test_env();
 
     // Step 1: Create initial use case
-    let create_result = controller
-        .create_use_case(
-            "Original Title".to_string(),
-            "authentication".to_string(),
-            "AUT".to_string(),
-            Some("User login workflow".to_string()),
-            Some("business".to_string()),
-            None,
-            Some("low".to_string()),
-            None,
-        )
-        .unwrap();
+    let params = create_test_params(
+        "Original Title",
+        "authentication",
+        "AUT",
+        Some("User login workflow".to_string()),
+        Some("business".to_string()),
+        Some("low".to_string()), // priority
+        None,                    // views
+        None,                    // extra_fields
+    );
+    let create_result = controller.create_use_case(params).unwrap();
 
-    assert!(create_result.is_success());
+    if !create_result.is_success() {
+        eprintln!("Create failed: {}", create_result.message);
+    }
+    assert!(
+        create_result.is_success(),
+        "Create result failed: {}",
+        create_result.message
+    );
+    eprintln!("Create message: '{}'", create_result.message);
     let use_case_id = extract_use_case_id(&create_result.message);
 
     // Verify initial state
@@ -157,18 +198,17 @@ fn test_multi_view_management() {
     let (temp_dir, mut controller) = setup_test_env();
 
     // Create use case with business methodology
-    let create_result = controller
-        .create_use_case(
-            "Multi-View Test".to_string(),
-            "test".to_string(),
-            "TES".to_string(),
-            Some("Testing multi-view support".to_string()),
-            Some("business".to_string()),
-            None,
-            None,
-            None,
-        )
-        .unwrap();
+    let params = create_test_params(
+        "Multi-View Test",
+        "test",
+        "TES",
+        Some("Testing multi-view support".to_string()),
+        Some("business".to_string()),
+        None,
+        None,
+        None,
+    );
+    let create_result = controller.create_use_case(params).unwrap();
 
     let use_case_id = extract_use_case_id(&create_result.message);
 
@@ -240,18 +280,17 @@ fn test_partial_field_updates() {
     let (_temp_dir, mut controller) = setup_test_env();
 
     // Create use case with all fields
-    let create_result = controller
-        .create_use_case(
-            "Partial Update Test".to_string(),
-            "original_category".to_string(),
-            "ORI".to_string(),
-            Some("Original description".to_string()),
-            Some("business".to_string()),
-            None,
-            Some("medium".to_string()),
-            None,
-        )
-        .unwrap();
+    let params = create_test_params(
+        "Partial Update Test",
+        "original_category",
+        "ORI",
+        Some("Original description".to_string()),
+        Some("business".to_string()),
+        Some("medium".to_string()), // priority
+        None,                       // views
+        None,                       // extra_fields
+    );
+    let create_result = controller.create_use_case(params).unwrap();
 
     let use_case_id = extract_use_case_id(&create_result.message);
 
@@ -313,18 +352,17 @@ fn test_methodology_fields_per_view() {
     let (_temp_dir, mut controller) = setup_test_env();
 
     // Create use case with business methodology
-    let create_result = controller
-        .create_use_case(
-            "Methodology Fields Test".to_string(),
-            "test".to_string(),
-            "TES".to_string(),
-            None,
-            Some("business".to_string()),
-            None,
-            None,
-            None,
-        )
-        .unwrap();
+    let params = create_test_params(
+        "Methodology Fields Test",
+        "test",
+        "TES",
+        None,
+        Some("business".to_string()),
+        None,
+        None,
+        None,
+    );
+    let create_result = controller.create_use_case(params).unwrap();
 
     let use_case_id = extract_use_case_id(&create_result.message);
 
@@ -388,19 +426,18 @@ fn test_methodology_fields_per_view() {
 fn test_error_handling_invalid_operations() {
     let (_temp_dir, mut controller) = setup_test_env();
 
-    // Create use case with single view
-    let create_result = controller
-        .create_use_case(
-            "Error Test".to_string(),
-            "test".to_string(),
-            "TES".to_string(),
-            None,
-            Some("business".to_string()),
-            None,
-            None,
-            None,
-        )
-        .unwrap();
+    // Create a use case that will trigger an error
+    let params = create_test_params(
+        "Error Test",
+        "test",
+        "TES",
+        None,
+        Some("business".to_string()),
+        None,
+        None,
+        None,
+    );
+    let create_result = controller.create_use_case(params).unwrap();
 
     let use_case_id = extract_use_case_id(&create_result.message);
 
@@ -442,20 +479,18 @@ fn test_error_handling_invalid_operations() {
 fn test_edit_workflow_with_regeneration() {
     let (temp_dir, mut controller) = setup_test_env();
 
-    // Create use case
-    let create_result = controller
-        .create_use_case(
-            "Regeneration Test".to_string(),
-            "test".to_string(),
-            "TES".to_string(),
-            Some("Testing markdown regeneration".to_string()),
-            Some("business".to_string()),
-            None,
-            None,
-            None,
-        )
-        .unwrap();
-
+    // Create initial use case
+    let params = create_test_params(
+        "Regeneration Test",
+        "test",
+        "TES",
+        Some("Testing regeneration".to_string()),
+        Some("business".to_string()),
+        None,
+        None,
+        None,
+    );
+    let create_result = controller.create_use_case(params).unwrap();
     let use_case_id = extract_use_case_id(&create_result.message);
 
     // Markdown should be automatically generated on creation

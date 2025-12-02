@@ -2,11 +2,14 @@
 // This orchestrates domain services, manages state, and provides transaction boundaries
 // Controllers (presentation layer) call this coordinator, which delegates to domain services
 use crate::config::Config;
-use crate::core::application::creators::{ScenarioCreator, UseCaseCreator};
+use crate::core::application::creators::{
+    ScenarioCreator, ScenarioParams, StepParams, UseCaseCreator,
+};
 use crate::core::application::generators::{
     MarkdownGenerator, OutputManager, OverviewGenerator, TestGenerator,
 };
 use crate::core::application::services;
+use crate::core::application::services::CleanupResult;
 use crate::core::utils::suggest_alternatives;
 use crate::core::{
     domain::{Priority, Scenario, ScenarioReference, ScenarioType, UseCaseReference},
@@ -14,6 +17,55 @@ use crate::core::{
 };
 use anyhow::Result;
 use std::collections::HashMap;
+
+/// Parameters for creating a use case with views and fields
+pub struct CreateUseCaseWithViewsParams {
+    pub title: String,
+    pub category: String,
+    pub category_abbreviation: String,
+    pub description: Option<String>,
+    pub priority: String,
+    pub views: String, // comma-separated "methodology:level" pairs
+    pub extra_fields: HashMap<String, String>,
+}
+
+/// Parameters for adding a scenario step
+pub struct AddScenarioStepParams {
+    pub order: String,
+    pub actor: String,
+    pub receiver: Option<String>,
+    pub action: String,
+    pub expected_result: Option<String>,
+}
+
+/// Parameters for creating an extension scenario
+pub struct CreateExtensionScenarioParams {
+    pub parent_scenario_id: String,
+    pub extends_at_step: String,
+    pub returns_at_step: Option<String>,
+    pub title: String,
+    pub description: String,
+    pub primary_actor: crate::core::Actor,
+}
+
+/// Parameters for inserting a step with extension update
+pub struct InsertStepWithExtensionParams {
+    pub after_step: String,
+    pub actor: String,
+    pub receiver: Option<String>,
+    pub action: String,
+    pub expected_result: Option<String>,
+}
+
+/// Parameters for adding a scenario
+pub struct AddScenarioParams {
+    pub title: String,
+    pub scenario_type: ScenarioType,
+    pub description: Option<String>,
+    pub preconditions: Vec<String>,
+    pub postconditions: Vec<String>,
+    pub actors: Vec<String>,
+}
 
 /// Coordinator that orchestrates use case operations and manages application state
 ///
@@ -183,17 +235,28 @@ impl UseCaseCoordinator {
             .take(3)
             .collect::<String>()
             .to_uppercase();
-        let use_case = self.use_case_creator.create_use_case_with_views(
-            title,
-            category,
-            category_abbreviation,
-            description,
-            "Medium".to_string(), // Default priority for create_use_case_with_views
-            view_list,
-            HashMap::new(), // No user fields provided
-            &self.use_cases,
-            self.repository.as_ref(),
-        )?;
+
+        let view_tuples: Vec<(String, String)> = view_list
+            .iter()
+            .map(|v| (v.methodology.clone(), v.level.clone()))
+            .collect();
+
+        let params = crate::core::application::creators::UseCaseWithViewsParams {
+            base: crate::core::application::creators::UseCaseCreationParams {
+                title,
+                category,
+                category_abbreviation,
+                description,
+                priority: "Medium".to_string(),
+                existing_use_cases: self.use_cases.clone(),
+            },
+            views: view_tuples,
+            extra_fields: HashMap::new(),
+        };
+
+        let use_case = self
+            .use_case_creator
+            .create_use_case_with_views(params, self.repository.as_ref())?;
 
         let use_case_id = use_case.id.clone();
 
@@ -218,16 +281,11 @@ impl UseCaseCoordinator {
     /// The ID of the created use case
     pub fn create_use_case_with_views_and_fields(
         &mut self,
-        title: String,
-        category: String,
-        category_abbreviation: String,
-        description: Option<String>,
-        priority: String,
-        views: &str,
-        extra_fields: std::collections::HashMap<String, String>,
+        params: CreateUseCaseWithViewsParams,
     ) -> Result<String> {
         // Parse views string into MethodologyView objects
-        let view_list: Vec<MethodologyView> = views
+        let view_list: Vec<MethodologyView> = params
+            .views
             .split(',')
             .map(|s| s.trim())
             .filter(|s| !s.is_empty())
@@ -251,17 +309,27 @@ impl UseCaseCoordinator {
         }
 
         // Use the new create_use_case_with_views method that properly handles methodology_fields
-        let use_case = self.use_case_creator.create_use_case_with_views(
-            title,
-            category,
-            category_abbreviation,
-            description,
-            priority,
-            view_list,
-            extra_fields,
-            &self.use_cases,
-            self.repository.as_ref(),
-        )?;
+        let view_tuples: Vec<(String, String)> = view_list
+            .iter()
+            .map(|v| (v.methodology.clone(), v.level.clone()))
+            .collect();
+
+        let creator_params = crate::core::application::creators::UseCaseWithViewsParams {
+            base: crate::core::application::creators::UseCaseCreationParams {
+                title: params.title,
+                category: params.category,
+                category_abbreviation: params.category_abbreviation,
+                description: params.description,
+                priority: params.priority,
+                existing_use_cases: self.use_cases.clone(),
+            },
+            views: view_tuples,
+            extra_fields: params.extra_fields,
+        };
+
+        let use_case = self
+            .use_case_creator
+            .create_use_case_with_views(creator_params, self.repository.as_ref())?;
 
         let use_case_id = use_case.id.clone();
 
@@ -319,7 +387,7 @@ impl UseCaseCoordinator {
         methodology: &str,
     ) -> Result<()> {
         let regen_service = services::MarkdownRegenerationService::new(
-            &self.repository,
+            self.repository.as_ref(),
             &self.use_cases,
             &self.markdown_generator,
             &self.template_engine,
@@ -330,7 +398,7 @@ impl UseCaseCoordinator {
     /// Regenerate markdown for a single use case
     pub fn regenerate_markdown(&self, use_case_id: &str) -> Result<()> {
         let regen_service = services::MarkdownRegenerationService::new(
-            &self.repository,
+            self.repository.as_ref(),
             &self.use_cases,
             &self.markdown_generator,
             &self.template_engine,
@@ -366,8 +434,10 @@ impl UseCaseCoordinator {
 
     /// Add a precondition to a use case
     pub fn add_precondition(&mut self, use_case_id: &str, precondition: String) -> Result<()> {
-        let mut service =
-            services::PreconditionPostconditionService::new(&self.repository, &mut self.use_cases);
+        let mut service = services::PreconditionPostconditionService::new(
+            self.repository.as_ref(),
+            &mut self.use_cases,
+        );
         service.add_precondition(use_case_id, precondition)
     }
 
@@ -383,15 +453,19 @@ impl UseCaseCoordinator {
 
     /// Remove a precondition from a use case
     pub fn remove_precondition(&mut self, use_case_id: &str, index: usize) -> Result<()> {
-        let mut service =
-            services::PreconditionPostconditionService::new(&self.repository, &mut self.use_cases);
+        let mut service = services::PreconditionPostconditionService::new(
+            self.repository.as_ref(),
+            &mut self.use_cases,
+        );
         service.remove_precondition(use_case_id, index)
     }
 
     /// Add a postcondition to a use case
     pub fn add_postcondition(&mut self, use_case_id: &str, postcondition: String) -> Result<()> {
-        let mut service =
-            services::PreconditionPostconditionService::new(&self.repository, &mut self.use_cases);
+        let mut service = services::PreconditionPostconditionService::new(
+            self.repository.as_ref(),
+            &mut self.use_cases,
+        );
         service.add_postcondition(use_case_id, postcondition)
     }
 
@@ -407,8 +481,10 @@ impl UseCaseCoordinator {
 
     /// Remove a postcondition from a use case
     pub fn remove_postcondition(&mut self, use_case_id: &str, index: usize) -> Result<()> {
-        let mut service =
-            services::PreconditionPostconditionService::new(&self.repository, &mut self.use_cases);
+        let mut service = services::PreconditionPostconditionService::new(
+            self.repository.as_ref(),
+            &mut self.use_cases,
+        );
         service.remove_postcondition(use_case_id, index)
     }
 
@@ -419,8 +495,10 @@ impl UseCaseCoordinator {
         index: usize,
         new_text: String,
     ) -> Result<()> {
-        let mut service =
-            services::PreconditionPostconditionService::new(&self.repository, &mut self.use_cases);
+        let mut service = services::PreconditionPostconditionService::new(
+            self.repository.as_ref(),
+            &mut self.use_cases,
+        );
         service.edit_precondition(use_case_id, index, new_text)
     }
 
@@ -431,8 +509,10 @@ impl UseCaseCoordinator {
         index: usize,
         new_text: String,
     ) -> Result<()> {
-        let mut service =
-            services::PreconditionPostconditionService::new(&self.repository, &mut self.use_cases);
+        let mut service = services::PreconditionPostconditionService::new(
+            self.repository.as_ref(),
+            &mut self.use_cases,
+        );
         service.edit_postcondition(use_case_id, index, new_text)
     }
 
@@ -443,8 +523,10 @@ impl UseCaseCoordinator {
         from_index: usize,
         to_index: usize,
     ) -> Result<()> {
-        let mut service =
-            services::PreconditionPostconditionService::new(&self.repository, &mut self.use_cases);
+        let mut service = services::PreconditionPostconditionService::new(
+            self.repository.as_ref(),
+            &mut self.use_cases,
+        );
         service.reorder_preconditions(use_case_id, from_index, to_index)
     }
 
@@ -455,22 +537,28 @@ impl UseCaseCoordinator {
         from_index: usize,
         to_index: usize,
     ) -> Result<()> {
-        let mut service =
-            services::PreconditionPostconditionService::new(&self.repository, &mut self.use_cases);
+        let mut service = services::PreconditionPostconditionService::new(
+            self.repository.as_ref(),
+            &mut self.use_cases,
+        );
         service.reorder_postconditions(use_case_id, from_index, to_index)
     }
 
     /// Clear all preconditions from a use case
     pub fn clear_preconditions(&mut self, use_case_id: &str) -> Result<()> {
-        let mut service =
-            services::PreconditionPostconditionService::new(&self.repository, &mut self.use_cases);
+        let mut service = services::PreconditionPostconditionService::new(
+            self.repository.as_ref(),
+            &mut self.use_cases,
+        );
         service.clear_preconditions(use_case_id)
     }
 
     /// Clear all postconditions from a use case
     pub fn clear_postconditions(&mut self, use_case_id: &str) -> Result<()> {
-        let mut service =
-            services::PreconditionPostconditionService::new(&self.repository, &mut self.use_cases);
+        let mut service = services::PreconditionPostconditionService::new(
+            self.repository.as_ref(),
+            &mut self.use_cases,
+        );
         service.clear_postconditions(use_case_id)
     }
 
@@ -482,8 +570,10 @@ impl UseCaseCoordinator {
         relationship: String,
         description: Option<String>,
     ) -> Result<()> {
-        let mut service =
-            services::ReferenceManagementService::new(&self.repository, &mut self.use_cases);
+        let mut service = services::ReferenceManagementService::new(
+            self.repository.as_ref(),
+            &mut self.use_cases,
+        );
         service.add_reference(use_case_id, target_id, relationship, description)
     }
 
@@ -495,38 +585,41 @@ impl UseCaseCoordinator {
 
     /// Remove a reference from a use case
     pub fn remove_reference(&mut self, use_case_id: &str, target_id: &str) -> Result<()> {
-        let mut service =
-            services::ReferenceManagementService::new(&self.repository, &mut self.use_cases);
+        let mut service = services::ReferenceManagementService::new(
+            self.repository.as_ref(),
+            &mut self.use_cases,
+        );
         service.remove_reference(use_case_id, target_id)
     }
 
     // ========== Scenario Management Methods ==========
 
     /// Add a scenario to a use case
-    pub fn add_scenario(
-        &mut self,
-        use_case_id: &str,
-        title: String,
-        scenario_type: ScenarioType,
-        description: Option<String>,
-        preconditions: Vec<String>,
-        postconditions: Vec<String>,
-        actors: Vec<String>,
-    ) -> Result<String> {
+    pub fn add_scenario(&mut self, use_case_id: &str, params: AddScenarioParams) -> Result<String> {
         let mut scenario_service = services::ScenarioManagementService::new(
-            &self.repository,
+            self.repository.as_ref(),
             &mut self.use_cases,
             &self.scenario_creator,
         );
-        scenario_service.add_scenario(
-            use_case_id,
-            title,
-            scenario_type,
-            description,
-            preconditions,
-            postconditions,
-            actors,
-        )
+
+        // Use first actor as primary actor, default to User if none provided
+        let primary_actor = if let Some(first_actor) = params.actors.first() {
+            first_actor.clone().into()
+        } else {
+            crate::core::domain::Actor::User
+        };
+
+        let scenario_params = ScenarioParams {
+            title: params.title,
+            scenario_type: params.scenario_type,
+            description: params.description,
+            primary_actor,
+            preconditions: params.preconditions,
+            postconditions: params.postconditions,
+            actors: params.actors,
+        };
+
+        scenario_service.add_scenario(use_case_id, scenario_params)
     }
 
     /// Add a step to an existing scenario
@@ -534,26 +627,21 @@ impl UseCaseCoordinator {
         &mut self,
         use_case_id: &str,
         scenario_id: &str,
-        order: String,
-        actor: String,
-        receiver: Option<String>,
-        action: String,
-        expected_result: Option<String>,
+        params: AddScenarioStepParams,
     ) -> Result<()> {
         let mut scenario_service = services::ScenarioManagementService::new(
-            &self.repository,
+            self.repository.as_ref(),
             &mut self.use_cases,
             &self.scenario_creator,
         );
-        scenario_service.add_scenario_step(
-            use_case_id,
-            scenario_id,
-            order,
-            actor,
-            receiver,
-            action,
-            expected_result,
-        )
+        let step_params = StepParams {
+            order: params.order,
+            actor: params.actor,
+            receiver: params.receiver,
+            action: params.action,
+            expected_result: params.expected_result,
+        };
+        scenario_service.add_scenario_step(use_case_id, scenario_id, step_params)
     }
 
     /// Update the status of a scenario
@@ -564,7 +652,7 @@ impl UseCaseCoordinator {
         new_status: crate::core::Status,
     ) -> Result<()> {
         let mut scenario_service = services::ScenarioManagementService::new(
-            &self.repository,
+            self.repository.as_ref(),
             &mut self.use_cases,
             &self.scenario_creator,
         );
@@ -585,7 +673,7 @@ impl UseCaseCoordinator {
         step_order: &str,
     ) -> Result<()> {
         let mut scenario_service = services::ScenarioManagementService::new(
-            &self.repository,
+            self.repository.as_ref(),
             &mut self.use_cases,
             &self.scenario_creator,
         );
@@ -600,7 +688,7 @@ impl UseCaseCoordinator {
         reference: ScenarioReference,
     ) -> Result<()> {
         let mut scenario_service = services::ScenarioManagementService::new(
-            &self.repository,
+            self.repository.as_ref(),
             &mut self.use_cases,
             &self.scenario_creator,
         );
@@ -616,7 +704,7 @@ impl UseCaseCoordinator {
         relationship: &str,
     ) -> Result<()> {
         let mut scenario_service = services::ScenarioManagementService::new(
-            &self.repository,
+            self.repository.as_ref(),
             &mut self.use_cases,
             &self.scenario_creator,
         );
@@ -660,7 +748,7 @@ impl UseCaseCoordinator {
         status: Option<crate::core::Status>,
     ) -> Result<()> {
         let mut scenario_service = services::ScenarioManagementService::new(
-            &self.repository,
+            self.repository.as_ref(),
             &mut self.use_cases,
             &self.scenario_creator,
         );
@@ -677,7 +765,7 @@ impl UseCaseCoordinator {
     /// Delete a scenario from a use case
     pub fn delete_scenario(&mut self, use_case_id: &str, scenario_id: &str) -> Result<()> {
         let mut scenario_service = services::ScenarioManagementService::new(
-            &self.repository,
+            self.repository.as_ref(),
             &mut self.use_cases,
             &self.scenario_creator,
         );
@@ -694,7 +782,7 @@ impl UseCaseCoordinator {
         new_description: String,
     ) -> Result<()> {
         let mut scenario_service = services::ScenarioManagementService::new(
-            &self.repository,
+            self.repository.as_ref(),
             &mut self.use_cases,
             &self.scenario_creator,
         );
@@ -715,7 +803,7 @@ impl UseCaseCoordinator {
         reorderings: HashMap<String, String>,
     ) -> Result<()> {
         let mut scenario_service = services::ScenarioManagementService::new(
-            &self.repository,
+            self.repository.as_ref(),
             &mut self.use_cases,
             &self.scenario_creator,
         );
@@ -730,7 +818,7 @@ impl UseCaseCoordinator {
         persona_id: &str,
     ) -> Result<()> {
         let mut scenario_service = services::ScenarioManagementService::new(
-            &self.repository,
+            self.repository.as_ref(),
             &mut self.use_cases,
             &self.scenario_creator,
         );
@@ -744,7 +832,7 @@ impl UseCaseCoordinator {
         scenario_id: &str,
     ) -> Result<()> {
         let mut scenario_service = services::ScenarioManagementService::new(
-            &self.repository,
+            self.repository.as_ref(),
             &mut self.use_cases,
             &self.scenario_creator,
         );
@@ -757,27 +845,21 @@ impl UseCaseCoordinator {
     pub fn create_extension_scenario(
         &mut self,
         use_case_id: &str,
-        parent_scenario_id: &str,
-        extends_at_step: String,
-        returns_at_step: Option<String>,
-        title: String,
-        description: String,
-        primary_actor: crate::core::Actor,
+        params: CreateExtensionScenarioParams,
     ) -> Result<String> {
         let mut scenario_service = services::ScenarioManagementService::new(
-            &self.repository,
+            self.repository.as_ref(),
             &mut self.use_cases,
             &self.scenario_creator,
         );
-        scenario_service.create_extension_scenario(
-            use_case_id,
-            parent_scenario_id,
-            extends_at_step,
-            returns_at_step,
-            title,
-            description,
-            primary_actor,
-        )
+        let ext_params = crate::core::application::creators::ExtensionScenarioParams {
+            parent_scenario_id: params.parent_scenario_id,
+            extends_at_step: params.extends_at_step,
+            title: params.title,
+            description: Some(params.description),
+            primary_actor: params.primary_actor,
+        };
+        scenario_service.create_extension_scenario(use_case_id, ext_params, params.returns_at_step)
     }
 
     /// Add a repeat block to a scenario
@@ -790,7 +872,7 @@ impl UseCaseCoordinator {
         condition: String,
     ) -> Result<()> {
         let mut scenario_service = services::ScenarioManagementService::new(
-            &self.repository,
+            self.repository.as_ref(),
             &mut self.use_cases,
             &self.scenario_creator,
         );
@@ -806,7 +888,7 @@ impl UseCaseCoordinator {
         to_step: &str,
     ) -> Result<()> {
         let mut scenario_service = services::ScenarioManagementService::new(
-            &self.repository,
+            self.repository.as_ref(),
             &mut self.use_cases,
             &self.scenario_creator,
         );
@@ -819,25 +901,25 @@ impl UseCaseCoordinator {
         &mut self,
         use_case_id: &str,
         scenario_id: &str,
-        after_step: &str,
-        actor: String,
-        receiver: Option<String>,
-        action: String,
-        expected_result: Option<String>,
+        params: InsertStepWithExtensionParams,
     ) -> Result<String> {
         let mut scenario_service = services::ScenarioManagementService::new(
-            &self.repository,
+            self.repository.as_ref(),
             &mut self.use_cases,
             &self.scenario_creator,
         );
+        let step_params = StepParams {
+            order: String::new(), // Will be determined by the service
+            actor: params.actor,
+            receiver: params.receiver,
+            action: params.action,
+            expected_result: params.expected_result,
+        };
         scenario_service.insert_step_with_extension_update(
             use_case_id,
             scenario_id,
-            after_step,
-            actor,
-            receiver,
-            action,
-            expected_result,
+            &params.after_step,
+            step_params,
         )
     }
 
@@ -850,7 +932,7 @@ impl UseCaseCoordinator {
         step_order: &str,
     ) -> Result<Vec<String>> {
         let mut scenario_service = services::ScenarioManagementService::new(
-            &self.repository,
+            self.repository.as_ref(),
             &mut self.use_cases,
             &self.scenario_creator,
         );
@@ -866,7 +948,7 @@ impl UseCaseCoordinator {
         increment: i32,
     ) -> Result<()> {
         let mut scenario_service = services::ScenarioManagementService::new(
-            &self.repository,
+            self.repository.as_ref(),
             &mut self.use_cases,
             &self.scenario_creator,
         );
@@ -876,7 +958,7 @@ impl UseCaseCoordinator {
     /// Validate all scenarios in a use case
     pub fn validate_use_case_scenarios(&mut self, use_case_id: &str) -> Result<()> {
         let scenario_service = services::ScenarioManagementService::new(
-            &self.repository,
+            self.repository.as_ref(),
             &mut self.use_cases,
             &self.scenario_creator,
         );
@@ -937,16 +1019,22 @@ impl UseCaseCoordinator {
             .take(3)
             .collect::<String>()
             .to_uppercase();
-        let use_case = self.use_case_creator.create_use_case_with_methodology(
-            title,
-            category,
-            category_abbreviation,
-            description,
-            "Medium".to_string(), // Default priority for internal helper
-            methodology,
-            &self.use_cases,
-            self.repository.as_ref(),
-        )?;
+
+        let params = crate::core::application::creators::UseCaseWithMethodologyParams {
+            base: crate::core::application::creators::UseCaseCreationParams {
+                title,
+                category,
+                category_abbreviation,
+                description,
+                priority: "Medium".to_string(),
+                existing_use_cases: self.use_cases.clone(),
+            },
+            methodology: methodology.to_string(),
+        };
+
+        let use_case = self
+            .use_case_creator
+            .create_use_case_with_methodology(params, self.repository.as_ref())?;
 
         // Generate markdown from TOML data
         let markdown_content = self.markdown_generator.generate(&use_case, None, None)?;
@@ -970,17 +1058,23 @@ impl UseCaseCoordinator {
             .take(3)
             .collect::<String>()
             .to_uppercase();
-        let use_case = self.use_case_creator.create_use_case_with_custom_fields(
-            title,
-            category,
-            category_abbreviation,
-            description,
-            "Medium".to_string(), // Default priority for internal helper
-            methodology,
-            extra_fields,
-            &self.use_cases,
-            self.repository.as_ref(),
-        )?;
+
+        let params = crate::core::application::creators::UseCaseWithCustomFieldsParams {
+            base: crate::core::application::creators::UseCaseCreationParams {
+                title,
+                category,
+                category_abbreviation,
+                description,
+                priority: "Medium".to_string(),
+                existing_use_cases: self.use_cases.clone(),
+            },
+            methodology: methodology.to_string(),
+            user_fields: extra_fields,
+        };
+
+        let use_case = self
+            .use_case_creator
+            .create_use_case_with_custom_fields(params, self.repository.as_ref())?;
 
         // Generate markdown from TOML data
         let markdown_content = self.markdown_generator.generate(&use_case, None, None)?;
@@ -1097,9 +1191,11 @@ impl UseCaseCoordinator {
         &mut self,
         use_case_id: Option<String>,
         dry_run: bool,
-    ) -> Result<(usize, usize, Vec<(String, Vec<String>)>)> {
-        let mut service =
-            services::MethodologyFieldCleanupService::new(&self.repository, &mut self.use_cases);
+    ) -> Result<CleanupResult> {
+        let mut service = services::MethodologyFieldCleanupService::new(
+            self.repository.as_ref(),
+            &mut self.use_cases,
+        );
         service.cleanup_methodology_fields(use_case_id, dry_run)
     }
 

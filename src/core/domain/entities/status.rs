@@ -33,9 +33,12 @@ impl Status {
             Status::Deprecated => "DEPRECATED",
         }
     }
+}
 
-    /// Parse status from string
-    pub fn from_str(status_str: &str) -> Result<Self, String> {
+impl std::str::FromStr for Status {
+    type Err = String;
+
+    fn from_str(status_str: &str) -> Result<Self, Self::Err> {
         match status_str.to_lowercase().as_str() {
             "planned" => Ok(Status::Planned),
             "in_progress" => Ok(Status::InProgress),
@@ -60,6 +63,7 @@ impl fmt::Display for Status {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::str::FromStr;
 
     /// Test Status enum variants exist and have correct ordering
     #[test]

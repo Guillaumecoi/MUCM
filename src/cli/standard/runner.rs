@@ -100,17 +100,18 @@ impl CliRunner {
             .cloned()
             .unwrap_or_else(|| "feature".to_string());
 
-        let result = ProjectController::init_project(
-            sanitized_language,
-            Some(sanitized_methodologies),
-            Some(storage),
-            Some(default_methodology),
-            None,
-            None,
-            None,
-            None,
-            None, // default_scenario_template
-        )?;
+        let params = crate::controller::InitProjectParams {
+            language: sanitized_language,
+            methodologies: Some(sanitized_methodologies),
+            storage: Some(storage),
+            default_methodology: Some(default_methodology),
+            use_case_dir: None,
+            test_dir: None,
+            actor_dir: None,
+            data_dir: None,
+            default_scenario_template: None,
+        };
+        let result = ProjectController::init_project(params)?;
         Ok(result)
     }
 
@@ -153,16 +154,17 @@ impl CliRunner {
             .take(3)
             .collect::<String>()
             .to_uppercase();
-        controller.create_use_case(
-            Self::sanitize_required_string(title),
-            category_clean,
+        let params = crate::controller::CreateUseCaseParams {
+            title: Self::sanitize_required_string(title),
+            category: category_clean,
             category_abbreviation,
-            Self::sanitize_optional_string(description),
-            None,
-            None,
-            None,
-            None,
-        )
+            description: Self::sanitize_optional_string(description),
+            methodology: None,
+            views: None,
+            priority: None,
+            extra_fields: None,
+        };
+        controller.create_use_case(params)
     }
 
     /// Create a new use case with a specific methodology.
@@ -193,16 +195,17 @@ impl CliRunner {
             .take(3)
             .collect::<String>()
             .to_uppercase();
-        controller.create_use_case(
-            Self::sanitize_required_string(title),
-            category_clean,
+        let params = crate::controller::CreateUseCaseParams {
+            title: Self::sanitize_required_string(title),
+            category: category_clean,
             category_abbreviation,
-            Self::sanitize_optional_string(description),
-            Some(Self::sanitize_required_string(methodology)),
-            None,
-            None,
-            None,
-        )
+            description: Self::sanitize_optional_string(description),
+            methodology: Some(Self::sanitize_required_string(methodology)),
+            views: None,
+            priority: None,
+            extra_fields: None,
+        };
+        controller.create_use_case(params)
     }
 
     /// Create a new use case with multiple views.
@@ -233,16 +236,17 @@ impl CliRunner {
             .take(3)
             .collect::<String>()
             .to_uppercase();
-        controller.create_use_case(
-            Self::sanitize_required_string(title),
-            category_clean,
+        let params = crate::controller::CreateUseCaseParams {
+            title: Self::sanitize_required_string(title),
+            category: category_clean,
             category_abbreviation,
-            Self::sanitize_optional_string(description),
-            None,
-            Some(Self::sanitize_required_string(views)),
-            None,
-            None,
-        )
+            description: Self::sanitize_optional_string(description),
+            methodology: None,
+            views: Some(Self::sanitize_required_string(views)),
+            priority: None,
+            extra_fields: None,
+        };
+        controller.create_use_case(params)
     }
 
     /// List all use cases in the project.

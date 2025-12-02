@@ -21,12 +21,137 @@ mod use_case_controller_tests {
     use crate::controller::UseCaseController;
     use serial_test::serial;
     use std::env;
+    use std::fs;
+    use std::path::Path;
     use tempfile::TempDir;
+
+    /// Create minimal source-templates structure for testing
+    fn create_minimal_source_templates(base_path: &Path) -> std::io::Result<()> {
+        let templates_dir = base_path.join("source-templates");
+        fs::create_dir_all(&templates_dir)?;
+
+        // Create config.toml with all required sections
+        fs::write(
+            templates_dir.join("config.toml"),
+            r#"[project]
+name = "Test Project"
+description = "Test"
+
+[directories]
+use_case_dir = "docs/use-cases"
+test_dir = "tests/use-cases"
+actor_dir = "docs/actors"
+data_dir = "use-cases-data"
+
+[templates]
+methodologies = ["business", "developer", "feature", "tester"]
+default_methodology = "feature"
+default_scenario_template = "scenarios/scenario.hbs"
+
+[generation]
+test_language = "none"
+auto_generate_tests = false
+overwrite_test_documentation = false
+
+[storage]
+backend = "toml"
+
+[metadata]
+created = true
+last_updated = true
+"#,
+        )?;
+
+        // Create minimal language structure
+        let languages_dir = templates_dir.join("languages");
+        for lang in &["rust", "python", "javascript"] {
+            let lang_dir = languages_dir.join(lang);
+            fs::create_dir_all(&lang_dir)?;
+            fs::write(
+                lang_dir.join("info.toml"),
+                format!(
+                    r#"name = "{}"
+file_extension = "{}"
+template_file = "test.hbs"
+"#,
+                    lang,
+                    if *lang == "python" {
+                        "py"
+                    } else if *lang == "javascript" {
+                        "js"
+                    } else {
+                        "rs"
+                    }
+                ),
+            )?;
+            fs::write(lang_dir.join("test.hbs"), "# Test template\n")?;
+        }
+
+        // Create minimal methodology structure
+        let methodologies_dir = templates_dir.join("methodologies");
+        for methodology in &["business", "developer", "feature", "tester"] {
+            let method_dir = methodologies_dir.join(methodology);
+            fs::create_dir_all(&method_dir)?;
+            fs::write(
+                method_dir.join("methodology.toml"),
+                format!(
+                    r#"[methodology]
+name = "{}"
+abbreviation = "{}"
+description = "Test {}"
+
+[template]
+preferred_style = "Normal"
+
+[levels.normal]
+name = "Normal"
+abbreviation = "n"
+filename = "uc_normal.hbs"
+description = "Normal level"
+inherits = []
+
+[levels.simple]
+name = "Simple"
+abbreviation = "s"
+filename = "uc_simple.hbs"
+description = "Simple level"
+inherits = []
+
+[levels.detailed]
+name = "Detailed"
+abbreviation = "d"
+filename = "uc_detailed.hbs"
+description = "Detailed level"
+inherits = []
+
+[levels.advanced]
+name = "Advanced"
+abbreviation = "a"
+filename = "uc_advanced.hbs"
+description = "Advanced level"
+inherits = ["Normal"]
+"#,
+                    methodology,
+                    &methodology[..3],
+                    methodology
+                ),
+            )?;
+            fs::write(method_dir.join("uc_normal.hbs"), "# Template\n")?;
+            fs::write(method_dir.join("uc_simple.hbs"), "# Template\n")?;
+            fs::write(method_dir.join("uc_detailed.hbs"), "# Template\n")?;
+            fs::write(method_dir.join("uc_advanced.hbs"), "# Template\n")?;
+        }
+
+        Ok(())
+    }
 
     /// Helper to create a test environment with initialized config
     fn setup_test_env() -> (TempDir, UseCaseController) {
         let temp_dir = TempDir::new().unwrap();
         env::set_current_dir(&temp_dir).unwrap();
+
+        // Create minimal source-templates for testing
+        create_minimal_source_templates(std::path::Path::new(".")).unwrap();
 
         // Create a basic config
         let config = Config::default();
@@ -46,12 +171,38 @@ mod use_case_controller_tests {
             .to_string()
     }
 
+    /// Helper to create test use case params with defaults
+    /// Note: Using #[allow] for test helper - refactoring would require changing many call sites
+    // Test helper: many arguments acceptable to keep test call sites simple
+    #[allow(clippy::too_many_arguments)]
+    fn create_test_params(
+        title: String,
+        category: String,
+        abbreviation: String,
+        description: Option<String>,
+        methodology: Option<String>,
+        priority: Option<String>,
+        views: Option<String>,
+        extra_fields: Option<std::collections::HashMap<String, String>>,
+    ) -> crate::controller::CreateUseCaseParams {
+        crate::controller::CreateUseCaseParams {
+            title,
+            category,
+            category_abbreviation: abbreviation,
+            description,
+            methodology,
+            priority,
+            views,
+            extra_fields,
+        }
+    }
+
     #[test]
     #[serial]
     fn test_create_use_case_basic() {
         let (_temp_dir, mut controller) = setup_test_env();
 
-        let result = controller.create_use_case(
+        let params = create_test_params(
             "Test Use Case".to_string(),
             "test".to_string(),
             "TES".to_string(),
@@ -61,6 +212,7 @@ mod use_case_controller_tests {
             None,
             None,
         );
+        let result = controller.create_use_case(params);
 
         assert!(result.is_ok());
         let display = result.unwrap();
@@ -74,18 +226,17 @@ mod use_case_controller_tests {
         let (_temp_dir, mut controller) = setup_test_env();
 
         // Create a use case
-        controller
-            .create_use_case(
-                "Test UC 1".to_string(),
-                "test".to_string(),
-                "TES".to_string(),
-                None,
-                Some("business".to_string()),
-                None,
-                None,
-                None,
-            )
-            .unwrap();
+        let params = create_test_params(
+            "Test UC 1".to_string(),
+            "test".to_string(),
+            "TES".to_string(),
+            None,
+            Some("business".to_string()),
+            None,
+            None,
+            None,
+        );
+        controller.create_use_case(params).unwrap();
 
         // List should not panic
         let result = controller.list_use_cases();
@@ -98,18 +249,17 @@ mod use_case_controller_tests {
         let (_temp_dir, mut controller) = setup_test_env();
 
         // Create a use case first
-        let create_result = controller
-            .create_use_case(
-                "Test UC".to_string(),
-                "test".to_string(),
-                "TES".to_string(),
-                None,
-                Some("business".to_string()),
-                None,
-                None,
-                None,
-            )
-            .unwrap();
+        let params = create_test_params(
+            "Test UC".to_string(),
+            "test".to_string(),
+            "TES".to_string(),
+            None,
+            Some("business".to_string()),
+            None,
+            None,
+            None,
+        );
+        let create_result = controller.create_use_case(params).unwrap();
 
         // Extract the use case ID from the message
         let use_case_id = extract_use_case_id(&create_result.message);
@@ -128,18 +278,17 @@ mod use_case_controller_tests {
         let (_temp_dir, mut controller) = setup_test_env();
 
         // Create a use case
-        let create_result = controller
-            .create_use_case(
-                "Test UC".to_string(),
-                "test".to_string(),
-                "TES".to_string(),
-                None,
-                Some("business".to_string()),
-                None,
-                None,
-                None,
-            )
-            .unwrap();
+        let params = create_test_params(
+            "Test UC".to_string(),
+            "test".to_string(),
+            "TES".to_string(),
+            None,
+            Some("business".to_string()),
+            None,
+            None,
+            None,
+        );
+        let create_result = controller.create_use_case(params).unwrap();
         let use_case_id = extract_use_case_id(&create_result.message);
 
         // Add preconditions
@@ -168,18 +317,17 @@ mod use_case_controller_tests {
         let (_temp_dir, mut controller) = setup_test_env();
 
         // Create a use case
-        let create_result = controller
-            .create_use_case(
-                "Test UC".to_string(),
-                "test".to_string(),
-                "TES".to_string(),
-                None,
-                Some("business".to_string()),
-                None,
-                None,
-                None,
-            )
-            .unwrap();
+        let params = create_test_params(
+            "Test UC".to_string(),
+            "test".to_string(),
+            "TES".to_string(),
+            None,
+            Some("business".to_string()),
+            None,
+            None,
+            None,
+        );
+        let create_result = controller.create_use_case(params).unwrap();
         let use_case_id = extract_use_case_id(&create_result.message);
 
         // Add a postcondition
@@ -196,32 +344,30 @@ mod use_case_controller_tests {
         let (_temp_dir, mut controller) = setup_test_env();
 
         // Create two use cases
-        let result1 = controller
-            .create_use_case(
-                "Test UC 1".to_string(),
-                "test".to_string(),
-                "TES".to_string(),
-                None,
-                Some("business".to_string()),
-                None,
-                None,
-                None,
-            )
-            .unwrap();
+        let params = create_test_params(
+            "Test UC 1".to_string(),
+            "test".to_string(),
+            "TES".to_string(),
+            None,
+            Some("business".to_string()),
+            None,
+            None,
+            None,
+        );
+        let result1 = controller.create_use_case(params).unwrap();
         let uc_id_1 = extract_use_case_id(&result1.message);
 
-        let result2 = controller
-            .create_use_case(
-                "Test UC 2".to_string(),
-                "test".to_string(),
-                "TES".to_string(),
-                None,
-                Some("business".to_string()),
-                None,
-                None,
-                None,
-            )
-            .unwrap();
+        let params = create_test_params(
+            "Test UC 2".to_string(),
+            "test".to_string(),
+            "TES".to_string(),
+            None,
+            Some("business".to_string()),
+            None,
+            None,
+            None,
+        );
+        let result2 = controller.create_use_case(params).unwrap();
         let uc_id_2 = extract_use_case_id(&result2.message);
 
         // Add a reference
@@ -243,32 +389,30 @@ mod use_case_controller_tests {
         let (_temp_dir, mut controller) = setup_test_env();
 
         // Create use cases
-        let result1 = controller
-            .create_use_case(
-                "Test UC 1".to_string(),
-                "test".to_string(),
-                "TES".to_string(),
-                None,
-                Some("business".to_string()),
-                None,
-                None,
-                None,
-            )
-            .unwrap();
+        let params = create_test_params(
+            "Test UC 1".to_string(),
+            "test".to_string(),
+            "TES".to_string(),
+            None,
+            Some("business".to_string()),
+            None,
+            None,
+            None,
+        );
+        let result1 = controller.create_use_case(params).unwrap();
         let uc_id_1 = extract_use_case_id(&result1.message);
 
-        let result2 = controller
-            .create_use_case(
-                "Test UC 2".to_string(),
-                "test".to_string(),
-                "TES".to_string(),
-                None,
-                Some("business".to_string()),
-                None,
-                None,
-                None,
-            )
-            .unwrap();
+        let params = create_test_params(
+            "Test UC 2".to_string(),
+            "test".to_string(),
+            "TES".to_string(),
+            None,
+            Some("business".to_string()),
+            None,
+            None,
+            None,
+        );
+        let result2 = controller.create_use_case(params).unwrap();
         let uc_id_2 = extract_use_case_id(&result2.message);
 
         // Add references
@@ -297,18 +441,17 @@ mod use_case_controller_tests {
         let (_temp_dir, mut controller) = setup_test_env();
 
         // Create a use case
-        let result = controller
-            .create_use_case(
-                "Test UC".to_string(),
-                "test".to_string(),
-                "TES".to_string(),
-                None,
-                Some("business".to_string()),
-                None,
-                None,
-                None,
-            )
-            .unwrap();
+        let params = create_test_params(
+            "Test UC".to_string(),
+            "test".to_string(),
+            "TES".to_string(),
+            None,
+            Some("business".to_string()),
+            None,
+            None,
+            None,
+        );
+        let result = controller.create_use_case(params).unwrap();
         let use_case_id = extract_use_case_id(&result.message);
 
         // Add a scenario
@@ -331,18 +474,17 @@ mod use_case_controller_tests {
         let (_temp_dir, mut controller) = setup_test_env();
 
         // Create a use case
-        let result = controller
-            .create_use_case(
-                "Test UC".to_string(),
-                "test".to_string(),
-                "TES".to_string(),
-                None,
-                Some("business".to_string()),
-                None,
-                None,
-                None,
-            )
-            .unwrap();
+        let params = create_test_params(
+            "Test UC".to_string(),
+            "test".to_string(),
+            "TES".to_string(),
+            None,
+            Some("business".to_string()),
+            None,
+            None,
+            None,
+        );
+        let result = controller.create_use_case(params).unwrap();
         let use_case_id = extract_use_case_id(&result.message);
 
         // Add scenarios with different types
@@ -380,18 +522,17 @@ mod use_case_controller_tests {
         let (_temp_dir, mut controller) = setup_test_env();
 
         // Create a use case and scenario
-        let result = controller
-            .create_use_case(
-                "Test UC".to_string(),
-                "test".to_string(),
-                "TES".to_string(),
-                None,
-                Some("business".to_string()),
-                None,
-                None,
-                None,
-            )
-            .unwrap();
+        let params = create_test_params(
+            "Test UC".to_string(),
+            "test".to_string(),
+            "TES".to_string(),
+            None,
+            Some("business".to_string()),
+            None,
+            None,
+            None,
+        );
+        let result = controller.create_use_case(params).unwrap();
         let use_case_id = extract_use_case_id(&result.message);
 
         controller
@@ -427,18 +568,17 @@ mod use_case_controller_tests {
         let (_temp_dir, mut controller) = setup_test_env();
 
         // Create a use case and scenario
-        let result = controller
-            .create_use_case(
-                "Test UC".to_string(),
-                "test".to_string(),
-                "TES".to_string(),
-                None,
-                Some("business".to_string()),
-                None,
-                None,
-                None,
-            )
-            .unwrap();
+        let params = create_test_params(
+            "Test UC".to_string(),
+            "test".to_string(),
+            "TES".to_string(),
+            None,
+            Some("business".to_string()),
+            None,
+            None,
+            None,
+        );
+        let result = controller.create_use_case(params).unwrap();
         let use_case_id = extract_use_case_id(&result.message);
 
         controller
@@ -474,18 +614,17 @@ mod use_case_controller_tests {
         let (_temp_dir, mut controller) = setup_test_env();
 
         // Create a use case and scenario
-        let result = controller
-            .create_use_case(
-                "Test UC".to_string(),
-                "test".to_string(),
-                "TES".to_string(),
-                None,
-                Some("business".to_string()),
-                None,
-                None,
-                None,
-            )
-            .unwrap();
+        let params = create_test_params(
+            "Test UC".to_string(),
+            "test".to_string(),
+            "TES".to_string(),
+            None,
+            Some("business".to_string()),
+            None,
+            None,
+            None,
+        );
+        let result = controller.create_use_case(params).unwrap();
         let use_case_id = extract_use_case_id(&result.message);
 
         controller
@@ -538,18 +677,17 @@ mod use_case_controller_tests {
         let (_temp_dir, mut controller) = setup_test_env();
 
         // Create a use case
-        let result = controller
-            .create_use_case(
-                "Test UC".to_string(),
-                "test".to_string(),
-                "TES".to_string(),
-                None,
-                Some("business".to_string()),
-                None,
-                None,
-                None,
-            )
-            .unwrap();
+        let params = create_test_params(
+            "Test UC".to_string(),
+            "test".to_string(),
+            "TES".to_string(),
+            None,
+            Some("business".to_string()),
+            None,
+            None,
+            None,
+        );
+        let result = controller.create_use_case(params).unwrap();
         let use_case_id = extract_use_case_id(&result.message);
 
         // Try to add scenario with invalid type
@@ -572,18 +710,17 @@ mod use_case_controller_tests {
         let (_temp_dir, mut controller) = setup_test_env();
 
         // Create a use case
-        let result = controller
-            .create_use_case(
-                "Test UC".to_string(),
-                "test".to_string(),
-                "TES".to_string(),
-                None,
-                Some("business".to_string()),
-                None,
-                None,
-                None,
-            )
-            .unwrap();
+        let params = create_test_params(
+            "Test UC".to_string(),
+            "test".to_string(),
+            "TES".to_string(),
+            None,
+            Some("business".to_string()),
+            None,
+            None,
+            None,
+        );
+        let result = controller.create_use_case(params).unwrap();
         let use_case_id = extract_use_case_id(&result.message);
 
         // Test various scenario type aliases
@@ -624,18 +761,17 @@ mod use_case_controller_tests {
     fn test_update_use_case_basic_fields() {
         let (_temp_dir, mut controller) = setup_test_env();
 
-        let create_result = controller
-            .create_use_case(
-                "Original Title".to_string(),
-                "test".to_string(),
-                "TES".to_string(),
-                Some("Original description".to_string()),
-                Some("business".to_string()),
-                None,
-                None,
-                None,
-            )
-            .unwrap();
+        let params = create_test_params(
+            "Original Title".to_string(),
+            "test".to_string(),
+            "TES".to_string(),
+            Some("Original description".to_string()),
+            Some("business".to_string()),
+            None,
+            None,
+            None,
+        );
+        let create_result = controller.create_use_case(params).unwrap();
 
         let use_case_id = extract_use_case_id(&create_result.message);
 
@@ -663,18 +799,17 @@ mod use_case_controller_tests {
     fn test_update_use_case_partial_fields() {
         let (_temp_dir, mut controller) = setup_test_env();
 
-        let create_result = controller
-            .create_use_case(
-                "Original Title".to_string(),
-                "test".to_string(),
-                "TES".to_string(),
-                Some("Original description".to_string()),
-                Some("business".to_string()),
-                None,
-                Some("medium".to_string()),
-                None,
-            )
-            .unwrap();
+        let params = create_test_params(
+            "Original Title".to_string(),
+            "test".to_string(),
+            "TES".to_string(),
+            Some("Original description".to_string()),
+            Some("business".to_string()),
+            Some("medium".to_string()),
+            None,
+            None,
+        );
+        let create_result = controller.create_use_case(params).unwrap();
 
         let use_case_id = extract_use_case_id(&create_result.message);
 
@@ -701,18 +836,17 @@ mod use_case_controller_tests {
     fn test_update_methodology_fields() {
         let (_temp_dir, mut controller) = setup_test_env();
 
-        let create_result = controller
-            .create_use_case(
-                "Test UC".to_string(),
-                "test".to_string(),
-                "TES".to_string(),
-                None,
-                Some("business".to_string()),
-                None,
-                None,
-                None,
-            )
-            .unwrap();
+        let params = create_test_params(
+            "Test UC".to_string(),
+            "test".to_string(),
+            "TES".to_string(),
+            None,
+            Some("business".to_string()),
+            None,
+            None,
+            None,
+        );
+        let create_result = controller.create_use_case(params).unwrap();
 
         let use_case_id = extract_use_case_id(&create_result.message);
 
@@ -739,18 +873,17 @@ mod use_case_controller_tests {
     fn test_add_view_to_use_case() {
         let (_temp_dir, mut controller) = setup_test_env();
 
-        let create_result = controller
-            .create_use_case(
-                "Test UC".to_string(),
-                "test".to_string(),
-                "TES".to_string(),
-                None,
-                Some("business".to_string()),
-                None,
-                None,
-                None,
-            )
-            .unwrap();
+        let params = create_test_params(
+            "Test UC".to_string(),
+            "test".to_string(),
+            "TES".to_string(),
+            None,
+            Some("business".to_string()),
+            None,
+            None,
+            None,
+        );
+        let create_result = controller.create_use_case(params).unwrap();
 
         let use_case_id = extract_use_case_id(&create_result.message);
 
@@ -777,18 +910,17 @@ mod use_case_controller_tests {
     fn test_remove_view_from_use_case() {
         let (_temp_dir, mut controller) = setup_test_env();
 
-        let create_result = controller
-            .create_use_case(
-                "Test UC".to_string(),
-                "test".to_string(),
-                "TES".to_string(),
-                None,
-                Some("business".to_string()),
-                None,
-                None,
-                None,
-            )
-            .unwrap();
+        let params = create_test_params(
+            "Test UC".to_string(),
+            "test".to_string(),
+            "TES".to_string(),
+            None,
+            Some("business".to_string()),
+            None,
+            None,
+            None,
+        );
+        let create_result = controller.create_use_case(params).unwrap();
 
         let use_case_id = extract_use_case_id(&create_result.message);
 
@@ -817,18 +949,17 @@ mod use_case_controller_tests {
     fn test_remove_last_view_fails() {
         let (_temp_dir, mut controller) = setup_test_env();
 
-        let create_result = controller
-            .create_use_case(
-                "Test UC".to_string(),
-                "test".to_string(),
-                "TES".to_string(),
-                None,
-                Some("business".to_string()),
-                None,
-                None,
-                None,
-            )
-            .unwrap();
+        let params = create_test_params(
+            "Test UC".to_string(),
+            "test".to_string(),
+            "TES".to_string(),
+            None,
+            Some("business".to_string()),
+            None,
+            None,
+            None,
+        );
+        let create_result = controller.create_use_case(params).unwrap();
 
         let use_case_id = extract_use_case_id(&create_result.message);
 
@@ -846,10 +977,131 @@ mod project_controller_tests {
     use crate::controller::ProjectController;
     use serial_test::serial;
     use std::env;
+    use std::fs;
     use std::path::Path;
     use tempfile::TempDir;
 
     // ===== Test Helpers =====
+
+    /// Create minimal source-templates structure for testing
+    fn create_minimal_source_templates(base_path: &Path) -> std::io::Result<()> {
+        let templates_dir = base_path.join("source-templates");
+        fs::create_dir_all(&templates_dir)?;
+
+        // Create config.toml with all required sections
+        fs::write(
+            templates_dir.join("config.toml"),
+            r#"[project]
+name = "Test Project"
+description = "Test"
+
+[directories]
+use_case_dir = "docs/use-cases"
+test_dir = "tests/use-cases"
+actor_dir = "docs/actors"
+data_dir = "use-cases-data"
+
+[templates]
+methodologies = ["business", "developer", "feature", "tester"]
+default_methodology = "feature"
+default_scenario_template = "scenarios/scenario.hbs"
+
+[generation]
+test_language = "none"
+auto_generate_tests = false
+overwrite_test_documentation = false
+
+[storage]
+backend = "toml"
+
+[metadata]
+created = true
+last_updated = true
+"#,
+        )?;
+
+        // Create minimal language structure
+        let languages_dir = templates_dir.join("languages");
+        for lang in &["rust", "python", "javascript"] {
+            let lang_dir = languages_dir.join(lang);
+            fs::create_dir_all(&lang_dir)?;
+            fs::write(
+                lang_dir.join("info.toml"),
+                format!(
+                    r#"name = "{}"
+file_extension = "{}"
+template_file = "test.hbs"
+"#,
+                    lang,
+                    if *lang == "python" {
+                        "py"
+                    } else if *lang == "javascript" {
+                        "js"
+                    } else {
+                        "rs"
+                    }
+                ),
+            )?;
+            fs::write(lang_dir.join("test.hbs"), "# Test template\n")?;
+        }
+
+        // Create minimal methodology structure
+        let methodologies_dir = templates_dir.join("methodologies");
+        for methodology in &["business", "developer", "feature", "tester"] {
+            let method_dir = methodologies_dir.join(methodology);
+            fs::create_dir_all(&method_dir)?;
+            fs::write(
+                method_dir.join("methodology.toml"),
+                format!(
+                    r#"[methodology]
+name = "{}"
+abbreviation = "{}"
+description = "Test {}"
+
+[template]
+preferred_style = "Normal"
+
+[levels.normal]
+name = "Normal"
+abbreviation = "n"
+filename = "uc_normal.hbs"
+description = "Normal level"
+inherits = []
+
+[levels.simple]
+name = "Simple"
+abbreviation = "s"
+filename = "uc_simple.hbs"
+description = "Simple level"
+inherits = []
+
+[levels.detailed]
+name = "Detailed"
+abbreviation = "d"
+filename = "uc_detailed.hbs"
+description = "Detailed level"
+inherits = []
+
+[levels.advanced]
+name = "Advanced"
+abbreviation = "a"
+filename = "uc_advanced.hbs"
+description = "Advanced level"
+inherits = ["Normal"]
+"#,
+                    methodology,
+                    &methodology[..3],
+                    methodology
+                ),
+            )?;
+            fs::write(method_dir.join("uc_normal.hbs"), "# Template\n")?;
+            fs::write(method_dir.join("uc_simple.hbs"), "# Template\n")?;
+            fs::write(method_dir.join("uc_detailed.hbs"), "# Template\n")?;
+            fs::write(method_dir.join("uc_advanced.hbs"), "# Template\n")?;
+        }
+
+        Ok(())
+    }
 
     fn setup_empty_dir() -> TempDir {
         let temp_dir = TempDir::new().unwrap();
@@ -857,7 +1109,9 @@ mod project_controller_tests {
 
         // Set CARGO_MANIFEST_DIR to the project root so source-templates can be found
         let project_root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"));
-        env::set_var("CARGO_MANIFEST_DIR", project_root);
+        unsafe {
+            env::set_var("CARGO_MANIFEST_DIR", project_root);
+        }
 
         temp_dir
     }
@@ -946,6 +1200,34 @@ mod project_controller_tests {
         config
     }
 
+    /// Helper to create test init project params with defaults
+    /// Note: Using #[allow] for test helper - refactoring would require changing many call sites
+    // Test helper: many arguments acceptable to keep test call sites simple
+    #[allow(clippy::too_many_arguments)]
+    fn create_test_init_params(
+        language: Option<String>,
+        methodologies: Option<Vec<String>>,
+        storage: Option<String>,
+        default_methodology: Option<String>,
+        use_case_dir: Option<String>,
+        test_dir: Option<String>,
+        actor_dir: Option<String>,
+        data_dir: Option<String>,
+        default_scenario_template: Option<String>,
+    ) -> crate::controller::InitProjectParams {
+        crate::controller::InitProjectParams {
+            language,
+            methodologies,
+            storage,
+            default_methodology,
+            use_case_dir,
+            test_dir,
+            actor_dir,
+            data_dir,
+            default_scenario_template,
+        }
+    }
+
     // ===== Basic Initialization Tests =====
 
     #[test]
@@ -960,7 +1242,7 @@ mod project_controller_tests {
     fn test_is_initialized_after_init() {
         let _temp_dir = setup_empty_dir();
 
-        ProjectController::init_project(
+        let params = create_test_init_params(
             Some("rust".to_string()),
             None,
             None,
@@ -970,8 +1252,8 @@ mod project_controller_tests {
             None,
             None,
             None,
-        )
-        .unwrap();
+        );
+        ProjectController::init_project(params).unwrap();
 
         assert!(ProjectController::is_initialized());
     }
@@ -981,7 +1263,7 @@ mod project_controller_tests {
     fn test_init_project_with_single_methodology_rust() {
         let _temp_dir = setup_empty_dir();
 
-        let result = ProjectController::init_project(
+        let params = create_test_init_params(
             Some("rust".to_string()),
             Some(vec!["business".to_string()]),
             None,
@@ -992,6 +1274,7 @@ mod project_controller_tests {
             None,
             None,
         );
+        let result = ProjectController::init_project(params);
 
         assert!(result.is_ok(), "Init should succeed");
         let display = result.unwrap();
@@ -1022,7 +1305,7 @@ mod project_controller_tests {
     fn test_init_project_with_single_methodology_python() {
         let _temp_dir = setup_empty_dir();
 
-        let result = ProjectController::init_project(
+        let params = create_test_init_params(
             Some("python".to_string()),
             Some(vec!["developer".to_string()]),
             None,
@@ -1033,6 +1316,7 @@ mod project_controller_tests {
             None,
             None,
         );
+        let result = ProjectController::init_project(params);
 
         assert!(result.is_ok(), "Init should succeed");
         let display = result.unwrap();
@@ -1054,7 +1338,7 @@ mod project_controller_tests {
     fn test_init_project_with_single_methodology_javascript() {
         let _temp_dir = setup_empty_dir();
 
-        let result = ProjectController::init_project(
+        let params = create_test_init_params(
             Some("javascript".to_string()),
             Some(vec!["feature".to_string()]),
             None,
@@ -1065,6 +1349,7 @@ mod project_controller_tests {
             None,
             None,
         );
+        let result = ProjectController::init_project(params);
 
         assert!(result.is_ok(), "Init should succeed");
         let display = result.unwrap();
@@ -1086,7 +1371,7 @@ mod project_controller_tests {
     fn test_init_project_with_language_none() {
         let _temp_dir = setup_empty_dir();
 
-        let result = ProjectController::init_project(
+        let params = create_test_init_params(
             Some("none".to_string()),
             Some(vec!["tester".to_string()]),
             None,
@@ -1097,6 +1382,7 @@ mod project_controller_tests {
             None,
             None,
         );
+        let result = ProjectController::init_project(params);
 
         assert!(result.is_ok(), "Init should succeed");
         let display = result.unwrap();
@@ -1113,7 +1399,7 @@ mod project_controller_tests {
     fn test_init_project_with_no_language_defaults_to_none() {
         let _temp_dir = setup_empty_dir();
 
-        let result = ProjectController::init_project(
+        let params = create_test_init_params(
             None, // No language specified
             Some(vec!["business".to_string()]),
             None,
@@ -1124,6 +1410,7 @@ mod project_controller_tests {
             None,
             None,
         );
+        let result = ProjectController::init_project(params);
 
         assert!(result.is_ok(), "Init should succeed");
         let display = result.unwrap();
@@ -1145,7 +1432,7 @@ mod project_controller_tests {
             "feature".to_string(),
         ];
 
-        let result = ProjectController::init_project(
+        let params = create_test_init_params(
             Some("rust".to_string()),
             Some(methodologies.clone()),
             None,
@@ -1156,6 +1443,7 @@ mod project_controller_tests {
             None,
             None,
         );
+        let result = ProjectController::init_project(params);
 
         assert!(result.is_ok(), "Init should succeed");
         let display = result.unwrap();
@@ -1198,7 +1486,7 @@ mod project_controller_tests {
             "tester".to_string(),
         ];
 
-        let result = ProjectController::init_project(
+        let params = create_test_init_params(
             Some("python".to_string()),
             Some(methodologies.clone()),
             None,
@@ -1209,6 +1497,7 @@ mod project_controller_tests {
             None,
             None,
         );
+        let result = ProjectController::init_project(params);
 
         assert!(result.is_ok(), "Init should succeed");
         let display = result.unwrap();
@@ -1235,21 +1524,7 @@ mod project_controller_tests {
         let _temp_dir = setup_empty_dir();
 
         // Initialize once
-        ProjectController::init_project(
-            Some("rust".to_string()),
-            None,
-            None,
-            Some("business".to_string()),
-            None,
-            None,
-            None,
-            None,
-            None,
-        )
-        .unwrap();
-
-        // Try to initialize again - should fail
-        let result = ProjectController::init_project(
+        let params = create_test_init_params(
             Some("rust".to_string()),
             None,
             None,
@@ -1260,6 +1535,21 @@ mod project_controller_tests {
             None,
             None,
         );
+        ProjectController::init_project(params).unwrap();
+
+        // Try to initialize again - should fail
+        let params2 = create_test_init_params(
+            Some("rust".to_string()),
+            None,
+            None,
+            Some("business".to_string()),
+            None,
+            None,
+            None,
+            None,
+            None,
+        );
+        let result = ProjectController::init_project(params2);
 
         assert!(result.is_ok(), "Should return Ok with error message");
         let display = result.unwrap();
@@ -1272,7 +1562,7 @@ mod project_controller_tests {
     fn test_init_with_storage_backend_sqlite() {
         let _temp_dir = setup_empty_dir();
 
-        let result = ProjectController::init_project(
+        let params = create_test_init_params(
             Some("rust".to_string()),
             Some(vec!["business".to_string()]),
             Some("sqlite".to_string()),
@@ -1283,6 +1573,7 @@ mod project_controller_tests {
             None,
             None,
         );
+        let result = ProjectController::init_project(params);
 
         assert!(result.is_ok());
         let display = result.unwrap();
@@ -1297,7 +1588,7 @@ mod project_controller_tests {
     fn test_init_with_storage_backend_toml() {
         let _temp_dir = setup_empty_dir();
 
-        let result = ProjectController::init_project(
+        let params = create_test_init_params(
             Some("rust".to_string()),
             Some(vec!["business".to_string()]),
             Some("toml".to_string()),
@@ -1308,6 +1599,7 @@ mod project_controller_tests {
             None,
             None,
         );
+        let result = ProjectController::init_project(params);
 
         assert!(result.is_ok());
         let display = result.unwrap();
@@ -1322,7 +1614,7 @@ mod project_controller_tests {
     fn test_init_with_custom_directories() {
         let _temp_dir = setup_empty_dir();
 
-        let result = ProjectController::init_project(
+        let params = create_test_init_params(
             Some("rust".to_string()),
             Some(vec!["business".to_string()]),
             None,
@@ -1333,6 +1625,7 @@ mod project_controller_tests {
             Some("custom/data".to_string()),
             None,
         );
+        let result = ProjectController::init_project(params);
 
         assert!(result.is_ok());
         let display = result.unwrap();
@@ -1361,7 +1654,7 @@ mod project_controller_tests {
     fn test_init_project_with_invalid_language() {
         let _temp_dir = setup_empty_dir();
 
-        let result = ProjectController::init_project(
+        let params = create_test_init_params(
             Some("invalid_language_that_does_not_exist".to_string()),
             Some(vec!["business".to_string()]),
             None,
@@ -1372,6 +1665,7 @@ mod project_controller_tests {
             None,
             None,
         );
+        let result = ProjectController::init_project(params);
 
         // Should still succeed but use the invalid language as-is (no validation in init)
         // The language registry will handle invalid languages during template processing
@@ -1385,7 +1679,7 @@ mod project_controller_tests {
     fn test_init_project_with_invalid_methodology() {
         let _temp_dir = setup_empty_dir();
 
-        let result = ProjectController::init_project(
+        let params = create_test_init_params(
             Some("rust".to_string()),
             Some(vec!["invalid_methodology_xyz".to_string()]),
             None,
@@ -1396,6 +1690,7 @@ mod project_controller_tests {
             None,
             None,
         );
+        let result = ProjectController::init_project(params);
 
         // Should fail because init_project calls finalize internally,
         // which tries to copy the invalid methodology
@@ -1422,7 +1717,7 @@ mod project_controller_tests {
             "business".to_string(), // Another duplicate
         ];
 
-        let result = ProjectController::init_project(
+        let params = create_test_init_params(
             Some("rust".to_string()),
             Some(methodologies.clone()),
             None,
@@ -1433,6 +1728,7 @@ mod project_controller_tests {
             None,
             None,
         );
+        let result = ProjectController::init_project(params);
 
         assert!(result.is_ok(), "Init should succeed");
         let display = result.unwrap();
@@ -1478,6 +1774,10 @@ mod project_controller_tests {
 
         // Create config only (simulate step 1)
         use crate::config::{Config, ConfigFileManager};
+
+        // Create minimal source-templates for testing
+        create_minimal_source_templates(std::path::Path::new(".")).unwrap();
+
         let config = Config::default();
         ConfigFileManager::save_in_dir(&config, ".").unwrap();
 
@@ -1504,7 +1804,7 @@ mod project_controller_tests {
         let _temp_dir = setup_empty_dir();
 
         // Initialize (which calls finalize internally)
-        ProjectController::init_project(
+        let params = create_test_init_params(
             Some("rust".to_string()),
             Some(vec!["business".to_string()]),
             None,
@@ -1514,8 +1814,8 @@ mod project_controller_tests {
             None,
             None,
             None,
-        )
-        .unwrap();
+        );
+        ProjectController::init_project(params).unwrap();
 
         // Try to finalize again
         let result = ProjectController::finalize_init();
@@ -1535,7 +1835,7 @@ mod project_controller_tests {
         let _temp_dir = setup_empty_dir();
 
         // Initialize first time
-        ProjectController::init_project(
+        let params = create_test_init_params(
             Some("rust".to_string()),
             Some(vec!["business".to_string()]),
             None,
@@ -1545,8 +1845,8 @@ mod project_controller_tests {
             None,
             None,
             None,
-        )
-        .unwrap();
+        );
+        ProjectController::init_project(params).unwrap();
 
         // Test sync_templates (should preserve existing files)
         let result = ProjectController::sync_templates();
@@ -1566,7 +1866,7 @@ mod project_controller_tests {
     fn test_directories_created_after_init() {
         let _temp_dir = setup_empty_dir();
 
-        ProjectController::init_project(
+        let params = create_test_init_params(
             Some("rust".to_string()),
             Some(vec!["business".to_string()]),
             None,
@@ -1576,8 +1876,8 @@ mod project_controller_tests {
             None,
             None,
             None,
-        )
-        .unwrap();
+        );
+        ProjectController::init_project(params).unwrap();
 
         // Verify all expected directories exist
         verify_project_directories(
@@ -1593,7 +1893,7 @@ mod project_controller_tests {
     fn test_config_directory_structure() {
         let _temp_dir = setup_empty_dir();
 
-        ProjectController::init_project(
+        let params = create_test_init_params(
             Some("python".to_string()),
             Some(vec!["developer".to_string()]),
             None,
@@ -1603,8 +1903,8 @@ mod project_controller_tests {
             None,
             None,
             None,
-        )
-        .unwrap();
+        );
+        ProjectController::init_project(params).unwrap();
 
         let cwd = env::current_dir().unwrap();
         let config_dir = cwd.join(".config/.mucm");
@@ -1624,7 +1924,7 @@ mod project_controller_tests {
     fn test_methodology_templates_structure() {
         let _temp_dir = setup_empty_dir();
 
-        ProjectController::init_project(
+        let params = create_test_init_params(
             Some("rust".to_string()),
             Some(vec!["business".to_string(), "developer".to_string()]),
             None,
@@ -1634,8 +1934,8 @@ mod project_controller_tests {
             None,
             None,
             None,
-        )
-        .unwrap();
+        );
+        ProjectController::init_project(params).unwrap();
 
         let cwd = env::current_dir().unwrap();
         let methodologies_dir = cwd.join(".config/.mucm/template-assets/methodologies");
@@ -1715,7 +2015,7 @@ mod project_controller_tests {
         let _temp_dir = setup_empty_dir();
 
         // Initialize with specific methodologies
-        ProjectController::init_project(
+        let params = create_test_init_params(
             Some("rust".to_string()),
             Some(vec!["business".to_string(), "feature".to_string()]),
             None,
@@ -1725,8 +2025,8 @@ mod project_controller_tests {
             None,
             None,
             None,
-        )
-        .unwrap();
+        );
+        ProjectController::init_project(params).unwrap();
 
         // Get installed methodologies
         let result = ProjectController::get_installed_methodologies();
@@ -1765,7 +2065,7 @@ mod project_controller_tests {
     fn test_get_default_methodology_after_init() {
         let _temp_dir = setup_empty_dir();
 
-        ProjectController::init_project(
+        let params = create_test_init_params(
             Some("rust".to_string()),
             Some(vec!["developer".to_string()]),
             None,
@@ -1775,8 +2075,8 @@ mod project_controller_tests {
             None,
             None,
             None,
-        )
-        .unwrap();
+        );
+        ProjectController::init_project(params).unwrap();
 
         let result = ProjectController::get_default_methodology();
         assert!(result.is_ok(), "Should retrieve default methodology");
@@ -1800,7 +2100,7 @@ mod project_controller_tests {
         let _temp_dir = setup_empty_dir();
 
         // Initialize with business methodology
-        ProjectController::init_project(
+        let params = create_test_init_params(
             Some("rust".to_string()),
             Some(vec!["business".to_string()]),
             None,
@@ -1810,8 +2110,8 @@ mod project_controller_tests {
             None,
             None,
             None,
-        )
-        .unwrap();
+        );
+        ProjectController::init_project(params).unwrap();
 
         let result = ProjectController::get_methodology_levels("business");
         assert!(result.is_ok(), "Should retrieve methodology levels");
@@ -1829,7 +2129,7 @@ mod project_controller_tests {
         let _temp_dir = setup_empty_dir();
 
         // Initialize first
-        ProjectController::init_project(
+        let params = create_test_init_params(
             Some("rust".to_string()),
             Some(vec!["business".to_string()]),
             None,
@@ -1839,8 +2139,8 @@ mod project_controller_tests {
             None,
             None,
             None,
-        )
-        .unwrap();
+        );
+        ProjectController::init_project(params).unwrap();
 
         let result = ProjectController::get_methodology_levels("nonexistent_methodology");
         assert!(result.is_err(), "Should fail for invalid methodology");
@@ -1852,7 +2152,7 @@ mod project_controller_tests {
         let _temp_dir = setup_empty_dir();
 
         // Initialize with just developer methodology
-        ProjectController::init_project(
+        let params = create_test_init_params(
             Some("rust".to_string()),
             Some(vec!["developer".to_string()]),
             None,
@@ -1862,8 +2162,8 @@ mod project_controller_tests {
             None,
             None,
             None,
-        )
-        .unwrap();
+        );
+        ProjectController::init_project(params).unwrap();
 
         // Verify initial state
         let installed = ProjectController::get_installed_methodologies().unwrap();
@@ -1906,7 +2206,7 @@ mod project_controller_tests {
         let _temp_dir = setup_empty_dir();
 
         // Initialize with developer and business
-        ProjectController::init_project(
+        let params = create_test_init_params(
             Some("rust".to_string()),
             Some(vec!["developer".to_string(), "business".to_string()]),
             None,
@@ -1916,8 +2216,8 @@ mod project_controller_tests {
             None,
             None,
             None,
-        )
-        .unwrap();
+        );
+        ProjectController::init_project(params).unwrap();
 
         // Try to add business again (duplicate) and feature (new)
         let result = ProjectController::add_methodologies(vec![
@@ -1943,7 +2243,7 @@ mod project_controller_tests {
     fn test_add_methodologies_empty_list() {
         let _temp_dir = setup_empty_dir();
 
-        ProjectController::init_project(
+        let params = create_test_init_params(
             Some("rust".to_string()),
             Some(vec!["developer".to_string()]),
             None,
@@ -1953,8 +2253,8 @@ mod project_controller_tests {
             None,
             None,
             None,
-        )
-        .unwrap();
+        );
+        ProjectController::init_project(params).unwrap();
 
         let result = ProjectController::add_methodologies(vec![]);
 
@@ -1980,7 +2280,7 @@ mod project_controller_tests {
         let _temp_dir = setup_empty_dir();
 
         // Initialize with multiple methodologies
-        ProjectController::init_project(
+        let params = create_test_init_params(
             Some("rust".to_string()),
             Some(vec![
                 "developer".to_string(),
@@ -1994,8 +2294,8 @@ mod project_controller_tests {
             None,
             None,
             None,
-        )
-        .unwrap();
+        );
+        ProjectController::init_project(params).unwrap();
 
         // Verify initial state
         let config = Config::load().unwrap();
@@ -2029,7 +2329,7 @@ mod project_controller_tests {
         let _temp_dir = setup_empty_dir();
 
         // Initialize with developer as default
-        ProjectController::init_project(
+        let params = create_test_init_params(
             Some("rust".to_string()),
             Some(vec!["developer".to_string(), "business".to_string()]),
             None,
@@ -2039,8 +2339,8 @@ mod project_controller_tests {
             None,
             None,
             None,
-        )
-        .unwrap();
+        );
+        ProjectController::init_project(params).unwrap();
 
         // Try to remove the default methodology
         let result = ProjectController::remove_methodologies(vec!["developer".to_string()]);
@@ -2061,7 +2361,7 @@ mod project_controller_tests {
     fn test_remove_methodologies_empty_list() {
         let _temp_dir = setup_empty_dir();
 
-        ProjectController::init_project(
+        let params = create_test_init_params(
             Some("rust".to_string()),
             Some(vec!["developer".to_string()]),
             None,
@@ -2071,8 +2371,8 @@ mod project_controller_tests {
             None,
             None,
             None,
-        )
-        .unwrap();
+        );
+        ProjectController::init_project(params).unwrap();
 
         let result = ProjectController::remove_methodologies(vec![]);
 
@@ -2098,7 +2398,7 @@ mod project_controller_tests {
         let _temp_dir = setup_empty_dir();
 
         // Initialize with minimal setup
-        ProjectController::init_project(
+        let params = create_test_init_params(
             Some("rust".to_string()),
             Some(vec!["developer".to_string()]),
             None,
@@ -2108,8 +2408,8 @@ mod project_controller_tests {
             None,
             None,
             None,
-        )
-        .unwrap();
+        );
+        ProjectController::init_project(params).unwrap();
 
         // Add methodologies
         let add_result = ProjectController::add_methodologies(vec![
@@ -2151,7 +2451,7 @@ mod project_controller_tests {
         let _temp_dir = setup_empty_dir();
 
         // Initialize with specific settings
-        ProjectController::init_project(
+        let params = create_test_init_params(
             Some("python".to_string()),
             Some(vec!["developer".to_string()]),
             None,
@@ -2161,8 +2461,8 @@ mod project_controller_tests {
             None,
             None,
             None,
-        )
-        .unwrap();
+        );
+        ProjectController::init_project(params).unwrap();
 
         // Get initial config values
         let initial_config = Config::load().unwrap();
@@ -2199,7 +2499,7 @@ mod project_controller_tests {
         let _temp_dir = setup_empty_dir();
 
         // Initialize project
-        ProjectController::init_project(
+        let params = create_test_init_params(
             Some("rust".to_string()),
             Some(vec!["developer".to_string()]),
             None,
@@ -2209,8 +2509,8 @@ mod project_controller_tests {
             None,
             None,
             None,
-        )
-        .unwrap();
+        );
+        ProjectController::init_project(params).unwrap();
 
         // Verify templates were created
         let template_dir =
@@ -2250,7 +2550,7 @@ mod project_controller_tests {
         let _temp_dir = setup_empty_dir();
 
         // Initialize with just developer
-        ProjectController::init_project(
+        let params = create_test_init_params(
             Some("rust".to_string()),
             Some(vec!["developer".to_string()]),
             None,
@@ -2260,8 +2560,8 @@ mod project_controller_tests {
             None,
             None,
             None,
-        )
-        .unwrap();
+        );
+        ProjectController::init_project(params).unwrap();
 
         // Verify only developer exists
         let methodologies_dir = std::path::Path::new(".config/.mucm/template-assets/methodologies");
@@ -2309,7 +2609,7 @@ mod project_controller_tests {
         let _temp_dir = setup_empty_dir();
 
         // Initialize
-        ProjectController::init_project(
+        let params = create_test_init_params(
             Some("rust".to_string()),
             Some(vec!["developer".to_string(), "business".to_string()]),
             None,
@@ -2319,8 +2619,8 @@ mod project_controller_tests {
             None,
             None,
             None,
-        )
-        .unwrap();
+        );
+        ProjectController::init_project(params).unwrap();
 
         // Customize a file
         let test_file = std::path::Path::new(
@@ -2352,7 +2652,7 @@ mod project_controller_tests {
         let _temp_dir = setup_empty_dir();
 
         // Initialize with multiple methodologies
-        ProjectController::init_project(
+        let params = create_test_init_params(
             Some("rust".to_string()),
             Some(vec!["developer".to_string(), "business".to_string()]),
             None,
@@ -2362,8 +2662,8 @@ mod project_controller_tests {
             None,
             None,
             None,
-        )
-        .unwrap();
+        );
+        ProjectController::init_project(params).unwrap();
 
         let business_dir =
             std::path::Path::new(".config/.mucm/template-assets/methodologies/business");
@@ -2399,7 +2699,7 @@ mod project_controller_tests {
         let _temp_dir = setup_empty_dir();
 
         // Initialize
-        ProjectController::init_project(
+        let params = create_test_init_params(
             Some("rust".to_string()),
             Some(vec!["developer".to_string()]),
             None,
@@ -2409,8 +2709,8 @@ mod project_controller_tests {
             None,
             None,
             None,
-        )
-        .unwrap();
+        );
+        ProjectController::init_project(params).unwrap();
 
         let overview_file = std::path::Path::new(".config/.mucm/template-assets/overview.hbs");
         assert!(overview_file.exists(), "Overview template should exist");
@@ -2450,7 +2750,7 @@ mod project_controller_tests {
     fn test_get_available_scenario_templates_after_init() {
         let _temp_dir = setup_empty_dir();
 
-        ProjectController::init_project(
+        let params = create_test_init_params(
             Some("rust".to_string()),
             None,
             None,
@@ -2460,8 +2760,8 @@ mod project_controller_tests {
             None,
             None,
             None,
-        )
-        .unwrap();
+        );
+        ProjectController::init_project(params).unwrap();
 
         let templates = ProjectController::get_available_scenario_templates().unwrap();
         assert!(!templates.is_empty(), "Should have templates after init");
@@ -2480,7 +2780,7 @@ mod project_controller_tests {
     fn test_get_default_scenario_template() {
         let _temp_dir = setup_empty_dir();
 
-        ProjectController::init_project(
+        let params = create_test_init_params(
             Some("rust".to_string()),
             None,
             None,
@@ -2490,8 +2790,8 @@ mod project_controller_tests {
             None,
             None,
             Some("scenarios/scenario_mermaid.hbs".to_string()),
-        )
-        .unwrap();
+        );
+        ProjectController::init_project(params).unwrap();
 
         let default = ProjectController::get_default_scenario_template().unwrap();
         assert_eq!(
@@ -2505,7 +2805,7 @@ mod project_controller_tests {
     fn test_set_default_scenario_template_success() {
         let _temp_dir = setup_empty_dir();
 
-        ProjectController::init_project(
+        let params = create_test_init_params(
             Some("rust".to_string()),
             None,
             None,
@@ -2515,8 +2815,8 @@ mod project_controller_tests {
             None,
             None,
             None,
-        )
-        .unwrap();
+        );
+        ProjectController::init_project(params).unwrap();
 
         // Change to mermaid template
         let result = ProjectController::set_default_scenario_template(
@@ -2538,7 +2838,7 @@ mod project_controller_tests {
     fn test_set_default_scenario_template_invalid() {
         let _temp_dir = setup_empty_dir();
 
-        ProjectController::init_project(
+        let params = create_test_init_params(
             Some("rust".to_string()),
             None,
             None,
@@ -2548,8 +2848,8 @@ mod project_controller_tests {
             None,
             None,
             None,
-        )
-        .unwrap();
+        );
+        ProjectController::init_project(params).unwrap();
 
         // Try to set invalid template
         let result = ProjectController::set_default_scenario_template(
@@ -2568,7 +2868,7 @@ mod project_controller_tests {
     fn test_init_with_custom_scenario_template() {
         let _temp_dir = setup_empty_dir();
 
-        ProjectController::init_project(
+        let params = create_test_init_params(
             Some("rust".to_string()),
             Some(vec!["developer".to_string()]),
             None,
@@ -2578,8 +2878,8 @@ mod project_controller_tests {
             None,
             None,
             Some("scenarios/scenario_mermaid.hbs".to_string()),
-        )
-        .unwrap();
+        );
+        ProjectController::init_project(params).unwrap();
 
         let config = Config::load().unwrap();
         assert_eq!(
@@ -2594,7 +2894,7 @@ mod project_controller_tests {
         let _temp_dir = setup_empty_dir();
 
         // Init without specifying template
-        ProjectController::init_project(
+        let params = create_test_init_params(
             Some("rust".to_string()),
             None,
             None,
@@ -2604,8 +2904,8 @@ mod project_controller_tests {
             None,
             None,
             None, // No template specified
-        )
-        .unwrap();
+        );
+        ProjectController::init_project(params).unwrap();
 
         let config = Config::load().unwrap();
         assert_eq!(

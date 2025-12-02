@@ -82,15 +82,16 @@ impl UseCaseWorkflow {
 
         if !fill_additional {
             // Create use case with just the basic fields and default priority
-            let (use_case_id, message) = runner.create_use_case_with_views_and_fields(
+            let params = crate::cli::interactive::runner::CreateUseCaseWithViewsParams {
                 title,
                 category,
-                category_abbreviation.clone(),
+                category_abbreviation: category_abbreviation.clone(),
                 description,
-                "Medium".to_string(), // Default priority
-                views.clone(),
-                HashMap::new(),
-            )?;
+                priority: "Medium".to_string(),
+                views: views.clone(),
+                extra_fields: HashMap::new(),
+            };
+            let (use_case_id, message) = runner.create_use_case_with_views_and_fields(params)?;
 
             UI::show_success(&message)?;
 
@@ -209,15 +210,16 @@ impl UseCaseWorkflow {
         // Merge methodology field values into extra_fields
         extra_fields.extend(methodology_field_values);
 
-        let (use_case_id, message) = runner.create_use_case_with_views_and_fields(
+        let params = crate::cli::interactive::runner::CreateUseCaseWithViewsParams {
             title,
             category,
             category_abbreviation,
-            final_description,
-            priority.to_string(),
-            views.clone(),
+            description: final_description,
+            priority: priority.to_string(),
+            views: views.clone(),
             extra_fields,
-        )?;
+        };
+        let (use_case_id, message) = runner.create_use_case_with_views_and_fields(params)?;
 
         UI::show_success(&message)?;
 

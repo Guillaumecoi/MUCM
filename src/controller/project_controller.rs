@@ -26,6 +26,19 @@ use super::dto::{DisplayResult, MethodologyInfo, SelectionOptions};
 use crate::config::Config;
 use crate::core::{DocumentationLevel, LanguageRegistry, Methodology, MethodologyRegistry};
 
+/// Parameters for initializing a project
+pub struct InitProjectParams {
+    pub language: Option<String>,
+    pub methodologies: Option<Vec<String>>,
+    pub storage: Option<String>,
+    pub default_methodology: Option<String>,
+    pub use_case_dir: Option<String>,
+    pub test_dir: Option<String>,
+    pub actor_dir: Option<String>,
+    pub data_dir: Option<String>,
+    pub default_scenario_template: Option<String>,
+}
+
 /// Controller for project initialization and management operations.
 ///
 /// Handles all project-level operations including initialization, configuration
@@ -216,17 +229,7 @@ impl ProjectController {
     ///
     /// # Errors
     /// Returns error if project is already initialized or initialization fails
-    pub fn init_project(
-        language: Option<String>,
-        methodologies: Option<Vec<String>>,
-        storage: Option<String>,
-        default_methodology: Option<String>,
-        use_case_dir: Option<String>,
-        test_dir: Option<String>,
-        actor_dir: Option<String>,
-        data_dir: Option<String>,
-        default_scenario_template: Option<String>,
-    ) -> Result<DisplayResult> {
+    pub fn init_project(params: InitProjectParams) -> Result<DisplayResult> {
         // Check if already initialized
         if Self::is_initialized() {
             return Ok(DisplayResult::error(
@@ -236,7 +239,7 @@ impl ProjectController {
         }
 
         // Resolve language aliases to primary names (default: "none")
-        let resolved_language = if let Some(lang) = language {
+        let resolved_language = if let Some(lang) = params.language {
             use crate::config::Config;
 
             // Handle special case for "none"
@@ -257,7 +260,7 @@ impl ProjectController {
         };
 
         // Get available methodologies if none specified
-        let resolved_methodologies = if let Some(meths) = methodologies {
+        let resolved_methodologies = if let Some(meths) = params.methodologies {
             meths
         } else {
             // Load all available methodologies as default
@@ -267,10 +270,10 @@ impl ProjectController {
         };
 
         // Default to "toml" if storage not specified
-        let resolved_storage = storage.unwrap_or_else(|| "toml".to_string());
+        let resolved_storage = params.storage.unwrap_or_else(|| "toml".to_string());
 
         // Default methodology: use provided, or first methodology, or "feature"
-        let resolved_default_methodology = if let Some(default) = default_methodology {
+        let resolved_default_methodology = if let Some(default) = params.default_methodology {
             default
         } else if !resolved_methodologies.is_empty() {
             resolved_methodologies[0].clone()
@@ -279,23 +282,32 @@ impl ProjectController {
         };
 
         // Use defaults for directories
-        let resolved_use_case_dir = use_case_dir.unwrap_or_else(|| "docs/use-cases".to_string());
-        let resolved_test_dir = test_dir.unwrap_or_else(|| "tests/use-cases".to_string());
-        let resolved_actor_dir = actor_dir.unwrap_or_else(|| "docs/actors".to_string());
-        let resolved_data_dir = data_dir.unwrap_or_else(|| "use-cases-data".to_string());
+        let resolved_use_case_dir = params
+            .use_case_dir
+            .unwrap_or_else(|| "docs/use-cases".to_string());
+        let resolved_test_dir = params
+            .test_dir
+            .unwrap_or_else(|| "tests/use-cases".to_string());
+        let resolved_actor_dir = params
+            .actor_dir
+            .unwrap_or_else(|| "docs/actors".to_string());
+        let resolved_data_dir = params
+            .data_dir
+            .unwrap_or_else(|| "use-cases-data".to_string());
 
         // Create config with resolved parameters
-        let config = Config::for_template_with_methodologies_storage_and_directories(
-            Some(resolved_language.clone()),
-            resolved_methodologies.clone(),
-            Some(resolved_default_methodology.clone()),
-            resolved_storage.clone(),
-            resolved_use_case_dir.clone(),
-            resolved_test_dir.clone(),
-            resolved_actor_dir.clone(),
-            resolved_data_dir.clone(),
-            default_scenario_template,
-        );
+        let config_params = crate::config::ConfigParams {
+            test_language: Some(resolved_language.clone()),
+            methodologies: resolved_methodologies.clone(),
+            default_methodology: Some(resolved_default_methodology.clone()),
+            storage: resolved_storage.clone(),
+            use_case_dir: resolved_use_case_dir.clone(),
+            test_dir: resolved_test_dir.clone(),
+            actor_dir: resolved_actor_dir.clone(),
+            data_dir: resolved_data_dir.clone(),
+            default_scenario_template: params.default_scenario_template,
+        };
+        let config = Config::for_template_with_methodologies_storage_and_directories(config_params);
 
         // Save config file
         Config::save_config_only(&config)?;

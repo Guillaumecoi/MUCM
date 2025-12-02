@@ -71,13 +71,11 @@ impl MarkdownGenerator {
         // Merge methodology_fields for the SPECIFIC methodology into top-level HashMap
         // This flattens methodology_fields.{current_methodology}.{field} -> {field}
         if let Some(Value::Object(methodology_fields_map)) = data.remove("methodology_fields") {
-            if let Some(fields) = methodology_fields_map.get(methodology_name) {
-                if let Value::Object(field_map) = fields {
-                    for (field_name, field_value) in field_map {
-                        // Only insert if not already present (standard fields take priority)
-                        data.entry(field_name.clone())
-                            .or_insert(field_value.clone());
-                    }
+            if let Some(Value::Object(field_map)) = methodology_fields_map.get(methodology_name) {
+                for (field_name, field_value) in field_map {
+                    // Only insert if not already present (standard fields take priority)
+                    data.entry(field_name.clone())
+                        .or_insert(field_value.clone());
                 }
             }
         }

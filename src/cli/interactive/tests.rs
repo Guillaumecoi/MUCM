@@ -15,10 +15,21 @@ mod interactive_runner_tests {
     use std::env;
     use tempfile::TempDir;
 
+    // Note: Now using Config::ensure_test_templates() instead of local helper
+
     /// Helper to create a test environment with initialized config
     fn setup_test_env() -> (TempDir, InteractiveRunner) {
         let temp_dir = TempDir::new().unwrap();
         env::set_current_dir(&temp_dir).unwrap();
+
+        // Set environment variable to indicate we're in a test environment
+        // This tells find_source_templates_dir() to prefer local templates over global
+        unsafe {
+            env::set_var("MUCM_TEST_MODE", "1");
+        }
+
+        // Create minimal source-templates for testing using the shared helper
+        Config::ensure_test_templates().unwrap();
 
         // Create a basic config
         let config = Config::default();
@@ -134,23 +145,23 @@ mod interactive_runner_tests {
         let temp_dir = TempDir::new().unwrap();
         env::set_current_dir(&temp_dir).unwrap();
 
-        // Initialize project properly (this handles missing templates gracefully)
-        let mut runner = InteractiveRunner::new();
-        let result = runner.initialize_project(
-            None,                         // no language
-            vec!["business".to_string()], // single methodology
-            "toml".to_string(),
-            "docs/use-cases".to_string(),
-            "tests".to_string(),
-            "docs/personas".to_string(),
-            "use-cases-data".to_string(),
-            None,
-        );
+        // Create minimal source-templates
+        Config::ensure_test_templates().unwrap();
 
-        // If initialization fails (e.g., no source-templates), skip the test
-        if result.is_err() {
-            return;
-        }
+        // Initialize project
+        let mut runner = InteractiveRunner::new();
+        let params = crate::cli::interactive::runner::InitProjectParams {
+            language: None,
+            methodologies: vec!["business".to_string()],
+            storage: "toml".to_string(),
+            use_case_dir: "docs/use-cases".to_string(),
+            test_dir: "tests".to_string(),
+            persona_dir: "docs/personas".to_string(),
+            data_dir: "use-cases-data".to_string(),
+            scenario_template: None,
+        };
+        let result = runner.initialize_project(params);
+        assert!(result.is_ok(), "Initialization should succeed");
 
         // Create some use cases
         runner
@@ -213,6 +224,8 @@ mod workflow_tests {
     fn setup_empty_dir() -> TempDir {
         let temp_dir = TempDir::new().unwrap();
         env::set_current_dir(&temp_dir).unwrap();
+        // Create source-templates for testing
+        Config::ensure_test_templates().unwrap();
         temp_dir
     }
 
@@ -223,16 +236,17 @@ mod workflow_tests {
         let mut runner = InteractiveRunner::new();
 
         // Test initialization through runner interface
-        let result = runner.initialize_project(
-            Some("rust".to_string()),
-            vec!["business".to_string()],
-            "toml".to_string(),
-            "docs/my-use-cases".to_string(),
-            "tests/my-tests".to_string(),
-            "docs/my-personas".to_string(),
-            "my-data".to_string(),
-            None,
-        );
+        let params = crate::cli::interactive::runner::InitProjectParams {
+            language: Some("rust".to_string()),
+            methodologies: vec!["business".to_string()],
+            storage: "toml".to_string(),
+            use_case_dir: "docs/my-use-cases".to_string(),
+            test_dir: "tests/my-tests".to_string(),
+            persona_dir: "docs/my-personas".to_string(),
+            data_dir: "my-data".to_string(),
+            scenario_template: None,
+        };
+        let result = runner.initialize_project(params);
         assert!(result.is_ok(), "Initialization should succeed");
         let message = result.unwrap();
         assert!(
@@ -329,6 +343,9 @@ mod persona_workflow_tests {
         let temp_dir = TempDir::new().unwrap();
         env::set_current_dir(&temp_dir).unwrap();
 
+        // Create source-templates for testing
+        Config::ensure_test_templates().unwrap();
+
         let config = Config::default();
         ConfigFileManager::save_in_dir(&config, ".").unwrap();
 
@@ -341,6 +358,9 @@ mod persona_workflow_tests {
     ) -> (TempDir, InteractiveRunner, Config) {
         let temp_dir = TempDir::new().unwrap();
         env::set_current_dir(&temp_dir).unwrap();
+
+        // Create source-templates for testing
+        Config::ensure_test_templates().unwrap();
 
         let mut config = Config::default();
         config.storage.backend = backend;

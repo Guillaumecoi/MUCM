@@ -10,7 +10,11 @@ use rusqlite::Connection;
 ///
 /// Increment this when making schema changes and add corresponding
 /// migration in migrations.rs.
-pub const SCHEMA_VERSION: i32 = 1;
+///
+/// Version history:
+/// - v1: Initial schema
+/// - v2: Actor ID format change (function-name pattern for personas)
+pub const SCHEMA_VERSION: i32 = 2;
 
 /// Schema manager for creating and validating database structure.
 pub struct Schema;
@@ -178,7 +182,7 @@ impl Schema {
     }
 
     /// Set the schema version in metadata table.
-    fn set_schema_version(conn: &Connection, version: i32) -> Result<()> {
+    pub(super) fn set_schema_version(conn: &Connection, version: i32) -> Result<()> {
         conn.execute(
             "INSERT OR REPLACE INTO _metadata (key, value, updated_at)
              VALUES ('schema_version', ?1, datetime('now'))",

@@ -721,15 +721,16 @@ impl ScenarioWorkflow {
                         .unwrap_or_else(|| "User".to_string());
 
                     // Create the extension scenario
-                    let result = controller.create_extension_scenario(
-                        use_case_id.to_string(),
-                        scenario_id.to_string(),
+                    let params = crate::controller::CreateExtensionParams {
+                        use_case_id: use_case_id.to_string(),
+                        parent_scenario_id: scenario_id.to_string(),
                         extends_at_step,
                         returns_at_step,
                         title,
-                        description.unwrap_or_default(),
+                        description: description.unwrap_or_default(),
                         primary_actor,
-                    )?;
+                    };
+                    let result = controller.create_extension_scenario(params)?;
 
                     UI::show_success(&result.message)?;
                     println!(
@@ -1152,15 +1153,16 @@ impl ScenarioWorkflow {
 
         let description = Text::new("Step description:").prompt()?;
 
-        let result = controller.insert_step(
-            use_case_id.to_string(),
-            scenario_id.to_string(),
-            after_step_order,
-            actor.unwrap_or_else(|| "User".to_string()),
+        let params = crate::controller::InsertStepParams {
+            use_case_id: use_case_id.to_string(),
+            scenario_id: scenario_id.to_string(),
+            after_step: after_step_order,
+            actor: actor.unwrap_or_else(|| "User".to_string()),
             receiver,
-            description,
-            None,
-        )?;
+            action: description,
+            expected_result: None,
+        };
+        let result = controller.insert_step(params)?;
 
         UI::show_success(&result.message)?;
         Ok(())
@@ -1203,6 +1205,7 @@ impl ScenarioWorkflow {
     }
 
     /// Inline helper to renumber steps within manage_steps context
+    /// Legacy helper kept for reference - now using dedicated renumber_steps
     #[allow(dead_code)]
     fn renumber_steps_inline(
         use_case_id: &str,
@@ -1256,7 +1259,8 @@ impl ScenarioWorkflow {
 
     /// Create an extension scenario that diverges from a main scenario
     /// Note: This is now called from within the step management menu
-    #[allow(dead_code)]
+    /// Legacy function kept for reference - integrated into manage_steps
+    #[allow(dead_code)] // Legacy code kept for reference during refactoring
     fn create_extension_scenario(use_case_id: &str) -> Result<()> {
         UI::show_section_header("Create Extension Scenario", "🔀")?;
 
@@ -1351,15 +1355,16 @@ impl ScenarioWorkflow {
             .unwrap_or_else(|| "User".to_string());
 
         // Create extension
-        let result = controller.create_extension_scenario(
-            use_case_id.to_string(),
-            parent_id.to_string(),
-            extends_at_step.clone(),
-            returns_at_step.clone(),
-            title.clone(),
+        let params = crate::controller::CreateExtensionParams {
+            use_case_id: use_case_id.to_string(),
+            parent_scenario_id: parent_id.to_string(),
+            extends_at_step: extends_at_step.clone(),
+            returns_at_step: returns_at_step.clone(),
+            title: title.clone(),
             description,
-            actor,
-        )?;
+            primary_actor: actor,
+        };
+        let result = controller.create_extension_scenario(params)?;
 
         UI::show_success(&result.message)?;
 
@@ -1422,7 +1427,8 @@ impl ScenarioWorkflow {
     }
 
     /// Advanced scenario operations menu
-    #[allow(dead_code)]
+    /// Legacy function - operations now integrated into manage_steps menu
+    #[allow(dead_code)] // Kept for reference during UI refactoring
     fn advanced_operations(use_case_id: &str) -> Result<()> {
         loop {
             UI::show_section_header("Advanced Scenario Operations", "⚙️")?;
@@ -1463,7 +1469,8 @@ impl ScenarioWorkflow {
     }
 
     /// Add a repeat block to a scenario
-    #[allow(dead_code)]
+    /// Legacy function - now accessible via manage_steps menu
+    #[allow(dead_code)] // Kept for reference, may be reused
     fn add_repeat_block(use_case_id: &str) -> Result<()> {
         UI::show_section_header("Add Repeat Block", "🔁")?;
 
@@ -1551,7 +1558,8 @@ impl ScenarioWorkflow {
     }
 
     /// Remove a repeat block from a scenario
-    #[allow(dead_code)]
+    /// Legacy function - now accessible via manage_steps menu
+    #[allow(dead_code)] // Kept for reference, may be reused
     fn remove_repeat_block(use_case_id: &str) -> Result<()> {
         UI::show_section_header("Remove Repeat Block", "❌")?;
 
@@ -1684,15 +1692,16 @@ impl ScenarioWorkflow {
             .ok()
             .filter(|s| !s.is_empty());
 
-        let result = controller.insert_step(
-            use_case_id.to_string(),
-            scenario_id.to_string(),
+        let params = crate::controller::InsertStepParams {
+            use_case_id: use_case_id.to_string(),
+            scenario_id: scenario_id.to_string(),
             after_step,
             actor,
             receiver,
             action,
             expected_result,
-        )?;
+        };
+        let result = controller.insert_step(params)?;
 
         UI::show_success(&result.message)?;
         UI::pause_for_input()?;
@@ -1769,7 +1778,8 @@ impl ScenarioWorkflow {
     }
 
     /// Renumber steps in a scenario
-    #[allow(dead_code)]
+    /// Legacy function - now accessible via manage_steps menu
+    #[allow(dead_code)] // Kept for reference, may be reused
     fn renumber_steps(use_case_id: &str) -> Result<()> {
         UI::show_section_header("Renumber Steps", "🔢")?;
 
