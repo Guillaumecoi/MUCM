@@ -63,7 +63,7 @@ fn create_toml_repository() -> (TempDir, Box<dyn UseCaseRepository>) {
 
     // Create minimal source-templates for testing
     common::create_minimal_source_templates(std::path::Path::new(".")).unwrap();
-    
+
     use mucm::config::ConfigFileManager;
     let config = mucm::config::Config::default();
     ConfigFileManager::save_in_dir(&config, ".").unwrap();

@@ -282,10 +282,18 @@ impl ProjectController {
         };
 
         // Use defaults for directories
-        let resolved_use_case_dir = params.use_case_dir.unwrap_or_else(|| "docs/use-cases".to_string());
-        let resolved_test_dir = params.test_dir.unwrap_or_else(|| "tests/use-cases".to_string());
-        let resolved_actor_dir = params.actor_dir.unwrap_or_else(|| "docs/actors".to_string());
-        let resolved_data_dir = params.data_dir.unwrap_or_else(|| "use-cases-data".to_string());
+        let resolved_use_case_dir = params
+            .use_case_dir
+            .unwrap_or_else(|| "docs/use-cases".to_string());
+        let resolved_test_dir = params
+            .test_dir
+            .unwrap_or_else(|| "tests/use-cases".to_string());
+        let resolved_actor_dir = params
+            .actor_dir
+            .unwrap_or_else(|| "docs/actors".to_string());
+        let resolved_data_dir = params
+            .data_dir
+            .unwrap_or_else(|| "use-cases-data".to_string());
 
         // Create config with resolved parameters
         let config_params = crate::config::ConfigParams {

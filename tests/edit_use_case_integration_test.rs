@@ -28,7 +28,7 @@ fn setup_test_env() -> (TempDir, UseCaseController) {
 
     // Create minimal source-templates for testing
     common::create_minimal_source_templates(std::path::Path::new(".")).unwrap();
-    
+
     // Create default config
     let config = Config::default();
     ConfigFileManager::save_in_dir(&config, ".").unwrap();

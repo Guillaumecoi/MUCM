@@ -133,7 +133,8 @@ impl InteractiveRunner {
     pub fn initialize_project(&mut self, params: InitProjectParams) -> Result<String> {
         // Sanitize inputs: trim whitespace and filter out empty strings
         let sanitized_language = Self::sanitize_optional_string(params.language);
-        let sanitized_methodologies: Vec<String> = params.methodologies
+        let sanitized_methodologies: Vec<String> = params
+            .methodologies
             .into_iter()
             .filter_map(Self::sanitize_string)
             .collect();
@@ -208,7 +209,8 @@ impl InteractiveRunner {
         let controller = self.ensure_use_case_controller()?;
 
         // Format views as "methodology:level,methodology:level"
-        let views_string = params.views
+        let views_string = params
+            .views
             .iter()
             .map(|(methodology, level)| format!("{}:{}", methodology, level))
             .collect::<Vec<_>>()
@@ -228,7 +230,11 @@ impl InteractiveRunner {
 
         // Extract use case ID from message (format: "Created use case: UC-XXX-XXX with views: ...")
         let use_case_id = if let Some(id_part) = result.message.split("Created use case: ").nth(1) {
-            id_part.split(" with").next().unwrap_or(&params.title).to_string()
+            id_part
+                .split(" with")
+                .next()
+                .unwrap_or(&params.title)
+                .to_string()
         } else {
             params.title.clone()
         };

@@ -56,7 +56,13 @@ file_extension = "{}"
 template_file = "test.hbs"
 "#,
                 lang,
-                if *lang == "python" { "py" } else if *lang == "javascript" { "js" } else { "rs" }
+                if *lang == "python" {
+                    "py"
+                } else if *lang == "javascript" {
+                    "js"
+                } else {
+                    "rs"
+                }
             ),
         )?;
         fs::write(lang_dir.join("test.hbs"), "# Test template\n")?;
@@ -154,7 +160,7 @@ pub fn init_test_project(language: Option<String>) -> Result<Config> {
 
     // Create minimal source-templates for testing
     create_minimal_source_templates(Path::new("."))?;
-    
+
     let mut config = Config::default();
 
     if let Some(ref lang) = language {

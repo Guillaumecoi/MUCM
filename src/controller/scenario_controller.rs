@@ -127,7 +127,7 @@ impl ScenarioController {
         let persona_id = params.persona_id;
         let preconditions = params.preconditions;
         let postconditions = params.postconditions;
-        
+
         // Parse scenario type
         let parsed_type = ScenarioType::from_str(&params.scenario_type)
             .map_err(|e| anyhow::anyhow!("Invalid scenario type: {}", e))?;
@@ -334,7 +334,8 @@ impl ScenarioController {
             action: step_description.clone(),
             expected_result: None,
         };
-        self.app_service.add_scenario_step(&use_case_id, &scenario_id, params)?;
+        self.app_service
+            .add_scenario_step(&use_case_id, &scenario_id, params)?;
 
         let message = if let Some(ref recv) = receiver {
             format!(
@@ -872,7 +873,10 @@ impl ScenarioController {
     ///
     /// # Returns
     /// DisplayResult with the new extension scenario ID
-    pub fn create_extension_scenario(&mut self, params: CreateExtensionParams) -> Result<DisplayResult> {
+    pub fn create_extension_scenario(
+        &mut self,
+        params: CreateExtensionParams,
+    ) -> Result<DisplayResult> {
         let use_case_id = params.use_case_id;
         let parent_scenario_id = params.parent_scenario_id;
         let extends_at_step = params.extends_at_step;
@@ -895,7 +899,9 @@ impl ScenarioController {
             description,
             primary_actor: actor,
         };
-        let scenario_id = self.app_service.create_extension_scenario(&use_case_id, params)?;
+        let scenario_id = self
+            .app_service
+            .create_extension_scenario(&use_case_id, params)?;
 
         let return_info = returns_at_step
             .map(|r| format!(" and returns at step {}", r))
@@ -1004,7 +1010,11 @@ impl ScenarioController {
             action: action.clone(),
             expected_result,
         };
-        let new_step_order = self.app_service.insert_step_with_extension_update(&use_case_id, &scenario_id, params)?;
+        let new_step_order = self.app_service.insert_step_with_extension_update(
+            &use_case_id,
+            &scenario_id,
+            params,
+        )?;
 
         let receiver_info = receiver.map(|r| format!(" → {}", r)).unwrap_or_default();
 

@@ -816,7 +816,10 @@ impl UseCaseController {
             action,
             expected_result,
         };
-        match self.app_service.add_scenario_step(&use_case_id, &scenario_title, params) {
+        match self
+            .app_service
+            .add_scenario_step(&use_case_id, &scenario_title, params)
+        {
             Ok(_) => Ok(DisplayResult::success(format!(
                 "Added step to scenario '{}' in use case: {}",
                 scenario_title, use_case_id

@@ -2,7 +2,9 @@
 // This orchestrates domain services, manages state, and provides transaction boundaries
 // Controllers (presentation layer) call this coordinator, which delegates to domain services
 use crate::config::Config;
-use crate::core::application::creators::{ScenarioCreator, ScenarioParams, StepParams, UseCaseCreator};
+use crate::core::application::creators::{
+    ScenarioCreator, ScenarioParams, StepParams, UseCaseCreator,
+};
 use crate::core::application::generators::{
     MarkdownGenerator, OutputManager, OverviewGenerator, TestGenerator,
 };
@@ -593,11 +595,7 @@ impl UseCaseCoordinator {
     // ========== Scenario Management Methods ==========
 
     /// Add a scenario to a use case
-    pub fn add_scenario(
-        &mut self,
-        use_case_id: &str,
-        params: AddScenarioParams,
-    ) -> Result<String> {
+    pub fn add_scenario(&mut self, use_case_id: &str, params: AddScenarioParams) -> Result<String> {
         let mut scenario_service = services::ScenarioManagementService::new(
             self.repository.as_ref(),
             &mut self.use_cases,

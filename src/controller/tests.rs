@@ -75,7 +75,13 @@ file_extension = "{}"
 template_file = "test.hbs"
 "#,
                     lang,
-                    if *lang == "python" { "py" } else if *lang == "javascript" { "js" } else { "rs" }
+                    if *lang == "python" {
+                        "py"
+                    } else if *lang == "javascript" {
+                        "js"
+                    } else {
+                        "rs"
+                    }
                 ),
             )?;
             fs::write(lang_dir.join("test.hbs"), "# Test template\n")?;
@@ -146,7 +152,7 @@ inherits = ["Normal"]
 
         // Create minimal source-templates for testing
         create_minimal_source_templates(std::path::Path::new(".")).unwrap();
-        
+
         // Create a basic config
         let config = Config::default();
         ConfigFileManager::save_in_dir(&config, ".").unwrap();
@@ -1024,7 +1030,13 @@ file_extension = "{}"
 template_file = "test.hbs"
 "#,
                     lang,
-                    if *lang == "python" { "py" } else if *lang == "javascript" { "js" } else { "rs" }
+                    if *lang == "python" {
+                        "py"
+                    } else if *lang == "javascript" {
+                        "js"
+                    } else {
+                        "rs"
+                    }
                 ),
             )?;
             fs::write(lang_dir.join("test.hbs"), "# Test template\n")?;
@@ -1754,10 +1766,10 @@ inherits = ["Normal"]
 
         // Create config only (simulate step 1)
         use crate::config::{Config, ConfigFileManager};
-        
+
         // Create minimal source-templates for testing
         create_minimal_source_templates(std::path::Path::new(".")).unwrap();
-        
+
         let config = Config::default();
         ConfigFileManager::save_in_dir(&config, ".").unwrap();
 

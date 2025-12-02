@@ -425,7 +425,7 @@ impl Config {
     #[cfg(test)]
     pub fn ensure_test_templates() -> std::io::Result<()> {
         use std::path::Path;
-        
+
         // Check if source-templates already exists and has valid config
         if Path::new("source-templates/config.toml").exists() {
             // Try to parse it - if it works, we're good
@@ -437,7 +437,7 @@ impl Config {
                 return Ok(());
             }
         }
-        
+
         // Create minimal templates
         let templates_dir = Path::new("source-templates");
         std::fs::create_dir_all(templates_dir)?;
@@ -477,12 +477,12 @@ last_updated = true
         for lang in &["rust", "python", "javascript"] {
             let lang_dir = templates_dir.join("languages").join(lang);
             std::fs::create_dir_all(&lang_dir)?;
-            let (ext, alias) = if *lang == "python" { 
-                ("py", "py") 
-            } else if *lang == "javascript" { 
-                ("js", "js") 
-            } else { 
-                ("rs", "rs") 
+            let (ext, alias) = if *lang == "python" {
+                ("py", "py")
+            } else if *lang == "javascript" {
+                ("js", "js")
+            } else {
+                ("rs", "rs")
             };
             std::fs::write(
                 lang_dir.join("info.toml"),
@@ -755,7 +755,7 @@ impl Default for Config {
         {
             let _ = Self::ensure_test_templates();
         }
-        
+
         // Load default configuration from source-templates/config.toml
         // This ensures consistency between the template and the default config
         match Self::load_default_from_template() {
