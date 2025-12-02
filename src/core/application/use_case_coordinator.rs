@@ -27,6 +27,34 @@ pub struct CreateUseCaseWithViewsParams {
     pub extra_fields: HashMap<String, String>,
 }
 
+/// Parameters for adding a scenario step
+pub struct AddScenarioStepParams {
+    pub order: String,
+    pub actor: String,
+    pub receiver: Option<String>,
+    pub action: String,
+    pub expected_result: Option<String>,
+}
+
+/// Parameters for creating an extension scenario
+pub struct CreateExtensionScenarioParams {
+    pub parent_scenario_id: String,
+    pub extends_at_step: String,
+    pub returns_at_step: Option<String>,
+    pub title: String,
+    pub description: String,
+    pub primary_actor: crate::core::Actor,
+}
+
+/// Parameters for inserting a step with extension update
+pub struct InsertStepWithExtensionParams {
+    pub after_step: String,
+    pub actor: String,
+    pub receiver: Option<String>,
+    pub action: String,
+    pub expected_result: Option<String>,
+}
+
 /// Parameters for adding a scenario
 pub struct AddScenarioParams {
     pub title: String,
@@ -601,25 +629,21 @@ impl UseCaseCoordinator {
         &mut self,
         use_case_id: &str,
         scenario_id: &str,
-        order: String,
-        actor: String,
-        receiver: Option<String>,
-        action: String,
-        expected_result: Option<String>,
+        params: AddScenarioStepParams,
     ) -> Result<()> {
         let mut scenario_service = services::ScenarioManagementService::new(
             self.repository.as_ref(),
             &mut self.use_cases,
             &self.scenario_creator,
         );
-        let params = StepParams {
-            order,
-            actor,
-            receiver,
-            action,
-            expected_result,
+        let step_params = StepParams {
+            order: params.order,
+            actor: params.actor,
+            receiver: params.receiver,
+            action: params.action,
+            expected_result: params.expected_result,
         };
-        scenario_service.add_scenario_step(use_case_id, scenario_id, params)
+        scenario_service.add_scenario_step(use_case_id, scenario_id, step_params)
     }
 
     /// Update the status of a scenario
@@ -823,26 +847,21 @@ impl UseCaseCoordinator {
     pub fn create_extension_scenario(
         &mut self,
         use_case_id: &str,
-        parent_scenario_id: &str,
-        extends_at_step: String,
-        returns_at_step: Option<String>,
-        title: String,
-        description: String,
-        primary_actor: crate::core::Actor,
+        params: CreateExtensionScenarioParams,
     ) -> Result<String> {
         let mut scenario_service = services::ScenarioManagementService::new(
             self.repository.as_ref(),
             &mut self.use_cases,
             &self.scenario_creator,
         );
-        let params = crate::core::application::creators::ExtensionScenarioParams {
-            parent_scenario_id: parent_scenario_id.to_string(),
-            extends_at_step,
-            title,
-            description: Some(description),
-            primary_actor,
+        let ext_params = crate::core::application::creators::ExtensionScenarioParams {
+            parent_scenario_id: params.parent_scenario_id,
+            extends_at_step: params.extends_at_step,
+            title: params.title,
+            description: Some(params.description),
+            primary_actor: params.primary_actor,
         };
-        scenario_service.create_extension_scenario(use_case_id, params, returns_at_step)
+        scenario_service.create_extension_scenario(use_case_id, ext_params, params.returns_at_step)
     }
 
     /// Add a repeat block to a scenario
@@ -884,29 +903,25 @@ impl UseCaseCoordinator {
         &mut self,
         use_case_id: &str,
         scenario_id: &str,
-        after_step: &str,
-        actor: String,
-        receiver: Option<String>,
-        action: String,
-        expected_result: Option<String>,
+        params: InsertStepWithExtensionParams,
     ) -> Result<String> {
         let mut scenario_service = services::ScenarioManagementService::new(
             self.repository.as_ref(),
             &mut self.use_cases,
             &self.scenario_creator,
         );
-        let params = StepParams {
+        let step_params = StepParams {
             order: String::new(), // Will be determined by the service
-            actor,
-            receiver,
-            action,
-            expected_result,
+            actor: params.actor,
+            receiver: params.receiver,
+            action: params.action,
+            expected_result: params.expected_result,
         };
         scenario_service.insert_step_with_extension_update(
             use_case_id,
             scenario_id,
-            after_step,
-            params,
+            &params.after_step,
+            step_params,
         )
     }
 

@@ -9,6 +9,39 @@ use anyhow::Result;
 use std::collections::HashMap;
 use std::str::FromStr;
 
+/// Parameters for creating a scenario
+pub struct CreateScenarioParams {
+    pub use_case_id: String,
+    pub title: String,
+    pub scenario_type: String,
+    pub description: Option<String>,
+    pub persona_id: Option<String>,
+    pub preconditions: Option<Vec<String>>,
+    pub postconditions: Option<Vec<String>>,
+}
+
+/// Parameters for creating an extension scenario
+pub struct CreateExtensionParams {
+    pub use_case_id: String,
+    pub parent_scenario_id: String,
+    pub extends_at_step: String,
+    pub returns_at_step: Option<String>,
+    pub title: String,
+    pub description: String,
+    pub primary_actor: String,
+}
+
+/// Parameters for inserting a step
+pub struct InsertStepParams {
+    pub use_case_id: String,
+    pub scenario_id: String,
+    pub after_step: String,
+    pub actor: String,
+    pub receiver: Option<String>,
+    pub action: String,
+    pub expected_result: Option<String>,
+}
+
 /// Controller for managing scenarios within use cases
 pub struct ScenarioController {
     app_service: UseCaseCoordinator,
@@ -87,19 +120,17 @@ impl ScenarioController {
     ///
     /// # Returns
     /// DisplayResult with scenario ID
-    pub fn create_scenario(
-        &mut self,
-        use_case_id: String,
-        title: String,
-        scenario_type: String,
-        description: Option<String>,
-        persona_id: Option<String>,
-        preconditions: Option<Vec<String>>,
-        postconditions: Option<Vec<String>>,
-    ) -> Result<DisplayResult> {
+    pub fn create_scenario(&mut self, params: CreateScenarioParams) -> Result<DisplayResult> {
+        let use_case_id = params.use_case_id;
+        let title = params.title;
+        let description = params.description;
+        let persona_id = params.persona_id;
+        let preconditions = params.preconditions;
+        let postconditions = params.postconditions;
+        
         // Parse scenario type
-        let parsed_type = ScenarioType::from_str(&scenario_type)
-            .map_err(|_| anyhow::anyhow!("Invalid scenario type: {}", scenario_type))?;
+        let parsed_type = ScenarioType::from_str(&params.scenario_type)
+            .map_err(|e| anyhow::anyhow!("Invalid scenario type: {}", e))?;
 
         // Create scenario via coordinator (actors derived from steps)
         let params = crate::core::AddScenarioParams {
@@ -296,15 +327,14 @@ impl ScenarioController {
         let order_str = order.to_string();
         let actor_name = actor.unwrap_or_else(|| "Actor".to_string());
 
-        self.app_service.add_scenario_step(
-            &use_case_id,
-            &scenario_id,
-            order_str,
-            actor_name.clone(),
-            receiver.clone(),
-            step_description.clone(),
-            None, // No expected result by default
-        )?;
+        let params = crate::core::AddScenarioStepParams {
+            order: order_str,
+            actor: actor_name.clone(),
+            receiver: receiver.clone(),
+            action: step_description.clone(),
+            expected_result: None,
+        };
+        self.app_service.add_scenario_step(&use_case_id, &scenario_id, params)?;
 
         let message = if let Some(ref recv) = receiver {
             format!(
@@ -842,16 +872,14 @@ impl ScenarioController {
     ///
     /// # Returns
     /// DisplayResult with the new extension scenario ID
-    pub fn create_extension_scenario(
-        &mut self,
-        use_case_id: String,
-        parent_scenario_id: String,
-        extends_at_step: String,
-        returns_at_step: Option<String>,
-        title: String,
-        description: String,
-        primary_actor: String,
-    ) -> Result<DisplayResult> {
+    pub fn create_extension_scenario(&mut self, params: CreateExtensionParams) -> Result<DisplayResult> {
+        let use_case_id = params.use_case_id;
+        let parent_scenario_id = params.parent_scenario_id;
+        let extends_at_step = params.extends_at_step;
+        let returns_at_step = params.returns_at_step;
+        let title = params.title;
+        let description = params.description;
+        let primary_actor = params.primary_actor;
         let actor = primary_actor.parse().map_err(|_| {
             anyhow::anyhow!(
                 "Invalid actor: {}. Use System, User, or a persona ID",
@@ -859,15 +887,15 @@ impl ScenarioController {
             )
         })?;
 
-        let scenario_id = self.app_service.create_extension_scenario(
-            &use_case_id,
-            &parent_scenario_id,
-            extends_at_step.clone(),
-            returns_at_step.clone(),
-            title.clone(),
+        let params = crate::core::CreateExtensionScenarioParams {
+            parent_scenario_id: parent_scenario_id.clone(),
+            extends_at_step: extends_at_step.clone(),
+            returns_at_step: returns_at_step.clone(),
+            title: title.clone(),
             description,
-            actor,
-        )?;
+            primary_actor: actor,
+        };
+        let scenario_id = self.app_service.create_extension_scenario(&use_case_id, params)?;
 
         let return_info = returns_at_step
             .map(|r| format!(" and returns at step {}", r))
@@ -961,25 +989,22 @@ impl ScenarioController {
     ///
     /// # Returns
     /// DisplayResult with the new step order
-    pub fn insert_step(
-        &mut self,
-        use_case_id: String,
-        scenario_id: String,
-        after_step: String,
-        actor: String,
-        receiver: Option<String>,
-        action: String,
-        expected_result: Option<String>,
-    ) -> Result<DisplayResult> {
-        let new_step_order = self.app_service.insert_step_with_extension_update(
-            &use_case_id,
-            &scenario_id,
-            &after_step,
-            actor.clone(),
-            receiver.clone(),
-            action.clone(),
+    pub fn insert_step(&mut self, params: InsertStepParams) -> Result<DisplayResult> {
+        let use_case_id = params.use_case_id;
+        let scenario_id = params.scenario_id;
+        let after_step = params.after_step;
+        let actor = params.actor;
+        let receiver = params.receiver;
+        let action = params.action;
+        let expected_result = params.expected_result;
+        let params = crate::core::InsertStepWithExtensionParams {
+            after_step: after_step.clone(),
+            actor: actor.clone(),
+            receiver: receiver.clone(),
+            action: action.clone(),
             expected_result,
-        )?;
+        };
+        let new_step_order = self.app_service.insert_step_with_extension_update(&use_case_id, &scenario_id, params)?;
 
         let receiver_info = receiver.map(|r| format!(" → {}", r)).unwrap_or_default();
 
@@ -1148,17 +1173,16 @@ mod tests {
         // Reload the controller to pick up the newly created use case
         let mut controller = ScenarioController::new().unwrap();
 
-        let result = controller
-            .create_scenario(
-                use_case_id.clone(),
-                "User Login".to_string(),
-                "main".to_string(),
-                Some("Main login scenario".to_string()),
-                None,
-                None,
-                None,
-            )
-            .unwrap();
+        let params = CreateScenarioParams {
+            use_case_id: use_case_id.clone(),
+            title: "User Login".to_string(),
+            scenario_type: "main".to_string(),
+            description: Some("Main login scenario".to_string()),
+            persona_id: None,
+            preconditions: None,
+            postconditions: None,
+        };
+        let result = controller.create_scenario(params).unwrap();
 
         assert!(result.is_success());
         assert!(result.message.contains("Created scenario"));
@@ -1174,17 +1198,16 @@ mod tests {
         let mut controller = ScenarioController::new().unwrap();
 
         // Create a scenario
-        controller
-            .create_scenario(
-                use_case_id.clone(),
-                "Scenario 1".to_string(),
-                "main".to_string(),
-                None,
-                None,
-                None,
-                None,
-            )
-            .unwrap();
+        let params = CreateScenarioParams {
+            use_case_id: use_case_id.clone(),
+            title: "Scenario 1".to_string(),
+            scenario_type: "main".to_string(),
+            description: None,
+            persona_id: None,
+            preconditions: None,
+            postconditions: None,
+        };
+        controller.create_scenario(params).unwrap();
 
         // List scenarios
         let result = controller.list_scenarios(use_case_id).unwrap();
@@ -1202,17 +1225,16 @@ mod tests {
         let mut controller = ScenarioController::new().unwrap();
 
         // Create scenario
-        controller
-            .create_scenario(
-                use_case_id.clone(),
-                "Test Scenario".to_string(),
-                "main".to_string(),
-                None,
-                None,
-                None,
-                None,
-            )
-            .unwrap();
+        let params = CreateScenarioParams {
+            use_case_id: use_case_id.clone(),
+            title: "Test Scenario".to_string(),
+            scenario_type: "main".to_string(),
+            description: None,
+            persona_id: None,
+            preconditions: None,
+            postconditions: None,
+        };
+        controller.create_scenario(params).unwrap();
 
         let scenarios = controller.app_service.get_scenarios(&use_case_id).unwrap();
         let scenario_id = scenarios[0].id.clone();
@@ -1243,17 +1265,16 @@ mod tests {
         let mut controller = ScenarioController::new().unwrap();
 
         // Create scenario
-        controller
-            .create_scenario(
-                use_case_id.clone(),
-                "Test Scenario".to_string(),
-                "main".to_string(),
-                None,
-                None,
-                None,
-                None,
-            )
-            .unwrap();
+        let params = CreateScenarioParams {
+            use_case_id: use_case_id.clone(),
+            title: "Test Scenario".to_string(),
+            scenario_type: "main".to_string(),
+            description: None,
+            persona_id: None,
+            preconditions: None,
+            postconditions: None,
+        };
+        controller.create_scenario(params).unwrap();
 
         let scenarios = controller.app_service.get_scenarios(&use_case_id).unwrap();
         let scenario_id = scenarios[0].id.clone();
@@ -1951,17 +1972,16 @@ mod tests {
             .unwrap();
 
         // Create extension scenario
-        let result = controller
-            .create_extension_scenario(
-                use_case_id.clone(),
-                main_scenario_id.clone(),
-                "1".to_string(),
-                Some("2".to_string()),
-                "Extension Scenario".to_string(),
-                "Extension description".to_string(),
-                "User".to_string(),
-            )
-            .unwrap();
+        let params = CreateExtensionParams {
+            use_case_id: use_case_id.clone(),
+            parent_scenario_id: main_scenario_id.clone(),
+            extends_at_step: "1".to_string(),
+            returns_at_step: Some("2".to_string()),
+            title: "Extension Scenario".to_string(),
+            description: "Extension description".to_string(),
+            primary_actor: "User".to_string(),
+        };
+        let result = controller.create_extension_scenario(params).unwrap();
 
         assert!(result.is_success());
         assert!(result.message.contains("Created extension scenario"));
@@ -2165,17 +2185,16 @@ mod tests {
             .unwrap();
 
         // Insert step smartly after step 1 (should create 1a)
-        let result = controller
-            .insert_step(
-                use_case_id.clone(),
-                scenario_id.clone(),
-                "1".to_string(),
-                "System".to_string(),
-                None,
-                "Inserted action".to_string(),
-                None,
-            )
-            .unwrap();
+        let params = InsertStepParams {
+            use_case_id: use_case_id.clone(),
+            scenario_id: scenario_id.clone(),
+            after_step: "1".to_string(),
+            actor: "System".to_string(),
+            receiver: None,
+            action: "Inserted action".to_string(),
+            expected_result: None,
+        };
+        let result = controller.insert_step(params).unwrap();
 
         assert!(result.is_success());
         assert!(result.message.contains("Inserted step"));

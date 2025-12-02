@@ -7,7 +7,8 @@ mod use_case_coordinator;
 
 pub use methodology_field_collector::MethodologyFieldCollector;
 pub use use_case_coordinator::{
-    AddScenarioParams, CreateUseCaseWithViewsParams, UseCaseCoordinator,
+    AddScenarioParams, AddScenarioStepParams, CreateExtensionScenarioParams,
+    CreateUseCaseWithViewsParams, InsertStepWithExtensionParams, UseCaseCoordinator,
 };
 
 #[cfg(test)]
