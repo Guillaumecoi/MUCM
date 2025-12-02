@@ -1,0 +1,14 @@
+id = "store-administrator-john-smith"
+name = "John Smith"
+actor_type = "persona"
+emoji = "👨‍💼"
+background = "Store manager with 5 years e-commerce experience. Manages product catalog, monitors orders, and handles business operations. Technical background in retail management."
+motivation_for_product = "Manage inventory efficiently, monitor sales metrics, handle exceptional cases"
+technical_experience = "High"
+function = "Store Administrator"
+job_role = "Store Manager"
+education = "Bachelor's in Business Administration"
+
+[metadata]
+created_at = "2025-12-02T19:21:23.617535387Z"
+updated_at = "2025-12-02T19:21:23.617535387Z"
