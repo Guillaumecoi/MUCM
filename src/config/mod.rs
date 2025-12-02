@@ -1174,7 +1174,9 @@ mod tests {
             .and_then(|p| p.parent()) // target
             .and_then(|p| p.parent()) // project root
             .ok_or_else(|| anyhow::anyhow!("Could not determine project root"))?;
-        std::env::set_var("CARGO_MANIFEST_DIR", project_root);
+        unsafe {
+            std::env::set_var("CARGO_MANIFEST_DIR", project_root);
+        }
 
         let mut config = Config::default();
         config.project.name = "Test Project".to_string();
@@ -1196,7 +1198,9 @@ mod tests {
         assert_eq!(loaded_config.generation.test_language, "javascript");
 
         // Clean up
-        std::env::remove_var("CARGO_MANIFEST_DIR");
+        unsafe {
+            std::env::remove_var("CARGO_MANIFEST_DIR");
+        }
 
         Ok(())
     }
