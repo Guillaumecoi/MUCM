@@ -22,6 +22,12 @@ mod interactive_runner_tests {
         let temp_dir = TempDir::new().unwrap();
         env::set_current_dir(&temp_dir).unwrap();
 
+        // Set environment variable to indicate we're in a test environment
+        // This tells find_source_templates_dir() to prefer local templates over global
+        unsafe {
+            env::set_var("MUCM_TEST_MODE", "1");
+        }
+
         // Create minimal source-templates for testing using the shared helper
         Config::ensure_test_templates().unwrap();
 

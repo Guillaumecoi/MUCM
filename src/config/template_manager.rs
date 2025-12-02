@@ -173,6 +173,16 @@ impl TemplateManager {
     pub fn find_source_templates_dir() -> Result<PathBuf> {
         use directories::ProjectDirs;
 
+        // In test mode, prefer local templates over global to avoid cross-test pollution
+        let test_mode = std::env::var("MUCM_TEST_MODE").is_ok();
+
+        // Try current directory (prioritized in test mode)
+        let local_templates = Path::new("source-templates");
+        if test_mode && local_templates.exists() {
+            // In test mode, always use local templates without installing globally
+            return Ok(local_templates.to_path_buf());
+        }
+
         // Try user config directory first (~/.config/mucm/templates/)
         if let Some(proj_dirs) = ProjectDirs::from("", "", "mucm") {
             let user_templates = proj_dirs.config_dir().join("templates");
@@ -181,8 +191,7 @@ impl TemplateManager {
             }
         }
 
-        // Try current directory
-        let local_templates = Path::new("source-templates");
+        // Try current directory (normal priority)
         if local_templates.exists() {
             // Found in dev location - install to user config for future use
             Self::install_templates_to_user_config(local_templates)?;
