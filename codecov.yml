@@ -29,20 +29,12 @@ coverage:
         only_pulls: true    # Only check on pull requests
 
 # Flag definitions for separating coverage reports
+# Note: Files are pre-filtered using lcov before upload
 flags:
   non-cli:
-    paths:
-      - src/
-    # Exclude CLI directory
-    ignore:
-      - src/cli/
-      - src/main.rs
     carryforward: true
   
   cli:
-    paths:
-      - src/cli/
-      - src/main.rs
     carryforward: true
 
 # Comment on PRs with coverage details
