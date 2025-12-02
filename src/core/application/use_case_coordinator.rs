@@ -16,6 +16,27 @@ use crate::core::{
 use anyhow::Result;
 use std::collections::HashMap;
 
+/// Parameters for creating a use case with views and fields
+pub struct CreateUseCaseWithViewsParams {
+    pub title: String,
+    pub category: String,
+    pub category_abbreviation: String,
+    pub description: Option<String>,
+    pub priority: String,
+    pub views: String, // comma-separated "methodology:level" pairs
+    pub extra_fields: HashMap<String, String>,
+}
+
+/// Parameters for adding a scenario
+pub struct AddScenarioParams {
+    pub title: String,
+    pub scenario_type: ScenarioType,
+    pub description: Option<String>,
+    pub preconditions: Vec<String>,
+    pub postconditions: Vec<String>,
+    pub actors: Vec<String>,
+}
+
 /// Coordinator that orchestrates use case operations and manages application state
 ///
 /// This coordinator provides a centralized point for:
@@ -230,16 +251,11 @@ impl UseCaseCoordinator {
     /// The ID of the created use case
     pub fn create_use_case_with_views_and_fields(
         &mut self,
-        title: String,
-        category: String,
-        category_abbreviation: String,
-        description: Option<String>,
-        priority: String,
-        views: &str,
-        extra_fields: std::collections::HashMap<String, String>,
+        params: CreateUseCaseWithViewsParams,
     ) -> Result<String> {
         // Parse views string into MethodologyView objects
-        let view_list: Vec<MethodologyView> = views
+        let view_list: Vec<MethodologyView> = params
+            .views
             .split(',')
             .map(|s| s.trim())
             .filter(|s| !s.is_empty())
@@ -268,22 +284,22 @@ impl UseCaseCoordinator {
             .map(|v| (v.methodology.clone(), v.level.clone()))
             .collect();
 
-        let params = crate::core::application::creators::UseCaseWithViewsParams {
+        let creator_params = crate::core::application::creators::UseCaseWithViewsParams {
             base: crate::core::application::creators::UseCaseCreationParams {
-                title,
-                category,
-                category_abbreviation,
-                description,
-                priority,
+                title: params.title,
+                category: params.category,
+                category_abbreviation: params.category_abbreviation,
+                description: params.description,
+                priority: params.priority,
                 existing_use_cases: self.use_cases.clone(),
             },
             views: view_tuples,
-            extra_fields,
+            extra_fields: params.extra_fields,
         };
 
         let use_case = self
             .use_case_creator
-            .create_use_case_with_views(params, self.repository.as_ref())?;
+            .create_use_case_with_views(creator_params, self.repository.as_ref())?;
 
         let use_case_id = use_case.id.clone();
 
@@ -552,12 +568,7 @@ impl UseCaseCoordinator {
     pub fn add_scenario(
         &mut self,
         use_case_id: &str,
-        title: String,
-        scenario_type: ScenarioType,
-        description: Option<String>,
-        preconditions: Vec<String>,
-        postconditions: Vec<String>,
-        actors: Vec<String>,
+        params: AddScenarioParams,
     ) -> Result<String> {
         let mut scenario_service = services::ScenarioManagementService::new(
             self.repository.as_ref(),
@@ -566,23 +577,23 @@ impl UseCaseCoordinator {
         );
 
         // Use first actor as primary actor, default to User if none provided
-        let primary_actor = if let Some(first_actor) = actors.first() {
+        let primary_actor = if let Some(first_actor) = params.actors.first() {
             first_actor.clone().into()
         } else {
             crate::core::domain::Actor::User
         };
 
-        let params = ScenarioParams {
-            title,
-            scenario_type,
-            description,
+        let scenario_params = ScenarioParams {
+            title: params.title,
+            scenario_type: params.scenario_type,
+            description: params.description,
             primary_actor,
-            preconditions,
-            postconditions,
-            actors,
+            preconditions: params.preconditions,
+            postconditions: params.postconditions,
+            actors: params.actors,
         };
 
-        scenario_service.add_scenario(use_case_id, params)
+        scenario_service.add_scenario(use_case_id, scenario_params)
     }
 
     /// Add a step to an existing scenario

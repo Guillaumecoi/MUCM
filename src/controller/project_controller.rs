@@ -294,7 +294,7 @@ impl ProjectController {
             test_dir: resolved_test_dir.clone(),
             actor_dir: resolved_actor_dir.clone(),
             data_dir: resolved_data_dir.clone(),
-            default_scenario_template: default_scenario_template,
+            default_scenario_template,
         };
         let config = Config::for_template_with_methodologies_storage_and_directories(params);
 

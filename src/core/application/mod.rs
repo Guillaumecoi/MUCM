@@ -6,7 +6,9 @@ pub mod services;
 mod use_case_coordinator;
 
 pub use methodology_field_collector::MethodologyFieldCollector;
-pub use use_case_coordinator::UseCaseCoordinator;
+pub use use_case_coordinator::{
+    AddScenarioParams, CreateUseCaseWithViewsParams, UseCaseCoordinator,
+};
 
 #[cfg(test)]
 pub mod testing;

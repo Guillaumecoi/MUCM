@@ -101,15 +101,17 @@ impl UseCaseController {
         let result = if priority.is_some() || extra_fields.is_some() {
             let prio = priority.unwrap_or_else(|| "medium".to_string());
             let fields = extra_fields.unwrap_or_default();
-            self.app_service.create_use_case_with_views_and_fields(
+            let params = crate::core::CreateUseCaseWithViewsParams {
                 title,
                 category,
                 category_abbreviation,
                 description,
-                prio,
-                &views_str,
-                fields,
-            )
+                priority: prio,
+                views: views_str.clone(),
+                extra_fields: fields,
+            };
+            self.app_service
+                .create_use_case_with_views_and_fields(params)
         } else {
             self.app_service
                 .create_use_case_with_views(title, category, description, &views_str)
@@ -748,15 +750,15 @@ impl UseCaseController {
             _ => return Ok(DisplayResult::error(format!("Invalid scenario type: {}. Must be 'main', 'alternative', 'exception', or 'extension'", scenario_type))),
         };
 
-        match self.app_service.add_scenario(
-            &use_case_id,
+        let params = crate::core::AddScenarioParams {
             title,
-            scenario_type_enum,
+            scenario_type: scenario_type_enum,
             description,
-            vec![], // empty preconditions for now
-            vec![], // empty postconditions for now
-            vec![], // empty actors for now
-        ) {
+            preconditions: vec![],
+            postconditions: vec![],
+            actors: vec![],
+        };
+        match self.app_service.add_scenario(&use_case_id, params) {
             Ok(scenario_id) => Ok(DisplayResult::success(format!(
                 "Added scenario '{}' to use case: {}",
                 scenario_id, use_case_id

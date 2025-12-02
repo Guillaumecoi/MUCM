@@ -55,15 +55,15 @@ impl ScenarioController {
         postconditions: Option<Vec<String>>,
     ) -> Result<DisplayResult> {
         // Always create as main scenario with HappyPath type
-        let scenario_id = self.app_service.add_scenario(
-            &use_case_id,
-            title.clone(),
-            ScenarioType::HappyPath,
+        let params = crate::core::AddScenarioParams {
+            title: title.clone(),
+            scenario_type: ScenarioType::HappyPath,
             description,
-            preconditions.unwrap_or_default(),
-            postconditions.unwrap_or_default(),
-            Vec::new(), // actors will be derived from steps
-        )?;
+            preconditions: preconditions.unwrap_or_default(),
+            postconditions: postconditions.unwrap_or_default(),
+            actors: Vec::new(),
+        };
+        let scenario_id = self.app_service.add_scenario(&use_case_id, params)?;
 
         // Regenerate markdown to reflect the new scenario
         self.app_service.regenerate_markdown(&use_case_id)?;
@@ -102,15 +102,15 @@ impl ScenarioController {
             .map_err(|_| anyhow::anyhow!("Invalid scenario type: {}", scenario_type))?;
 
         // Create scenario via coordinator (actors derived from steps)
-        let scenario_id = self.app_service.add_scenario(
-            &use_case_id,
-            title.clone(),
-            parsed_type,
-            description.clone(),
-            preconditions.unwrap_or_default(),
-            postconditions.unwrap_or_default(),
-            Vec::new(), // actors will be derived from steps
-        )?;
+        let params = crate::core::AddScenarioParams {
+            title: title.clone(),
+            scenario_type: parsed_type,
+            description: description.clone(),
+            preconditions: preconditions.unwrap_or_default(),
+            postconditions: postconditions.unwrap_or_default(),
+            actors: Vec::new(),
+        };
+        let scenario_id = self.app_service.add_scenario(&use_case_id, params)?;
 
         // Assign persona if provided
         if let Some(persona) = persona_id {
