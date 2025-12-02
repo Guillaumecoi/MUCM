@@ -506,10 +506,40 @@ template_file = "test.hbs"
             std::fs::write(lang_dir.join("test.hbs"), test_content)?;
         }
 
-        // Create minimal methodology structure
+        // Create minimal methodology structure with unique fields per methodology
         for methodology in &["business", "developer", "feature", "tester"] {
             let method_dir = templates_dir.join("methodologies").join(methodology);
             std::fs::create_dir_all(&method_dir)?;
+
+            let (normal_fields, advanced_fields) = match *methodology {
+                "business" => (
+                    r#"business_value = { label = "Business Value", type = "text", required = false, description = "Test field" }
+roi_estimate = { label = "ROI Estimate", type = "string", required = false, description = "Test field" }"#,
+                    r#"# Inherits: business_value, roi_estimate
+stakeholder_analysis = { label = "Stakeholder Analysis", type = "text", required = false, description = "Test field" }"#,
+                ),
+                "developer" => (
+                    r#"api_endpoint = { label = "API Endpoint", type = "string", required = false, description = "Test field" }
+database_tables = { label = "Database Tables", type = "array", required = false, description = "Test field" }"#,
+                    r#"# Inherits: api_endpoint, database_tables
+performance_requirements = { label = "Performance Requirements", type = "string", required = false, description = "Test field" }
+security_considerations = { label = "Security Considerations", type = "string", required = false, description = "Test field" }"#,
+                ),
+                "feature" => (
+                    r#"user_segment = { label = "Target User Segment", type = "string", required = false, description = "Test field" }
+success_metrics = { label = "Success Metrics", type = "array", required = false, description = "Test field" }"#,
+                    r#"# Inherits: user_segment, success_metrics
+mockups = { label = "Mockups/Wireframes", type = "string", required = false, description = "Test field" }"#,
+                ),
+                "tester" => (
+                    r#"test_type = { label = "Test Type", type = "string", required = true, description = "Test field" }
+test_priority = { label = "Test Priority", type = "string", required = false, description = "Test field" }"#,
+                    r#"# Inherits: test_type, test_priority
+test_coverage = { label = "Test Coverage", type = "string", required = false, description = "Test field" }"#,
+                ),
+                _ => ("", ""),
+            };
+
             std::fs::write(
                 method_dir.join("methodology.toml"),
                 format!(
@@ -529,7 +559,7 @@ description = "Normal level"
 inherits = []
 
 [levels.normal.custom_fields]
-api_endpoint = {{ label = "API Endpoint", type = "string", required = false, description = "Test field" }}
+{}
 
 [levels.advanced]
 name = "Advanced"
@@ -539,10 +569,25 @@ description = "Advanced level"
 inherits = ["Normal"]
 
 [levels.advanced.custom_fields]
+{}
+
+[usage]
+when_to_use = ["For testing purposes"]
+key_features = ["Test feature"]
+best_practices = ["Test practice"]
+
+[examples]
+
+[examples.basic]
+title = "Test Example"
+
+[related_methodologies]
 "#,
                     methodology,
                     &methodology[..3],
-                    methodology
+                    methodology,
+                    normal_fields,
+                    advanced_fields,
                 ),
             )?;
             std::fs::write(method_dir.join("uc_normal.hbs"), "# Template\n")?;
