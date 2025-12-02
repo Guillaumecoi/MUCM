@@ -1,17 +1,17 @@
 
 <div align="center">
   <p align="center">
-    <a href="https://github.com/Guillaumecoi/MD-usecase-manager/actions/workflows/ci.yml">
-      <img src="https://github.com/Guillaumecoi/MD-usecase-manager/workflows/CI/badge.svg" alt="CI Status">
+    <a href="https://github.com/Guillaumecoi/MUCM/actions/workflows/ci.yml">
+      <img src="https://github.com/Guillaumecoi/MUCM/workflows/CI/badge.svg" alt="CI Status">
     </a>
-    <a href="https://github.com/Guillaumecoi/MD-usecase-manager/actions/workflows/test.yml">
-      <img src="https://github.com/Guillaumecoi/MD-usecase-manager/workflows/Tests/badge.svg" alt="Test Status">
+    <a href="https://github.com/Guillaumecoi/MUCM/actions/workflows/test.yml">
+      <img src="https://github.com/Guillaumecoi/MUCM/workflows/Tests/badge.svg" alt="Test Status">
     </a>
-    <a href="https://codecov.io/gh/Guillaumecoi/MD-usecase-manager">
-      <img src="https://codecov.io/gh/Guillaumecoi/MD-usecase-manager/branch/main/graph/badge.svg" alt="Coverage">
+    <a href="https://codecov.io/gh/Guillaumecoi/MUCM">
+      <img src="https://codecov.io/gh/Guillaumecoi/MUCM/branch/main/graph/badge.svg" alt="Coverage">
     </a>
-    <a href="https://github.com/Guillaumecoi/MD-usecase-manager/actions/workflows/security.yml">
-      <img src="https://github.com/Guillaumecoi/MD-usecase-manager/workflows/Security%20Audit/badge.svg" alt="Security">
+    <a href="https://github.com/Guillaumecoi/MUCM/actions/workflows/security.yml">
+      <img src="https://github.com/Guillaumecoi/MUCM/workflows/Security%20Audit/badge.svg" alt="Security">
     </a>
     <a href="LICENSE">
       <img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License">
