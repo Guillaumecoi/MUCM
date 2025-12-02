@@ -44,6 +44,19 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::str::FromStr;
 
+/// Parameters for creating a Config with custom directories
+pub struct ConfigParams {
+    pub test_language: Option<String>,
+    pub methodologies: Vec<String>,
+    pub default_methodology: Option<String>,
+    pub storage: String,
+    pub use_case_dir: String,
+    pub test_dir: String,
+    pub actor_dir: String,
+    pub data_dir: String,
+    pub default_scenario_template: Option<String>,
+}
+
 impl Config {
     // Constants
     pub const CONFIG_DIR: &'static str = ".config/.mucm";
@@ -142,29 +155,21 @@ impl Config {
     /// # Returns
     /// A Config instance with custom directories
     pub fn for_template_with_methodologies_storage_and_directories(
-        test_language: Option<String>,
-        methodologies: Vec<String>,
-        default_methodology: Option<String>,
-        storage: String,
-        use_case_dir: String,
-        test_dir: String,
-        actor_dir: String,
-        data_dir: String,
-        default_scenario_template: Option<String>,
+        params: crate::config::ConfigParams,
     ) -> Self {
         let mut config = Self::for_template_with_methodologies_and_storage(
-            test_language,
-            methodologies,
-            default_methodology,
-            storage,
-            default_scenario_template,
+            params.test_language,
+            params.methodologies,
+            params.default_methodology,
+            params.storage,
+            params.default_scenario_template,
         );
 
         // Update directories
-        config.directories.use_case_dir = use_case_dir;
-        config.directories.test_dir = test_dir;
-        config.directories.actor_dir = actor_dir.clone();
-        config.directories.data_dir = data_dir;
+        config.directories.use_case_dir = params.use_case_dir;
+        config.directories.test_dir = params.test_dir;
+        config.directories.actor_dir = params.actor_dir.clone();
+        config.directories.data_dir = params.data_dir;
 
         config
     }

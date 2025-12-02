@@ -285,17 +285,18 @@ impl ProjectController {
         let resolved_data_dir = data_dir.unwrap_or_else(|| "use-cases-data".to_string());
 
         // Create config with resolved parameters
-        let config = Config::for_template_with_methodologies_storage_and_directories(
-            Some(resolved_language.clone()),
-            resolved_methodologies.clone(),
-            Some(resolved_default_methodology.clone()),
-            resolved_storage.clone(),
-            resolved_use_case_dir.clone(),
-            resolved_test_dir.clone(),
-            resolved_actor_dir.clone(),
-            resolved_data_dir.clone(),
-            default_scenario_template,
-        );
+        let params = crate::config::ConfigParams {
+            test_language: Some(resolved_language.clone()),
+            methodologies: resolved_methodologies.clone(),
+            default_methodology: Some(resolved_default_methodology.clone()),
+            storage: resolved_storage.clone(),
+            use_case_dir: resolved_use_case_dir.clone(),
+            test_dir: resolved_test_dir.clone(),
+            actor_dir: resolved_actor_dir.clone(),
+            data_dir: resolved_data_dir.clone(),
+            default_scenario_template: default_scenario_template,
+        };
+        let config = Config::for_template_with_methodologies_storage_and_directories(params);
 
         // Save config file
         Config::save_config_only(&config)?;

@@ -358,24 +358,11 @@ impl<'a> ScenarioManagementService<'a> {
     pub fn create_extension_scenario(
         &mut self,
         use_case_id: &str,
-        parent_scenario_id: &str,
-        extends_at_step: String,
+        params: crate::core::application::creators::ExtensionScenarioParams,
         returns_at_step: Option<String>,
-        title: String,
-        description: String,
-        primary_actor: crate::core::domain::Actor,
     ) -> Result<String> {
         let index = self.find_use_case_index(use_case_id)?;
         let mut use_case = self.use_cases[index].clone();
-
-        // Create extension scenario using factory
-        let params = crate::core::application::creators::ExtensionScenarioParams {
-            parent_scenario_id: parent_scenario_id.to_string(),
-            extends_at_step,
-            title,
-            description: Some(description),
-            primary_actor,
-        };
 
         let scenario =
             self.scenario_creator

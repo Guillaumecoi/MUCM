@@ -803,15 +803,14 @@ impl UseCaseCoordinator {
             &mut self.use_cases,
             &self.scenario_creator,
         );
-        scenario_service.create_extension_scenario(
-            use_case_id,
-            parent_scenario_id,
+        let params = crate::core::application::creators::ExtensionScenarioParams {
+            parent_scenario_id: parent_scenario_id.to_string(),
             extends_at_step,
-            returns_at_step,
             title,
-            description,
+            description: Some(description),
             primary_actor,
-        )
+        };
+        scenario_service.create_extension_scenario(use_case_id, params, returns_at_step)
     }
 
     /// Add a repeat block to a scenario
