@@ -2,28 +2,45 @@ name: Coverage
 
 on:
   push:
-    branches: [ main, master]
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
 
 env:
   CARGO_TERM_COLOR: always
+  RUSTFLAGS: '-D warnings'
 
 jobs:
   coverage:
     name: Code Coverage
     runs-on: ubuntu-latest
-    container:
-      image: xd009642/tarpaulin:develop-nightly
-      options: --security-opt seccomp=unconfined
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Generate coverage
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: llvm-tools-preview
+
+      - name: Cache dependencies
+        uses: Swatinem/rust-cache@v2
+        with:
+          key: coverage-${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Install cargo-llvm-cov
+        uses: taiki-e/install-action@cargo-llvm-cov
+
+      - name: Install cargo-nextest
+        uses: taiki-e/install-action@cargo-nextest
+
+      - name: Generate coverage with llvm-cov
         run: |
-          cargo tarpaulin --verbose --out Xml --workspace
+          cargo llvm-cov nextest --all-features --workspace --lcov --output-path lcov.info
 
       - name: Upload to codecov
         uses: codecov/codecov-action@v4
         with:
-          files: ./cobertura.xml
+          files: ./lcov.info
           fail_ci_if_error: false
+          token: ${{ secrets.CODECOV_TOKEN }}
