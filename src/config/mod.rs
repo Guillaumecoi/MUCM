@@ -755,7 +755,7 @@ impl Default for Config {
         #[cfg(test)]
         {
             use std::path::Path;
-            
+
             // Ensure test templates exist - this creates the minimal config
             if let Ok(()) = Self::ensure_test_templates() {
                 // Try to load from local source-templates (test environment)
@@ -763,12 +763,10 @@ impl Default for Config {
                 let config_path = Path::new("source-templates/config.toml");
                 if config_path.exists() {
                     match std::fs::read_to_string(config_path) {
-                        Ok(content) => {
-                            match toml::from_str::<Config>(&content) {
-                                Ok(config) => return config,
-                                Err(e) => eprintln!("Warning: Failed to parse test config: {}", e),
-                            }
-                        }
+                        Ok(content) => match toml::from_str::<Config>(&content) {
+                            Ok(config) => return config,
+                            Err(e) => eprintln!("Warning: Failed to parse test config: {}", e),
+                        },
                         Err(e) => eprintln!("Warning: Failed to read test config: {}", e),
                     }
                 }
