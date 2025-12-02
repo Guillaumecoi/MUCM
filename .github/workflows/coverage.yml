@@ -39,10 +39,25 @@ jobs:
       - name: Install cargo-nextest
         uses: taiki-e/install-action@cargo-nextest
 
+      - name: Install lcov for filtering
+        run: sudo apt-get update && sudo apt-get install -y lcov
+
       - name: Generate full coverage report
         run: |
-          # Generate complete coverage report - Codecov will filter via flags
-          cargo llvm-cov nextest --all-features --workspace --lcov --output-path lcov.info
+          # Generate complete coverage report
+          cargo llvm-cov nextest --all-features --workspace --lcov --output-path lcov-full.info
+
+      - name: Filter coverage reports
+        run: |
+          # Create non-CLI coverage (exclude CLI paths)
+          lcov --remove lcov-full.info '*/src/cli/*' '*/src/main.rs' --output-file lcov-non-cli.info
+          
+          # Create CLI-only coverage (extract only CLI paths)
+          lcov --extract lcov-full.info '*/src/cli/*' '*/src/main.rs' --output-file lcov-cli.info
+          
+          echo "Generated filtered coverage reports:"
+          echo "- lcov-non-cli.info (excludes CLI)"
+          echo "- lcov-cli.info (CLI only)"
 
       - name: Display coverage summary
         run: |
@@ -50,22 +65,36 @@ jobs:
           FULL_COVERAGE=$(cargo llvm-cov nextest --all-features --workspace --summary-only | grep -oP '\d+\.\d+(?=% coverage)' || echo "0")
           echo "📊 Total Coverage: $FULL_COVERAGE%"
           echo ""
-          echo "✅ Generated full coverage report"
-          echo "ℹ️  Codecov will filter via flags: non-cli (80% enforced) and cli (informational)"
+          echo "✅ Generated separate filtered coverage reports"
+          echo "ℹ️  Non-CLI coverage enforced at 80%"
+          echo "ℹ️  CLI coverage tracked for informational purposes only"
           echo ""
 
-      - name: Upload coverage report as artifact
+      - name: Upload coverage reports as artifact
         uses: actions/upload-artifact@v4
         with:
-          name: coverage-report
-          path: lcov.info
+          name: coverage-reports
+          path: |
+            lcov-non-cli.info
+            lcov-cli.info
           retention-days: 30
 
-      - name: Upload coverage to Codecov with flags
+      - name: Upload non-CLI coverage to Codecov
         uses: codecov/codecov-action@v4
         with:
-          files: ./lcov.info
-          flags: non-cli,cli
+          files: ./lcov-non-cli.info
+          flags: non-cli
           fail_ci_if_error: true
           token: ${{ secrets.CODECOV_TOKEN }}
           verbose: true
+          name: non-cli-coverage
+
+      - name: Upload CLI coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          files: ./lcov-cli.info
+          flags: cli
+          fail_ci_if_error: false
+          token: ${{ secrets.CODECOV_TOKEN }}
+          verbose: true
+          name: cli-coverage
