@@ -529,8 +529,9 @@ error_handling = { label = "Error Handling Strategy", type = "string", required 
                 ),
                 "feature" => (
                     r#"user_segment = { label = "Target User Segment", type = "string", required = false, description = "Test field" }
-success_metrics = { label = "Success Metrics", type = "array", required = false, description = "Test field" }"#,
-                    r#"# Inherits: user_segment, success_metrics
+success_metrics = { label = "Success Metrics", type = "array", required = false, description = "Test field" }
+hypothesis = { label = "Product Hypothesis", type = "text", required = false, description = "Test field" }"#,
+                    r#"# Inherits: user_segment, success_metrics, hypothesis
 mockups = { label = "Mockups/Wireframes", type = "string", required = false, description = "Test field" }"#,
                 ),
                 "tester" => (
@@ -592,8 +593,14 @@ title = "Test Example"
                     advanced_fields,
                 ),
             )?;
-            std::fs::write(method_dir.join("uc_normal.hbs"), "# Template\n")?;
-            std::fs::write(method_dir.join("uc_advanced.hbs"), "# Template\n")?;
+            std::fs::write(
+                method_dir.join("uc_normal.hbs"),
+                "# {{title}}\n\n**ID:** {{id}} | **Status:** {{status}}\n\n{{#if description}}## Description\n{{description}}\n{{/if}}\n",
+            )?;
+            std::fs::write(
+                method_dir.join("uc_advanced.hbs"),
+                "# {{title}}\n\n**ID:** {{id}} | **Status:** {{status}}\n\n{{#if description}}## Description\n{{description}}\n{{/if}}\n",
+            )?;
         }
 
         Ok(())
