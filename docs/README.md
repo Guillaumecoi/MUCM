@@ -106,9 +106,9 @@ docs/
 
 ## External Resources
 
-- **GitHub Repository:** [Guillaumecoi/MD-usecase-manager](https://github.com/Guillaumecoi/MD-usecase-manager)
-- **Issue Tracker:** [GitHub Issues](https://github.com/Guillaumecoi/MD-usecase-manager/issues)
-- **Discussions:** [GitHub Discussions](https://github.com/Guillaumecoi/MD-usecase-manager/discussions)
+- **GitHub Repository:** [Guillaumecoi/MUCM](https://github.com/Guillaumecoi/MUCM)
+- **Issue Tracker:** [GitHub Issues](https://github.com/Guillaumecoi/MUCM/issues)
+- **Discussions:** [GitHub Discussions](https://github.com/Guillaumecoi/MUCM/discussions)
 - **License:** MIT License
 
 ## Getting Help
