@@ -28,8 +28,8 @@ description = "Standard developer documentation with API design and database sch
 inherits = []
 
 [levels.normal.custom_fields]
-api_endpoint = { label = "API Endpoint", type = "string", required = false, description = "API endpoint or service URL" }
-database_tables = { label = "Database Tables", type = "array", required = false, description = "Database tables or collections involved" }
+api_endpoint = { label = "API Endpoint", type = "string", required = false, description = "API endpoint or service URL", example = "/api/v1/users/{id}/profile" }
+database_tables = { label = "Database Tables", type = "array", required = false, description = "Database tables or collections involved", example = "users, user_profiles" }
 
 [levels.advanced]
 name = "Advanced"
@@ -42,10 +42,10 @@ inherits = ["Normal"]
 
 [levels.advanced.custom_fields]
 # Inherits: api_endpoint, database_tables (from normal)
-performance_requirements = { label = "Performance Requirements", type = "string", required = false, description = "Response times, throughput, or scalability needs" }
-security_considerations = { label = "Security Considerations", type = "string", required = false, description = "Authentication, authorization, or security constraints" }
-technical_dependencies = { label = "Technical Dependencies", type = "array", required = false, description = "External systems, libraries, or services required" }
-error_handling = { label = "Error Handling Strategy", type = "string", required = false, description = "Error handling approach and expected error conditions" }
+performance_requirements = { label = "Performance Requirements", type = "string", required = false, description = "Response times, throughput, or scalability needs", example = "Sub-100ms message delivery, support 10k concurrent users" }
+security_considerations = { label = "Security Considerations", type = "string", required = false, description = "Authentication, authorization, or security constraints", example = "End-to-end encryption, rate limiting, spam protection" }
+technical_dependencies = { label = "Technical Dependencies", type = "array", required = false, description = "External systems, libraries, or services required", example = "WebSocket server, Redis pub/sub, PostgreSQL" }
+error_handling = { label = "Error Handling Strategy", type = "string", required = false, description = "Error handling approach and expected error conditions", example = "Connection retry logic, offline message queuing, delivery guarantees" }
 
 [usage]
 when_to_use = [
@@ -71,22 +71,6 @@ best_practices = [
     "Use developer-friendly language and technical terminology",
     "Include code examples or pseudo-code when helpful"
 ]
-
-[examples]
-
-[examples.basic]
-title = "User Profile Update"
-api_endpoint = "/api/v1/users/{id}/profile"
-database_tables = ["users", "user_profiles"]
-
-[examples.detailed]
-title = "Real-time Chat System"
-api_endpoint = "/api/v1/chat/messages"
-database_tables = ["messages", "chat_rooms", "user_sessions"]
-performance_requirements = "Sub-100ms message delivery, support 10k concurrent users"
-security_considerations = "End-to-end encryption, rate limiting, spam protection"
-technical_dependencies = ["WebSocket server", "Redis pub/sub", "PostgreSQL", "AWS S3"]
-error_handling = "Connection retry logic, offline message queuing, delivery guarantees"
 
 [related_methodologies]
 business = "For business stakeholder documentation"

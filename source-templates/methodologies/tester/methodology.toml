@@ -28,10 +28,10 @@ description = "Standard test documentation covering test types, priorities, and 
 inherits = []
 
 [levels.normal.custom_fields]
-test_type = { label = "Test Type", type = "string", required = true, description = "Type of test (unit, integration, e2e, performance, security)" }
-test_priority = { label = "Test Priority", type = "string", required = false, description = "Priority level (P0-Critical, P1-High, P2-Medium, P3-Low)" }
-automation_status = { label = "Automation Status", type = "string", required = false, description = "Current state (manual, automated, in-progress, blocked)" }
-test_data_requirements = { label = "Test Data Requirements", type = "text", required = false, description = "Required test data, mock services, or environment configuration" }
+test_type = { label = "Test Type", type = "string", required = true, description = "Type of test (unit, integration, e2e, performance, security)", example = "e2e" }
+test_priority = { label = "Test Priority", type = "string", required = false, description = "Priority level (P0-Critical, P1-High, P2-Medium, P3-Low)", example = "P0-Critical" }
+automation_status = { label = "Automation Status", type = "string", required = false, description = "Current state (manual, automated, in-progress, blocked)", example = "automated" }
+test_data_requirements = { label = "Test Data Requirements", type = "text", required = false, description = "Required test data, mock services, or environment configuration", example = "Test accounts with SMS, email, and authenticator app methods configured" }
 
 [levels.advanced]
 name = "Advanced"
@@ -44,10 +44,10 @@ inherits = ["Normal"]
 
 [levels.advanced.custom_fields]
 # Inherits: test_type, test_priority, automation_status, test_data_requirements (from normal)
-test_environment = { label = "Test Environment", type = "string", required = false, description = "Required environment (browsers, OS, devices, or test infrastructure)" }
-regression_suite = { label = "Regression Suite", type = "string", required = false, description = "Name of regression suite including this test" }
-performance_baseline = { label = "Performance Baseline", type = "string", required = false, description = "Acceptable performance thresholds (response time, throughput, etc.)" }
-coverage_areas = { label = "Coverage Areas", type = "array", required = false, description = "Functional areas or code paths covered by this test" }
+test_environment = { label = "Test Environment", type = "string", required = false, description = "Required environment (browsers, OS, devices, or test infrastructure)", example = "Chrome, Firefox, Safari on desktop; iOS and Android native apps" }
+regression_suite = { label = "Regression Suite", type = "string", required = false, description = "Name of regression suite including this test", example = "Authentication & Security Regression Suite" }
+performance_baseline = { label = "Performance Baseline", type = "string", required = false, description = "Acceptable performance thresholds (response time, throughput, etc.)", example = "MFA code delivery <5s, verification <30s" }
+coverage_areas = { label = "Coverage Areas", type = "array", required = false, description = "Functional areas or code paths covered by this test", example = "SMS authentication, Email authentication, Authenticator app" }
 
 [usage]
 when_to_use = [
@@ -74,24 +74,6 @@ best_practices = [
     "Link to regression suites for comprehensive testing coverage",
     "Set realistic defect detection targets based on historical data"
 ]
-
-[examples]
-
-[examples.basic]
-title = "User Login Functionality"
-test_type = "e2e"
-test_priority = "P0-Critical"
-
-[examples.detailed]
-title = "Multi-factor Authentication"
-test_type = "integration"
-test_priority = "P0-Critical"
-automation_status = "automated"
-test_data_requirements = "Test accounts with SMS, email, and authenticator app methods configured. Mock SMS/email services with various delivery scenarios (success, delay, failure)."
-test_environment = "Chrome, Firefox, Safari on desktop; iOS and Android native apps"
-regression_suite = "Authentication & Security Regression Suite"
-performance_baseline = "MFA code delivery <5s, verification <30s, total auth flow <2min"
-coverage_areas = ["SMS authentication", "Email authentication", "Authenticator app", "Backup codes", "Account recovery"]
 
 [related_methodologies]
 business = "For business acceptance criteria"
