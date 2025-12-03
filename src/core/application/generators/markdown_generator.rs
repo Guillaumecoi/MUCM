@@ -53,21 +53,7 @@ impl MarkdownGenerator {
         let mut data: HashMap<String, Value> = serde_json::from_value(use_case_json)?;
 
         // Format dates according to config
-        if let Some(Value::Object(metadata)) = data.get("metadata").cloned() {
-            if let Some(Value::String(created_at)) = metadata.get("created_at") {
-                if let Ok(dt) = chrono::DateTime::parse_from_rfc3339(created_at) {
-                    let formatted = dt.format(&self.config.metadata.date_format).to_string();
-                    data.insert("created_date".to_string(), Value::String(formatted.clone()));
-                    data.insert("created".to_string(), Value::String(formatted));
-                }
-            }
-            if let Some(Value::String(updated_at)) = metadata.get("updated_at") {
-                if let Ok(dt) = chrono::DateTime::parse_from_rfc3339(updated_at) {
-                    let formatted = dt.format(&self.config.metadata.date_format).to_string();
-                    data.insert("last_updated".to_string(), Value::String(formatted));
-                }
-            }
-        }
+        crate::core::utils::format_dates_from_metadata(&mut data, &self.config.metadata.date_format);
 
         // Merge extra fields into top-level HashMap so templates can access them directly
         if let Some(Value::Object(extra_map)) = data.remove("extra") {

@@ -32,8 +32,8 @@ backend = "toml"                      # Options: "toml" or "sqlite"
 # These extra fields can be added by editing TOML files directly or through the interactive CLI.
 # Methodology-specific custom fields are defined in each methodology's config.toml file.
 [extra_fields]
-author = { type = "string", required = false }
-reviewer = { type = "string", required = false }
+author = { type = "string", required = false, description = "Person responsible for creating this use case", example = "John Smith" }
+reviewer = { type = "string", required = false, description = "Person responsible for reviewing this use case", example = "Jane Doe" }
 
 # Timestamp management - automatically track when use cases are created/modified
 [metadata]

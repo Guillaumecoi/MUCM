@@ -417,6 +417,18 @@ impl TemplateManager {
             }
         }
 
+        // Copy actor.hbs
+        let actor_src = source_templates_dir.join("actor.hbs");
+        if actor_src.exists() {
+            let actor_dst = config_templates_dir.join("actor.hbs");
+            if !actor_dst.exists() {
+                fs::copy(&actor_src, &actor_dst)?;
+                println!("✓ Copied actor template");
+            } else {
+                println!("⊙ Skipped actor template (already exists)");
+            }
+        }
+
         Ok(())
     }
 

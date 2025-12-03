@@ -99,11 +99,26 @@ System actor: {{name}}
 
     /// Convert actor entity to template data
     fn actor_to_template_data(&self, actor: &ActorEntity) -> Value {
+        // Load config for date formatting
+        let date_format = crate::config::Config::load()
+            .map(|c| c.metadata.date_format)
+            .unwrap_or_else(|_| "%d/%m/%Y".to_string());
+
+        // Format dates according to config
+        let (created, last_updated) = crate::core::utils::format_datetime_pair(
+            &actor.metadata.created_at,
+            &actor.metadata.updated_at,
+            &date_format,
+        );
+
         let mut data = json!({
             "id": actor.id,
             "name": actor.name,
             "actor_type": actor.actor_type.to_string(),
             "emoji": actor.emoji,
+            "created": created,
+            "created_date": created,
+            "last_updated": last_updated,
             "metadata": {
                 "created_at": actor.metadata.created_at.to_rfc3339(),
                 "updated_at": actor.metadata.updated_at.to_rfc3339(),

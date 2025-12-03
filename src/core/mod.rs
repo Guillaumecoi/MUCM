@@ -17,8 +17,9 @@ pub use application::{
 // Re-export domain types (from domain's public interface)
 pub use domain::{
     Actor, ActorEntity, ActorRepository, ActorType, Category, Condition, ExtensionPointUpdater,
-    MethodologyView, Persona, PersonaRepository, ReferenceType, RepeatBlock, ScenarioFlowValidator,
-    ScenarioReference, ScenarioReferenceValidator, ScenarioType, Status, StepOrder, UseCase,
+    Metadata, MethodologyView, Persona, PersonaRepository, ReferenceType, RepeatBlock,
+    ScenarioFlowValidator, ScenarioReference, ScenarioReferenceValidator, ScenarioType, Status,
+    StepOrder, UseCase,
 };
 
 // Exported for integration tests (appear unused to lib but required by tests/)
