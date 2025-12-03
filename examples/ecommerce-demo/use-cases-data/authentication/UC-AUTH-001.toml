@@ -1,0 +1,78 @@
+id = "UC-AUTH-001"
+title = "User Registration"
+category = "Authentication"
+category_abbreviation = "AUTH"
+description = "Allow new users to create an account on the e-commerce platform by providing email, password, and basic profile information. The system validates input, checks for existing accounts, creates the user record, and sends a verification email."
+priority = "High"
+use_case_references = []
+scenarios = []
+
+[metadata]
+created_at = "2025-12-03T03:15:46.408167072Z"
+updated_at = "2025-12-03T03:15:46.432346471Z"
+
+[[views]]
+methodology = "developer"
+level = "advanced"
+enabled = true
+
+[[views]]
+methodology = "tester"
+level = "advanced"
+enabled = true
+
+[[preconditions]]
+text = "User must have a valid email address"
+
+[[preconditions]]
+text = "User does not already have an account"
+
+[[postconditions]]
+text = "User account created in database"
+
+[[postconditions]]
+text = "Verification email sent to user's email address"
+
+[[postconditions]]
+text = "User logged in with unverified status"
+
+[[postconditions]]
+text = "Session created and stored in cache"
+
+[[postconditions]]
+text = "User can access basic platform features (but not checkout until verified)"
+
+[methodology_fields.tester]
+regression_suite = ""
+test_type = ""
+test_data_requirements = ""
+test_environment = ""
+test_priority = ""
+coverage_areas = []
+performance_baseline = ""
+automation_status = ""
+
+[methodology_fields.developer]
+performance_requirements = ""
+technical_dependencies = [
+    "PostgreSQL 14+",
+    "Redis 6+",
+    "SendGrid API",
+    "bcrypt library",
+]
+api_endpoint = "POST /api/v1/auth/register"
+security_considerations = ""
+error_handling = ""
+database_tables = [
+    "`users` (id",
+    "email",
+    "password_hash",
+    "first_name",
+    "last_name",
+    "verified",
+    "created_at)",
+    "`sessions` (id",
+    "user_id",
+    "token",
+    "expires_at)",
+]
