@@ -53,7 +53,10 @@ impl MarkdownGenerator {
         let mut data: HashMap<String, Value> = serde_json::from_value(use_case_json)?;
 
         // Format dates according to config
-        crate::core::utils::format_dates_from_metadata(&mut data, &self.config.metadata.date_format);
+        crate::core::utils::format_dates_from_metadata(
+            &mut data,
+            &self.config.metadata.date_format,
+        );
 
         // Merge extra fields into top-level HashMap so templates can access them directly
         if let Some(Value::Object(extra_map)) = data.remove("extra") {

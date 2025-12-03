@@ -323,9 +323,9 @@ impl ActorWorkflow {
 
         for (field_name, field_def) in &field_config {
             let current_json = current_values.get(field_name);
-            
+
             // Check if this is a new field (no current value) or editing existing
-            let is_new_field = current_json.is_none() 
+            let is_new_field = current_json.is_none()
                 || matches!(current_json, Some(serde_json::Value::Null))
                 || matches!(current_json, Some(serde_json::Value::String(s)) if s.is_empty())
                 || matches!(current_json, Some(serde_json::Value::Array(a)) if a.is_empty());
@@ -345,7 +345,7 @@ impl ActorWorkflow {
                     .description
                     .clone()
                     .unwrap_or_else(|| format!("{} field", field_def.field_type));
-                
+
                 FieldHelpers::edit_by_type(
                     &field_def.field_type,
                     field_name,

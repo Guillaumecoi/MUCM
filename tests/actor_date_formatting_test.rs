@@ -26,7 +26,10 @@ fn test_actor_markdown_date_formatting() -> Result<()> {
     println!("Generated markdown:\n{}", markdown);
 
     // Check that dates are present and not empty
-    assert!(markdown.contains("Created:"), "Markdown should contain 'Created:' label");
+    assert!(
+        markdown.contains("Created:"),
+        "Markdown should contain 'Created:' label"
+    );
     assert!(
         !markdown.contains("Created: *"),
         "Created date should not be empty"
