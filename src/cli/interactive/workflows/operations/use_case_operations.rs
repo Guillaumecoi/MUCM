@@ -7,9 +7,7 @@ use anyhow::{Context, Result};
 use inquire::{Confirm, Select, Text};
 use std::collections::HashMap;
 
-use crate::cli::interactive::{
-    field_helpers::FieldHelpers, runner::InteractiveRunner, ui::UI,
-};
+use crate::cli::interactive::{field_helpers::FieldHelpers, runner::InteractiveRunner, ui::UI};
 use crate::controller::CategoryController;
 
 /// Collect methodology views from user

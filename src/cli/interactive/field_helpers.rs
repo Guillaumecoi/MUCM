@@ -292,7 +292,9 @@ impl FieldHelpers {
                     Ok(None)
                 } else {
                     // Serialize as JSON array string
-                    Ok(Some(serde_json::to_string(&items).unwrap_or_else(|_| items.join("\n"))))
+                    Ok(Some(
+                        serde_json::to_string(&items).unwrap_or_else(|_| items.join("\n")),
+                    ))
                 }
             }
             "number" => {
