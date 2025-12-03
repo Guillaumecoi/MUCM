@@ -44,8 +44,8 @@ inherits = ["Normal"]
 
 [levels.advanced.custom_fields]
 # Inherits: test_type, test_priority, automation_status, test_data_requirements (from normal)
-test_environment = { label = "Test Environment", type = "string", required = false, description = "Required environment (browsers, OS, devices, or test infrastructure)", example = "Chrome, Firefox, Safari on desktop; iOS and Android native apps" }
-regression_suite = { label = "Regression Suite", type = "string", required = false, description = "Name of regression suite including this test", example = "Authentication & Security Regression Suite" }
+test_environments = { label = "Test Environments", type = "array", required = false, description = "Required environments (browsers, OS, devices, or test infrastructure)", example = "Chrome on Windows, Safari on macOS, iOS native app" }
+regression_suites = { label = "Regression Suites", type = "array", required = false, description = "Names of regression suites including this test", example = "Authentication & Security Suite, Smoke Test Suite" }
 performance_baseline = { label = "Performance Baseline", type = "string", required = false, description = "Acceptable performance thresholds (response time, throughput, etc.)", example = "MFA code delivery <5s, verification <30s" }
 coverage_areas = { label = "Coverage Areas", type = "array", required = false, description = "Functional areas or code paths covered by this test", example = "SMS authentication, Email authentication, Authenticator app" }
 

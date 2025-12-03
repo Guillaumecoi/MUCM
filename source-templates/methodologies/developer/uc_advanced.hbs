@@ -12,9 +12,11 @@
 {{description}}
 
 {{/if}}
-{{#if api_endpoint}}
-### API Endpoint
-{{api_endpoint}}
+{{#if api_endpoints}}
+### API Endpoints
+{{#each api_endpoints}}
+- {{this}}
+{{/each}}
 
 {{/if}}
 {{#if database_tables}}
@@ -31,7 +33,9 @@
 {{/if}}
 {{#if security_considerations}}
 ## Security Considerations
-{{security_considerations}}
+{{#each security_considerations}}
+- {{this}}
+{{/each}}
 
 {{/if}}
 {{#if technical_dependencies}}
@@ -41,9 +45,11 @@
 {{/each}}
 
 {{/if}}
-{{#if error_handling}}
-## Error Handling Strategy
-{{error_handling}}
+{{#if error_scenarios}}
+## Error Scenarios
+{{#each error_scenarios}}
+- {{this}}
+{{/each}}
 
 {{/if}}
 {{#if preconditions}}

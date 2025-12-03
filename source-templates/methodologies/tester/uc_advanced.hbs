@@ -22,12 +22,18 @@
 {{#if automation_status}}
 **Automation Status:** {{automation_status}}  
 {{/if}}
-{{#if test_environment}}
-**Test Environment:** {{test_environment}}
+{{#if test_environments}}
+**Test Environments:**
+{{#each test_environments}}
+- {{this}}
+{{/each}}
 
 {{/if}}
-{{#if regression_suite}}
-**Regression Suite:** {{regression_suite}}
+{{#if regression_suites}}
+**Regression Suites:**
+{{#each regression_suites}}
+- {{this}}
+{{/each}}
 
 {{/if}}
 {{#if performance_baseline}}
@@ -62,14 +68,18 @@
 {{test_data_requirements}}
 
 {{/if}}
-{{#if test_environment}}
-## Test Environment
-{{test_environment}}
+{{#if test_environments}}
+## Test Environments
+{{#each test_environments}}
+- {{this}}
+{{/each}}
 
 {{/if}}
-{{#if regression_suite}}
-## Regression Suite
-{{regression_suite}}
+{{#if regression_suites}}
+## Regression Suites
+{{#each regression_suites}}
+- {{this}}
+{{/each}}
 
 {{/if}}
 {{#if performance_baseline}}
