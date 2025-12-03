@@ -130,7 +130,20 @@ pub fn prompt_methodology_fields(
 
             for field in fields {
                 let default_help = format!("{} ({})", field.label, field.field_type);
-                let help_msg = field.description.as_deref().unwrap_or(&default_help);
+                // Include example in help message if available
+                let help_msg = if let Some(example) = &field.example {
+                    format!(
+                        "{}\nExample: {}",
+                        field.description.as_deref().unwrap_or(&default_help),
+                        example
+                    )
+                } else {
+                    field
+                        .description
+                        .as_deref()
+                        .unwrap_or(&default_help)
+                        .to_string()
+                };
 
                 let prompt_text = if field.required {
                     format!("{} (required):", field.label)
@@ -150,7 +163,7 @@ pub fn prompt_methodology_fields(
 
                         let result = Confirm::new(&prompt_text)
                             .with_default(default)
-                            .with_help_message(help_msg)
+                            .with_help_message(&help_msg)
                             .prompt()?;
 
                         Some(result.to_string())
@@ -165,9 +178,9 @@ pub fn prompt_methodology_fields(
                         let mut item_num = 1;
 
                         loop {
-                            let item_prompt = format!("  Item {}: ", item_num);
+                            let item_prompt = format!("  {} - Item {}: ", field.label, item_num);
                             let result = Text::new(&item_prompt)
-                                .with_help_message(help_msg)
+                                .with_help_message(&help_msg)
                                 .prompt_skippable()?;
 
                             match result {
@@ -188,7 +201,7 @@ pub fn prompt_methodology_fields(
                     "number" => {
                         // For number fields, validate input
                         let result = Text::new(&prompt_text)
-                            .with_help_message(help_msg)
+                            .with_help_message(&help_msg)
                             .prompt_skippable()?;
 
                         if let Some(num_str) = result {
@@ -209,13 +222,13 @@ pub fn prompt_methodology_fields(
                     "string" => {
                         // Default: string input
                         Text::new(&prompt_text)
-                            .with_help_message(help_msg)
+                            .with_help_message(&help_msg)
                             .prompt_skippable()?
                     }
                     _ => {
                         // Unknown field type defaults to string input
                         Text::new(&prompt_text)
-                            .with_help_message(help_msg)
+                            .with_help_message(&help_msg)
                             .prompt_skippable()?
                     }
                 };
