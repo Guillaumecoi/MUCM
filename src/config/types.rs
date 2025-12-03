@@ -293,6 +293,21 @@ pub struct MetadataConfig {
     /// Whether to automatically update timestamp when use case is modified
     /// Updates a "last_updated" field with the current date/time
     pub last_updated: bool,
+    /// Date format string for displaying timestamps in generated markdown
+    /// Uses chrono format specifiers (e.g., "%d/%m/%Y" for day/month/year)
+    /// Default: "%d/%m/%Y" (e.g., "03/12/2025")
+    /// Common formats:
+    /// - "%d/%m/%Y" - European: 03/12/2025
+    /// - "%m/%d/%Y" - US: 12/03/2025
+    /// - "%Y-%m-%d" - ISO: 2025-12-03
+    /// - "%B %d, %Y" - Long: December 03, 2025
+    #[serde(default = "default_date_format")]
+    pub date_format: String,
+}
+
+/// Default date format for metadata timestamps
+fn default_date_format() -> String {
+    "%d/%m/%Y".to_string()
 }
 
 /// Storage backend configuration settings.

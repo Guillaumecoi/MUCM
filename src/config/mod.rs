@@ -36,7 +36,7 @@ mod types;
 // Explicit public exports
 pub use file_manager::ConfigFileManager;
 pub use template_manager::TemplateManager;
-pub use types::{ActorConfig, Config, StorageBackend, StorageConfig};
+pub use types::{ActorConfig, Config, MetadataConfig, StorageBackend, StorageConfig};
 
 // Re-export from other modules
 use anyhow::{Context, Result};
@@ -376,6 +376,7 @@ impl Config {
                     metadata: MetadataConfig {
                         created: true,
                         last_updated: true,
+                        date_format: "%d/%m/%Y".to_string(),
                     },
                     actor: ActorConfig::default(),
                 });
