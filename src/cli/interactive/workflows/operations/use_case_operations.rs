@@ -195,7 +195,9 @@ pub fn prompt_methodology_fields(
                         if items.is_empty() {
                             None // Will be handled by required field logic below
                         } else {
-                            Some(items.join(", "))
+                            // Serialize as JSON array string to avoid parsing issues
+                            // This eliminates any ambiguity with separators
+                            Some(serde_json::to_string(&items).unwrap_or_else(|_| items.join("\n")))
                         }
                     }
                     "number" => {

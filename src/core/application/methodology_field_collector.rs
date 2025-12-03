@@ -228,16 +228,38 @@ impl MethodologyFieldCollector {
     }
 
     /// Convert string value to appropriate JSON type
+    ///
+    /// # Array Parsing Support
+    /// Arrays can be specified in three formats (tried in order):
+    /// 1. **JSON array** (preferred): `["item1", "item2", "item with, comma"]`
+    ///    - Eliminates all parsing ambiguity
+    ///    - Allows commas, newlines, and special characters within items
+    /// 2. **Newline-separated**: `"item1\nitem2\nitem3"`
+    ///    - Each line is one item
+    ///    - Allows commas within items
+    /// 3. **Comma-separated** (legacy): `"item1, item2, item3"`
+    ///    - For backward compatibility
+    ///    - Cannot handle commas within items
     fn convert_to_json_type(&self, value: &str, field_type: &str) -> serde_json::Value {
         match field_type {
             "array" => {
-                // Parse comma-separated values
-                let items: Vec<String> = value
-                    .split(',')
-                    .map(|s| s.trim().to_string())
-                    .filter(|s| !s.is_empty())
-                    .collect();
-                serde_json::Value::Array(items.into_iter().map(serde_json::Value::String).collect())
+                // Try JSON array first (e.g., ["item1", "item2", "item with, comma"])
+                // This format allows any characters within items including commas and newlines
+                if let Ok(json_value) = serde_json::from_str::<Vec<String>>(value) {
+                    return serde_json::Value::Array(
+                        json_value.into_iter().map(serde_json::Value::String).collect()
+                    );
+                }
+                
+                // Fall back to newline-separated (allows commas within items)
+                // or comma-separated (legacy, for backward compatibility)
+                let items: Vec<String> = if value.contains('\n') {
+                    value.lines().map(|s| s.trim().to_string()).collect()
+                } else {
+                    value.split(',').map(|s| s.trim().to_string()).collect()
+                };
+                let filtered: Vec<String> = items.into_iter().filter(|s| !s.is_empty()).collect();
+                serde_json::Value::Array(filtered.into_iter().map(serde_json::Value::String).collect())
             }
             "number" => {
                 // Try to parse as number
