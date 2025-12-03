@@ -5,6 +5,7 @@
 //! use cases, personas, scenarios, and other entities.
 
 use anyhow::Result;
+use colored::Colorize;
 use inquire::{Confirm, Select, Text};
 use serde_json::Value as JsonValue;
 
@@ -199,6 +200,127 @@ impl FieldHelpers {
     /// String with items joined by newlines
     pub fn array_to_storage(items: &[String]) -> String {
         items.join("\n")
+    }
+
+    /// Prompt for a new field value based on its type definition
+    ///
+    /// This is a high-level helper for collecting new field values during creation.
+    /// Automatically chooses the appropriate input method based on the field type.
+    ///
+    /// # Arguments
+    /// * `field_type` - Type of the field ("string", "number", "boolean", "array")
+    /// * `label` - Display name for the field
+    /// * `required` - Whether the field is required
+    /// * `description` - Field description (optional)
+    /// * `example` - Example value (optional)
+    ///
+    /// # Returns
+    /// * `Ok(Some(value))` - New value as string
+    /// * `Ok(None)` - No value provided (only valid for optional fields)
+    pub fn prompt_by_type(
+        field_type: &str,
+        label: &str,
+        required: bool,
+        description: Option<&str>,
+        example: Option<&str>,
+    ) -> Result<Option<String>> {
+        // Build comprehensive help message with description and example
+        let mut help_parts = Vec::new();
+        if let Some(desc) = description {
+            help_parts.push(format!("• Description: {}", desc));
+        }
+        if let Some(ex) = example {
+            help_parts.push(format!("• Example: {}", ex));
+        }
+        let help_msg = if help_parts.is_empty() {
+            format!("{} ({})", label, field_type)
+        } else {
+            help_parts.join("\n")
+        };
+
+        let prompt_text = if required {
+            format!("{} (required):", label)
+        } else {
+            format!("{} (optional):", label)
+        };
+
+        // Handle different field types
+        match field_type {
+            "boolean" => {
+                let result = Confirm::new(&prompt_text)
+                    .with_default(false)
+                    .with_help_message(&help_msg)
+                    .prompt()?;
+                Ok(Some(result.to_string()))
+            }
+            "array" => {
+                // Show field name as colored header
+                println!();
+                let colored_label = format!("> {}:", label).bright_cyan().bold();
+                println!("{}", colored_label);
+                println!();
+
+                // Build help message with instructions
+                let mut array_help = vec!["Press Enter to confirm and move to next item. Press Enter on empty line when done.".to_string()];
+                if let Some(desc) = description {
+                    array_help.push(format!("• Description: {}", desc));
+                }
+                if let Some(ex) = example {
+                    array_help.push(format!("• Example: {}", ex));
+                }
+                let array_help_msg = array_help.join("\n");
+
+                let mut items = Vec::new();
+                let mut item_num = 1;
+
+                loop {
+                    let item_prompt = format!("  Item {}: ", item_num);
+                    let result = Text::new(&item_prompt)
+                        .with_help_message(&array_help_msg)
+                        .prompt_skippable()?;
+
+                    match result {
+                        Some(item) if !item.trim().is_empty() => {
+                            items.push(item.trim().to_string());
+                            item_num += 1;
+                        }
+                        _ => break,
+                    }
+                }
+
+                if items.is_empty() {
+                    Ok(None)
+                } else {
+                    // Serialize as JSON array string
+                    Ok(Some(serde_json::to_string(&items).unwrap_or_else(|_| items.join("\n"))))
+                }
+            }
+            "number" => {
+                let result = Text::new(&prompt_text)
+                    .with_help_message(&help_msg)
+                    .prompt_skippable()?;
+
+                if let Some(num_str) = result {
+                    if num_str.parse::<f64>().is_err() {
+                        UI::show_warning(&format!(
+                            "  ⚠️  '{}' is not a valid number. Skipping field.",
+                            num_str
+                        ))?;
+                        Ok(None)
+                    } else {
+                        Ok(Some(num_str))
+                    }
+                } else {
+                    Ok(None)
+                }
+            }
+            _ => {
+                // Default: string input
+                Ok(Text::new(&prompt_text)
+                    .with_help_message(&help_msg)
+                    .prompt_skippable()?)
+            }
+        }
     }
 
     /// Edit a field based on its type definition
