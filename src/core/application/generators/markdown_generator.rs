@@ -226,7 +226,7 @@ mod tests {
     #[test]
     fn test_date_formatting_default() {
         use chrono::{TimeZone, Utc};
-        
+
         // Create a use case with known timestamps
         let mut use_case = UseCase::new(
             "UC-TEST-001".to_string(),
@@ -273,7 +273,7 @@ mod tests {
     #[test]
     fn test_date_formatting_us_format() {
         use chrono::{TimeZone, Utc};
-        
+
         let mut use_case = UseCase::new(
             "UC-TEST-001".to_string(),
             "Test Use Case".to_string(),
@@ -317,7 +317,7 @@ mod tests {
     #[test]
     fn test_date_formatting_iso_format() {
         use chrono::{TimeZone, Utc};
-        
+
         let mut use_case = UseCase::new(
             "UC-TEST-001".to_string(),
             "Test Use Case".to_string(),
@@ -361,7 +361,7 @@ mod tests {
     #[test]
     fn test_date_formatting_long_format() {
         use chrono::{TimeZone, Utc};
-        
+
         let mut use_case = UseCase::new(
             "UC-TEST-001".to_string(),
             "Test Use Case".to_string(),
@@ -405,7 +405,7 @@ mod tests {
     #[test]
     fn test_date_formatting_with_time() {
         use chrono::{TimeZone, Utc};
-        
+
         let mut use_case = UseCase::new(
             "UC-TEST-001".to_string(),
             "Test Use Case".to_string(),
@@ -449,7 +449,7 @@ mod tests {
     #[test]
     fn test_date_formatting_handles_serialization() {
         use chrono::{TimeZone, Utc};
-        
+
         // Test that our date formatting works correctly with the serialization process
         let mut use_case = UseCase::new(
             "UC-TEST-001".to_string(),

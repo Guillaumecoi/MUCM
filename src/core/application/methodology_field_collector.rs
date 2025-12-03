@@ -247,10 +247,13 @@ impl MethodologyFieldCollector {
                 // This format allows any characters within items including commas and newlines
                 if let Ok(json_value) = serde_json::from_str::<Vec<String>>(value) {
                     return serde_json::Value::Array(
-                        json_value.into_iter().map(serde_json::Value::String).collect()
+                        json_value
+                            .into_iter()
+                            .map(serde_json::Value::String)
+                            .collect(),
                     );
                 }
-                
+
                 // Fall back to newline-separated (allows commas within items)
                 // or comma-separated (legacy, for backward compatibility)
                 let items: Vec<String> = if value.contains('\n') {
@@ -259,7 +262,12 @@ impl MethodologyFieldCollector {
                     value.split(',').map(|s| s.trim().to_string()).collect()
                 };
                 let filtered: Vec<String> = items.into_iter().filter(|s| !s.is_empty()).collect();
-                serde_json::Value::Array(filtered.into_iter().map(serde_json::Value::String).collect())
+                serde_json::Value::Array(
+                    filtered
+                        .into_iter()
+                        .map(serde_json::Value::String)
+                        .collect(),
+                )
             }
             "number" => {
                 // Try to parse as number
