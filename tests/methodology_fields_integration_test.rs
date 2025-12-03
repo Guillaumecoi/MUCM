@@ -266,8 +266,8 @@ fn test_all_fields_present_in_toml_when_empty() -> Result<()> {
 
     // Developer:normal should have these fields defined in methodology.toml
     assert!(
-        developer_fields.contains_key("api_endpoint"),
-        "api_endpoint field should be present (even if empty)"
+        developer_fields.contains_key("api_endpoints"),
+        "api_endpoints field should be present (even if empty)"
     );
     assert!(
         developer_fields.contains_key("database_tables"),
@@ -276,9 +276,9 @@ fn test_all_fields_present_in_toml_when_empty() -> Result<()> {
 
     // Verify the fields are empty (no value provided)
     assert_eq!(
-        developer_fields.get("api_endpoint"),
-        Some(&serde_json::Value::String(String::new())),
-        "api_endpoint should be empty string"
+        developer_fields.get("api_endpoints"),
+        Some(&serde_json::Value::Array(vec![])),
+        "api_endpoints should be empty array"
     );
     assert_eq!(
         developer_fields.get("database_tables"),
@@ -357,8 +357,8 @@ fn test_advanced_level_has_all_fields_including_inherited() -> Result<()> {
 
     // Check inherited fields from normal level
     assert!(
-        developer_fields.contains_key("api_endpoint"),
-        "Inherited field api_endpoint should be present"
+        developer_fields.contains_key("api_endpoints"),
+        "Inherited field api_endpoints should be present"
     );
     assert!(
         developer_fields.contains_key("database_tables"),
@@ -379,8 +379,8 @@ fn test_advanced_level_has_all_fields_including_inherited() -> Result<()> {
         "Advanced field technical_dependencies should be present"
     );
     assert!(
-        developer_fields.contains_key("error_handling"),
-        "Advanced field error_handling should be present"
+        developer_fields.contains_key("error_scenarios"),
+        "Advanced field error_scenarios should be present"
     );
 
     // Verify all are empty (no values provided)
