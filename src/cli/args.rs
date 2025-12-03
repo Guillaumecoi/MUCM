@@ -130,6 +130,16 @@ pub enum Commands {
     },
     /// Enter interactive mode
     Interactive,
+    /// Sync templates from source to project configuration
+    ///
+    /// Updates methodology templates in .config/.mucm/templates/ with the latest
+    /// versions from the source templates. Useful after updating the tool to get
+    /// new template features like inline examples.
+    SyncTemplates {
+        /// Force overwrite existing template files (default: preserve customizations)
+        #[arg(short, long)]
+        force: bool,
+    },
 }
 
 #[derive(Debug, Subcommand)]

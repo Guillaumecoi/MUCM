@@ -1849,7 +1849,7 @@ inherits = ["Normal"]
         ProjectController::init_project(params).unwrap();
 
         // Test sync_templates (should preserve existing files)
-        let result = ProjectController::sync_templates();
+        let result = ProjectController::sync_templates(false);
 
         assert!(result.is_ok(), "Sync templates should succeed");
         let display = result.unwrap();
@@ -2531,7 +2531,7 @@ inherits = ["Normal"]
             assert_eq!(content_before, custom_content);
 
             // Sync templates again
-            let result = ProjectController::sync_templates();
+            let result = ProjectController::sync_templates(false);
             assert!(result.is_ok(), "Sync should succeed");
 
             // Verify our customization was preserved
@@ -2582,7 +2582,7 @@ inherits = ["Normal"]
         ProjectController::add_methodologies(vec!["business".to_string()]).unwrap();
 
         // Sync templates
-        let result = ProjectController::sync_templates();
+        let result = ProjectController::sync_templates(false);
         assert!(result.is_ok(), "Sync should succeed");
 
         // Verify business was added
@@ -2632,7 +2632,7 @@ inherits = ["Normal"]
 
             // Sync multiple times
             for i in 1..=5 {
-                let result = ProjectController::sync_templates();
+                let result = ProjectController::sync_templates(false);
                 assert!(result.is_ok(), "Sync #{} should succeed", i);
 
                 // Verify content is still preserved
@@ -2677,7 +2677,7 @@ inherits = ["Normal"]
         ProjectController::remove_methodologies(vec!["business".to_string()]).unwrap();
 
         // Sync templates - this should remove the business folder
-        ProjectController::sync_templates().unwrap();
+        ProjectController::sync_templates(false).unwrap();
 
         // Verify business folder was deleted
         assert!(
@@ -2721,7 +2721,7 @@ inherits = ["Normal"]
 
         // Add another methodology and sync
         ProjectController::add_methodologies(vec!["business".to_string()]).unwrap();
-        ProjectController::sync_templates().unwrap();
+        ProjectController::sync_templates(false).unwrap();
 
         // Verify overview customization preserved
         let content = fs::read_to_string(overview_file).unwrap();

@@ -383,13 +383,13 @@ impl ProjectController {
     /// This method will:
     /// - Add template files for newly added methodologies
     /// - Remove template folders for methodologies no longer in config
-    /// - Preserve existing template files within active methodologies
-    pub fn sync_templates() -> Result<DisplayResult> {
+    /// - Preserve existing template files within active methodologies (unless force=true)
+    pub fn sync_templates(force: bool) -> Result<DisplayResult> {
         // First, clean up removed methodology folders
         Self::cleanup_removed_methodologies()?;
 
-        // Then sync templates (adds new ones, preserves existing)
-        Self::finalize_init_internal(true, false)
+        // Then sync templates with or without forcing overwrite
+        Self::finalize_init_internal(true, force)
     }
 
     /// Remove template folders for methodologies that are no longer in the config.
