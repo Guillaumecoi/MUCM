@@ -504,6 +504,16 @@ impl UseCaseWorkflow {
 
             if let Some(value) = new_value {
                 updated_fields.insert(field_name.clone(), value);
+            } else if is_new_field {
+                // Field is missing/empty and user skipped - reinitialize with empty value
+                // This ensures all fields defined in the methodology are present in the TOML
+                let empty_value = match field_def.field_type.as_str() {
+                    "array" => "[]",
+                    "number" => "0",
+                    "boolean" => "false",
+                    _ => "",
+                };
+                updated_fields.insert(field_name.clone(), empty_value.to_string());
             }
         }
 
