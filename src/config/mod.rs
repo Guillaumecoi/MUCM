@@ -379,6 +379,7 @@ impl Config {
                         date_format: "%d/%m/%Y".to_string(),
                     },
                     actor: ActorConfig::default(),
+                    extra_fields: std::collections::HashMap::new(),
                 });
             }
         };

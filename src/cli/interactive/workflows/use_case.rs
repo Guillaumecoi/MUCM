@@ -133,15 +133,34 @@ impl UseCaseWorkflow {
                 .prompt_skippable()?
         };
 
-        // Author (optional)
-        let author = Text::new("Author (optional):")
-            .with_help_message("Person who created this use case")
-            .prompt_skippable()?;
+        // Prompt for custom extra fields from config
+        let config = crate::config::Config::load()?;
+        let mut custom_field_values = HashMap::new();
 
-        // Reviewer (optional)
-        let reviewer = Text::new("Reviewer (optional):")
-            .with_help_message("Person responsible for reviewing this use case")
-            .prompt_skippable()?;
+        for (field_name, field_config) in &config.extra_fields {
+            let label = field_config
+                .label
+                .clone()
+                .unwrap_or_else(|| field_name.clone());
+            let required_suffix = if field_config.required {
+                ""
+            } else {
+                " (optional)"
+            };
+            let prompt_label = format!("{}{}:", label, required_suffix);
+
+            let value = FieldHelpers::prompt_by_type(
+                &field_config.field_type,
+                &prompt_label,
+                field_config.required,
+                field_config.description.as_deref(),
+                field_config.example.as_deref(),
+            )?;
+
+            if let Some(v) = value {
+                custom_field_values.insert(field_name.clone(), v);
+            }
+        }
 
         // Collect preconditions with use case references
         let use_cases = runner.get_available_use_cases()?;
@@ -169,17 +188,8 @@ impl UseCaseWorkflow {
         // Create the use case with additional fields (only truly extra fields)
         let mut extra_fields = HashMap::new();
 
-        if let Some(auth) = author {
-            if !auth.is_empty() {
-                extra_fields.insert("author".to_string(), auth);
-            }
-        }
-
-        if let Some(rev) = reviewer {
-            if !rev.is_empty() {
-                extra_fields.insert("reviewer".to_string(), rev);
-            }
-        }
+        // Add custom field values from config
+        extra_fields.extend(custom_field_values);
 
         // Merge methodology field values into extra_fields
         extra_fields.extend(methodology_field_values);
