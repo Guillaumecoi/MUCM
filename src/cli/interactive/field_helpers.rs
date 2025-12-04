@@ -345,9 +345,18 @@ impl FieldHelpers {
             _ => {
                 // Default: string input
                 if required {
-                    Ok(Some(Text::new(&prompt_text)
-                        .with_help_message(&help_msg)
-                        .prompt()?))
+                    loop {
+                        let input = Text::new(&prompt_text)
+                            .with_help_message(&help_msg)
+                            .prompt()?;
+                        
+                        if input.trim().is_empty() {
+                            UI::show_warning("  ⚠️  This field is required and cannot be empty.")?;
+                            continue;
+                        }
+                        
+                        return Ok(Some(input));
+                    }
                 } else {
                     Ok(Text::new(&prompt_text)
                         .with_help_message(&help_msg)
