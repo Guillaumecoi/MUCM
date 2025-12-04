@@ -77,19 +77,10 @@ impl UseCaseWorkflow {
         // Ask if user wants to fill additional fields
         let fill_additional = Confirm::new("Fill in additional fields now?")
             .with_default(false)
-            .with_help_message("You can add description, author, reviewer, and other custom fields")
+            .with_help_message("You can add description, author, reviewer, preconditions, postconditions, and other custom fields")
             .prompt()?;
 
         if !fill_additional {
-            // Collect preconditions/postconditions before creating use case
-            let preconditions = prompts::collect_conditions(
-                "preconditions",
-                false, // No references for simpler flow
-                vec![],
-            )?;
-
-            let postconditions = prompts::collect_conditions("postconditions", false, vec![])?;
-
             // Create use case with just the basic fields and default priority
             let params = crate::cli::interactive::runner::CreateUseCaseWithViewsParams {
                 title,
@@ -103,26 +94,6 @@ impl UseCaseWorkflow {
             let (use_case_id, message) = runner.create_use_case_with_views_and_fields(params)?;
 
             UI::show_success(&message)?;
-
-            // Add preconditions if any
-            if !preconditions.is_empty() {
-                use crate::controller::UseCaseController;
-                let mut uc_controller = UseCaseController::new()?;
-
-                for condition in preconditions {
-                    uc_controller.add_precondition(use_case_id.clone(), condition)?;
-                }
-            }
-
-            // Add postconditions if any
-            if !postconditions.is_empty() {
-                use crate::controller::UseCaseController;
-                let mut uc_controller = UseCaseController::new()?;
-
-                for condition in postconditions {
-                    uc_controller.add_postcondition(use_case_id.clone(), condition)?;
-                }
-            }
 
             // Show summary of created views
             UI::show_info("\n📄 Generated files:")?;
