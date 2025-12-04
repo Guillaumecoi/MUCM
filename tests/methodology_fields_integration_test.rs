@@ -33,7 +33,10 @@ fn init_test_environment(methodologies: Vec<String>) -> Result<Config> {
             methodology
         ));
         if !method_path.exists() {
-            eprintln!("WARNING: Methodology file does not exist: {:?}", method_path);
+            eprintln!(
+                "WARNING: Methodology file does not exist: {:?}",
+                method_path
+            );
         } else {
             let content = std::fs::read_to_string(&method_path)?;
             if !content.contains("custom_fields") {
