@@ -198,42 +198,6 @@ mod tests {
     }
 
     #[test]
-    #[ignore] // Requires template files to be present
-    fn test_reinitialize_with_single_use_case() {
-        let repository = MockRepository;
-        let mut use_cases = vec![create_test_use_case("UC-TEST-001")];
-        let mut service = MethodologyFieldReinitializeService::new(&repository, &mut use_cases);
-
-        let result = service.reinitialize_methodology_fields(
-            Some("UC-TEST-001".to_string()),
-            true, // dry run
-        );
-
-        assert!(result.is_ok());
-        let (updated_count, total_checked, _details) = result.unwrap();
-        assert_eq!(total_checked, 1);
-        // Updated count depends on whether fields were missing
-        assert!(updated_count <= 1);
-    }
-
-    #[test]
-    #[ignore] // Requires template files to be present
-    fn test_reinitialize_all_use_cases() {
-        let repository = MockRepository;
-        let mut use_cases = vec![
-            create_test_use_case("UC-TEST-001"),
-            create_test_use_case("UC-TEST-002"),
-        ];
-        let mut service = MethodologyFieldReinitializeService::new(&repository, &mut use_cases);
-
-        let result = service.reinitialize_methodology_fields(None, true);
-
-        assert!(result.is_ok());
-        let (_updated_count, total_checked, _details) = result.unwrap();
-        assert_eq!(total_checked, 2);
-    }
-
-    #[test]
     fn test_reinitialize_nonexistent_use_case() {
         let repository = MockRepository;
         let mut use_cases = vec![create_test_use_case("UC-TEST-001")];
@@ -244,27 +208,6 @@ mod tests {
 
         assert!(result.is_err());
         assert!(result.unwrap_err().to_string().contains("not found"));
-    }
-
-    #[test]
-    #[ignore] // Requires template files to be present
-    fn test_reinitialize_dry_run_vs_actual() {
-        let repository = MockRepository;
-        let mut use_cases = vec![create_test_use_case("UC-TEST-001")];
-
-        // Dry run
-        {
-            let mut service = MethodologyFieldReinitializeService::new(&repository, &mut use_cases);
-            let result = service.reinitialize_methodology_fields(None, true);
-            assert!(result.is_ok());
-        }
-
-        // Actual run
-        {
-            let mut service = MethodologyFieldReinitializeService::new(&repository, &mut use_cases);
-            let result = service.reinitialize_methodology_fields(None, false);
-            assert!(result.is_ok());
-        }
     }
 
     #[test]
@@ -286,37 +229,6 @@ mod tests {
 
         let index_none = service.find_use_case_index("UC-NONEXISTENT");
         assert!(index_none.is_err());
-    }
-
-    #[test]
-    #[ignore] // Requires template files to be present
-    fn test_reinitialize_with_existing_fields() {
-        let repository = MockRepository;
-        let mut use_case = create_test_use_case("UC-TEST-001");
-
-        // Add some existing fields
-        let mut business_fields = HashMap::new();
-        business_fields.insert(
-            "existing_field".to_string(),
-            serde_json::json!("existing value"),
-        );
-        use_case
-            .methodology_fields
-            .insert("business".to_string(), business_fields);
-
-        let mut use_cases = vec![use_case];
-        let mut service = MethodologyFieldReinitializeService::new(&repository, &mut use_cases);
-
-        let result = service.reinitialize_methodology_fields(None, true);
-        assert!(result.is_ok());
-
-        // Verify existing field wasn't overwritten
-        let use_case = &use_cases[0];
-        if let Some(business_fields) = use_case.methodology_fields.get("business") {
-            if let Some(value) = business_fields.get("existing_field") {
-                assert_eq!(value, &serde_json::json!("existing value"));
-            }
-        }
     }
 
     /// Regression test for the dry-run mutation bug

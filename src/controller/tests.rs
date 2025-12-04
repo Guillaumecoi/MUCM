@@ -517,53 +517,6 @@ inherits = ["Normal"]
     // TODO: This test needs the scenario ID, not title. Need to get scenario ID from add_scenario result
     #[test]
     #[serial]
-    #[ignore]
-    fn test_add_scenario_step() {
-        let (_temp_dir, mut controller) = setup_test_env();
-
-        // Create a use case and scenario
-        let params = create_test_params(
-            "Test UC".to_string(),
-            "test".to_string(),
-            "TES".to_string(),
-            None,
-            Some("business".to_string()),
-            None,
-            None,
-            None,
-        );
-        let result = controller.create_use_case(params).unwrap();
-        let use_case_id = extract_use_case_id(&result.message);
-
-        controller
-            .add_scenario(
-                use_case_id.clone(),
-                "Happy Path".to_string(),
-                "happy_path".to_string(),
-                None,
-            )
-            .unwrap();
-
-        // TODO: Need to extract scenario ID from add_scenario result
-        // Add a step - use 0 to append
-        let result = controller.add_scenario_step(
-            use_case_id,
-            "Happy Path".to_string(), // This should be scenario ID, not title
-            "User clicks login button".to_string(),
-            None, // None means append
-        );
-
-        assert!(result.is_ok(), "Result error: {:?}", result);
-        let display = result.unwrap();
-        assert!(
-            display.is_success(),
-            "Failed with message: {}",
-            display.message
-        );
-    }
-
-    #[test]
-    #[serial]
     fn test_update_scenario_status() {
         let (_temp_dir, mut controller) = setup_test_env();
 
