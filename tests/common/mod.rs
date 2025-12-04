@@ -111,6 +111,7 @@ last_updated = true
                 r#"name = "{}"
 file_extension = "{}"
 template_file = "test.hbs"
+aliases = []
 "#,
                 lang,
                 if *lang == "python" {
@@ -293,6 +294,51 @@ key_features = []
         fs::write(method_dir.join("uc_detailed.hbs"), "# Template\n")?;
         fs::write(method_dir.join("uc_advanced.hbs"), "# Template\n")?;
     }
+
+    // Create scenario templates directory
+    let scenarios_dir = templates_dir.join("scenarios");
+    fs::create_dir_all(&scenarios_dir)?;
+    fs::write(
+        scenarios_dir.join("scenario.hbs"),
+        r#"# {{scenario_id}}: {{title}}
+
+{{#if description}}
+{{description}}
+{{/if}}
+"#,
+    )?;
+    fs::write(
+        scenarios_dir.join("scenario_mermaid.hbs"),
+        r#"```mermaid
+sequenceDiagram
+{{#each steps}}
+    {{sender}} ->> {{receiver}}: {{action}}
+{{/each}}
+```
+"#,
+    )?;
+
+    // Create actor template
+    fs::write(
+        templates_dir.join("actor.hbs"),
+        r#"# {{name}}
+
+{{#if description}}
+{{description}}
+{{/if}}
+"#,
+    )?;
+
+    // Create overview template
+    fs::write(
+        templates_dir.join("overview.hbs"),
+        r#"# Use Cases Overview
+
+{{#each use_cases}}
+- {{id}}: {{title}}
+{{/each}}
+"#,
+    )?;
 
     Ok(())
 }
