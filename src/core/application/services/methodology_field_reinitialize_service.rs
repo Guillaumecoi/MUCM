@@ -68,28 +68,49 @@ impl<'a> MethodologyFieldReinitializeService<'a> {
 
             // For each methodology in views
             for (methodology, _level) in &view_pairs {
-                let fields = use_case
-                    .methodology_fields
-                    .entry(methodology.clone())
-                    .or_default();
-
                 let mut added_fields = Vec::new();
 
-                // Add missing fields
-                for (field_name, field_def) in &field_collection.fields {
-                    if field_def.methodologies.contains(methodology)
-                        && !fields.contains_key(field_name)
-                    {
-                        let default_value = match field_def.field_type.as_str() {
-                            "array" => serde_json::Value::Array(vec![]),
-                            "number" => serde_json::Value::Number(serde_json::Number::from(0)),
-                            "boolean" => serde_json::Value::Bool(false),
-                            _ => serde_json::Value::String(String::new()),
-                        };
+                // First pass: identify missing fields
+                let missing_fields: Vec<(String, serde_json::Value)> = {
+                    let existing_fields = use_case.methodology_fields.get(methodology);
 
-                        fields.insert(field_name.clone(), default_value);
+                    field_collection
+                        .fields
+                        .iter()
+                        .filter(|(field_name, field_def)| {
+                            field_def.methodologies.contains(methodology)
+                                && existing_fields
+                                    .map(|fields| !fields.contains_key(*field_name))
+                                    .unwrap_or(true)
+                        })
+                        .map(|(field_name, field_def)| {
+                            let default_value = match field_def.field_type.as_str() {
+                                "array" => serde_json::Value::Array(vec![]),
+                                "number" => serde_json::Value::Number(serde_json::Number::from(0)),
+                                "boolean" => serde_json::Value::Bool(false),
+                                _ => serde_json::Value::String(String::new()),
+                            };
+                            (field_name.clone(), default_value)
+                        })
+                        .collect()
+                };
+
+                // Track missing fields for reporting
+                if !missing_fields.is_empty() {
+                    for (field_name, _) in &missing_fields {
                         added_fields.push(field_name.clone());
                         use_case_updated = true;
+                    }
+                }
+
+                // Second pass: actually add missing fields (skip if dry_run)
+                if !(dry_run || missing_fields.is_empty()) {
+                    for (field_name, default_value) in missing_fields {
+                        use_case
+                            .methodology_fields
+                            .entry(methodology.clone())
+                            .or_default()
+                            .insert(field_name, default_value);
                     }
                 }
 
