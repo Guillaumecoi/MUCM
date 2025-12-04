@@ -77,7 +77,7 @@ impl UseCaseWorkflow {
         // Ask if user wants to fill additional fields
         let fill_additional = Confirm::new("Fill in additional fields now?")
             .with_default(false)
-            .with_help_message("You can add description, author, reviewer, and other custom fields")
+            .with_help_message("You can add description, author, reviewer, preconditions, postconditions, and other custom fields")
             .prompt()?;
 
         if !fill_additional {
@@ -94,37 +94,6 @@ impl UseCaseWorkflow {
             let (use_case_id, message) = runner.create_use_case_with_views_and_fields(params)?;
 
             UI::show_success(&message)?;
-
-            // Ask if they want to add preconditions/postconditions
-            let add_conditions = Confirm::new("Add preconditions or postconditions?")
-                .with_default(false)
-                .with_help_message(
-                    "You can add conditions that must be true before/after this use case",
-                )
-                .prompt()?;
-
-            if add_conditions {
-                use crate::controller::UseCaseController;
-                let mut uc_controller = UseCaseController::new()?;
-
-                // Collect preconditions using prompts
-                let preconditions = prompts::collect_conditions(
-                    "preconditions",
-                    false, // No references for simpler flow
-                    vec![],
-                )?;
-
-                for condition in preconditions {
-                    uc_controller.add_precondition(use_case_id.clone(), condition)?;
-                }
-
-                // Collect postconditions
-                let postconditions = prompts::collect_conditions("postconditions", false, vec![])?;
-
-                for condition in postconditions {
-                    uc_controller.add_postcondition(use_case_id.clone(), condition)?;
-                }
-            }
 
             // Show summary of created views
             UI::show_info("\n📄 Generated files:")?;
@@ -164,21 +133,39 @@ impl UseCaseWorkflow {
                 .prompt_skippable()?
         };
 
-        // Author (optional)
-        let author = Text::new("Author (optional):")
-            .with_help_message("Person who created this use case")
-            .prompt_skippable()?;
+        // Prompt for custom extra fields from config
+        let config = crate::config::Config::load()?;
+        let mut custom_field_values = HashMap::new();
 
-        // Reviewer (optional)
-        let reviewer = Text::new("Reviewer (optional):")
-            .with_help_message("Person responsible for reviewing this use case")
-            .prompt_skippable()?;
+        for (field_name, field_config) in &config.extra_fields {
+            let label = field_config
+                .label
+                .clone()
+                .unwrap_or_else(|| field_name.clone());
 
-        // Collect preconditions
+            let value = FieldHelpers::prompt_by_type(
+                &field_config.field_type,
+                &label,
+                field_config.required,
+                field_config.description.as_deref(),
+                field_config.example.as_deref(),
+            )?;
+
+            if let Some(v) = value {
+                custom_field_values.insert(field_name.clone(), v);
+            }
+        }
+
+        // Collect preconditions with use case references
+        let use_cases = runner.get_available_use_cases()?;
+        let available_use_cases: Vec<String> = use_cases
+            .iter()
+            .map(|uc| format!("{} - {}", uc.id, uc.title))
+            .collect();
         let preconditions = prompts::collect_conditions(
             "preconditions",
-            false, // No use case references for now (simpler flow)
-            vec![],
+            true, // Allow use case references
+            available_use_cases,
         )?;
 
         // Collect postconditions
@@ -195,17 +182,8 @@ impl UseCaseWorkflow {
         // Create the use case with additional fields (only truly extra fields)
         let mut extra_fields = HashMap::new();
 
-        if let Some(auth) = author {
-            if !auth.is_empty() {
-                extra_fields.insert("author".to_string(), auth);
-            }
-        }
-
-        if let Some(rev) = reviewer {
-            if !rev.is_empty() {
-                extra_fields.insert("reviewer".to_string(), rev);
-            }
-        }
+        // Add custom field values from config
+        extra_fields.extend(custom_field_values);
 
         // Merge methodology field values into extra_fields
         extra_fields.extend(methodology_field_values);
@@ -488,20 +466,44 @@ impl UseCaseWorkflow {
         // Prompt for each field
         let mut updated_fields = HashMap::new();
 
-        UI::show_info("Choose fields to edit (smart input based on field type):")?;
+        UI::show_info(&format!("\n📋 {} Fields:", methodology))?;
+        UI::show_info("Press Enter to skip fields you don't want to change.\n")?;
 
         for (field_name, field_def) in &field_collection.fields {
             let current_json = current_values.get(field_name);
-            let help_msg = field_def.description.clone().unwrap_or_default();
 
-            // Use FieldHelpers to handle different field types automatically
-            if let Some(new_value) = FieldHelpers::edit_by_type(
-                &field_def.field_type,
-                &field_def.label,
-                current_json,
-                &help_msg,
-            )? {
-                updated_fields.insert(field_name.clone(), new_value);
+            // Check if field is empty/new
+            let is_new_field = current_json.is_none()
+                || matches!(current_json, Some(serde_json::Value::Null))
+                || matches!(current_json, Some(serde_json::Value::String(s)) if s.is_empty())
+                || matches!(current_json, Some(serde_json::Value::Array(a)) if a.is_empty());
+
+            let new_value = if is_new_field {
+                // Use prompt_by_type for new/empty fields (shows description and example)
+                FieldHelpers::prompt_by_type(
+                    &field_def.field_type,
+                    &field_def.label,
+                    field_def.required,
+                    field_def.description.as_deref(),
+                    field_def.example.as_deref(),
+                )?
+            } else {
+                // Use edit_by_type for existing fields (shows current value)
+                let help_msg = field_def
+                    .description
+                    .clone()
+                    .unwrap_or_else(|| format!("{} field", field_def.field_type));
+
+                FieldHelpers::edit_by_type(
+                    &field_def.field_type,
+                    &field_def.label,
+                    current_json,
+                    &help_msg,
+                )?
+            };
+
+            if let Some(value) = new_value {
+                updated_fields.insert(field_name.clone(), value);
             }
         }
 

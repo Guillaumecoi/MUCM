@@ -183,6 +183,10 @@ pub struct Config {
     /// Actor configuration with custom persona fields
     #[serde(default, alias = "persona")]
     pub actor: ActorConfig,
+    /// Custom fields available for all use cases
+    /// Key is the field name, value is the field configuration
+    #[serde(default)]
+    pub extra_fields: std::collections::HashMap<String, crate::core::CustomFieldConfig>,
 }
 
 /// Default config version for deserialization

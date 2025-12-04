@@ -189,12 +189,25 @@ pub fn create_or_select_category() -> Result<(String, String)> {
         // Suggest abbreviation
         let suggested_abbr = category_controller.suggest_abbreviation(&full_name);
 
-        let abbreviation = Text::new("Abbreviation:")
-            .with_default(&suggested_abbr)
-            .with_help_message("3+ uppercase letters for use case IDs (e.g., 'AUT', 'USR')")
-            .prompt()?;
+        let abbreviation = loop {
+            let abbr = Text::new("Abbreviation:")
+                .with_default(&suggested_abbr)
+                .with_help_message("3+ uppercase letters for use case IDs (e.g., 'AUT', 'USR')")
+                .prompt()?;
 
-        // Check for collision
+            // Validate abbreviation before proceeding
+            let validation_result =
+                category_controller.create_category(full_name.clone(), abbr.clone())?;
+            if validation_result.success {
+                UI::show_success(&validation_result.message)?;
+                break abbr;
+            } else {
+                UI::show_error(&validation_result.message)?;
+                // Loop will retry
+            }
+        };
+
+        // Category was already created in the validation loop above, now check for collision
         if let Some(existing) = category_controller.detect_collision(&abbreviation)? {
             UI::show_warning(&format!(
                 "⚠️  Abbreviation '{}' is already used by category '{}'",
@@ -271,11 +284,7 @@ pub fn create_or_select_category() -> Result<(String, String)> {
                 }
             }
         } else {
-            // No collision, create category
-            let result =
-                category_controller.create_category(full_name.clone(), abbreviation.clone())?;
-            UI::show_success(&result.message)?;
-
+            // No collision, category was already created in validation loop
             Ok((full_name, abbreviation))
         }
     } else {

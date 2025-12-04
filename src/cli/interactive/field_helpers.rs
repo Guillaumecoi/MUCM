@@ -5,7 +5,6 @@
 //! use cases, personas, scenarios, and other entities.
 
 use anyhow::Result;
-use colored::Colorize;
 use inquire::{Confirm, Select, Text};
 use serde_json::Value as JsonValue;
 
@@ -241,7 +240,7 @@ impl FieldHelpers {
         let prompt_text = if required {
             format!("{} (required):", label)
         } else {
-            format!("{} (optional):", label)
+            format!("{}:", label)
         };
 
         // Handle different field types
@@ -254,73 +253,117 @@ impl FieldHelpers {
                 Ok(Some(result.to_string()))
             }
             "array" => {
-                // Show field name as colored header
-                println!();
-                let colored_label = format!("> {}:", label).bright_cyan().bold();
-                println!("{}", colored_label);
-                println!();
-
-                // Build help message with instructions
-                let mut array_help = vec!["Press Enter to confirm and move to next item. Press Enter on empty line when done.".to_string()];
-                if let Some(desc) = description {
-                    array_help.push(format!("• Description: {}", desc));
-                }
-                if let Some(ex) = example {
-                    array_help.push(format!("• Example: {}", ex));
-                }
-                let array_help_msg = array_help.join("\n");
-
-                let mut items = Vec::new();
-                let mut item_num = 1;
-
                 loop {
-                    let item_prompt = format!("  Item {}: ", item_num);
-                    let result = Text::new(&item_prompt)
-                        .with_help_message(&array_help_msg)
-                        .prompt_skippable()?;
+                    // Show field name as header
+                    println!();
+                    let header = if required {
+                        format!("> {} (required):", label)
+                    } else {
+                        format!("> {}:", label)
+                    };
+                    println!("{}", header);
+                    println!();
 
-                    match result {
-                        Some(item) if !item.trim().is_empty() => {
-                            items.push(item.trim().to_string());
-                            item_num += 1;
-                        }
-                        _ => break,
+                    // Build help message with instructions
+                    let mut array_help = vec!["Press Enter to confirm and move to next item. Press Enter on empty line when done.".to_string()];
+                    if let Some(desc) = description {
+                        array_help.push(format!("• Description: {}", desc));
                     }
-                }
+                    if let Some(ex) = example {
+                        array_help.push(format!("• Example: {}", ex));
+                    }
+                    let array_help_msg = array_help.join("\n");
 
-                if items.is_empty() {
-                    Ok(None)
-                } else {
-                    // Serialize as JSON array string
-                    Ok(Some(
-                        serde_json::to_string(&items).unwrap_or_else(|_| items.join("\n")),
-                    ))
+                    let mut items = Vec::new();
+                    let mut item_num = 1;
+
+                    loop {
+                        let item_prompt = format!("  Item {}: ", item_num);
+                        let result = Text::new(&item_prompt)
+                            .with_help_message(&array_help_msg)
+                            .prompt_skippable()?;
+
+                        match result {
+                            Some(item) if !item.trim().is_empty() => {
+                                items.push(item.trim().to_string());
+                                item_num += 1;
+                            }
+                            _ => break,
+                        }
+                    }
+
+                    if items.is_empty() {
+                        if required {
+                            UI::show_warning(
+                                "  ⚠️  This field is required. Please add at least one item.",
+                            )?;
+                            continue;
+                        }
+                        return Ok(None);
+                    } else {
+                        // Serialize as JSON array string
+                        return Ok(Some(
+                            serde_json::to_string(&items).unwrap_or_else(|_| items.join("\n")),
+                        ));
+                    }
                 }
             }
             "number" => {
-                let result = Text::new(&prompt_text)
-                    .with_help_message(&help_msg)
-                    .prompt_skippable()?;
+                if required {
+                    loop {
+                        let num_str = Text::new(&prompt_text)
+                            .with_help_message(&help_msg)
+                            .prompt()?;
 
-                if let Some(num_str) = result {
-                    if num_str.parse::<f64>().is_err() {
-                        UI::show_warning(&format!(
-                            "  ⚠️  '{}' is not a valid number. Skipping field.",
-                            num_str
-                        ))?;
-                        Ok(None)
-                    } else {
-                        Ok(Some(num_str))
+                        if num_str.parse::<f64>().is_ok() {
+                            return Ok(Some(num_str));
+                        } else {
+                            UI::show_warning(&format!(
+                                "  ⚠️  '{}' is not a valid number. Please try again.",
+                                num_str
+                            ))?;
+                        }
                     }
                 } else {
-                    Ok(None)
+                    let result = Text::new(&prompt_text)
+                        .with_help_message(&help_msg)
+                        .prompt_skippable()?;
+
+                    if let Some(num_str) = result {
+                        if num_str.parse::<f64>().is_err() {
+                            UI::show_warning(&format!(
+                                "  ⚠️  '{}' is not a valid number. Skipping field.",
+                                num_str
+                            ))?;
+                            Ok(None)
+                        } else {
+                            Ok(Some(num_str))
+                        }
+                    } else {
+                        Ok(None)
+                    }
                 }
             }
             _ => {
                 // Default: string input
-                Ok(Text::new(&prompt_text)
-                    .with_help_message(&help_msg)
-                    .prompt_skippable()?)
+                if required {
+                    loop {
+                        let input = Text::new(&prompt_text)
+                            .with_help_message(&help_msg)
+                            .prompt()?;
+
+                        if input.trim().is_empty() {
+                            UI::show_warning("  ⚠️  This field is required and cannot be empty.")?;
+                            continue;
+                        }
+
+                        return Ok(Some(input));
+                    }
+                } else {
+                    Ok(Text::new(&prompt_text)
+                        .with_help_message(&help_msg)
+                        .prompt_skippable()?)
+                }
             }
         }
     }
