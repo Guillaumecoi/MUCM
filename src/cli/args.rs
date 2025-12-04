@@ -116,6 +116,19 @@ pub enum Commands {
         #[arg(long, short = 'n')]
         dry_run: bool,
     },
+    /// Reinitialize missing methodology fields in TOML files
+    ///
+    /// Scans all use case TOML files and ensures all fields defined in their enabled
+    /// methodology views are present. Missing fields are initialized with empty values
+    /// based on their type (arrays: [], numbers: 0, booleans: false, strings: "").
+    /// Existing field values are never overwritten.
+    Reinitialize {
+        /// Use case ID to reinitialize (e.g., UC-SEC-001). If omitted, all use cases.
+        use_case_id: Option<String>,
+        /// Dry run mode - show what would be added without making changes
+        #[arg(long, short = 'n')]
+        dry_run: bool,
+    },
     /// Migrate data to new format (v0.2.0: actor ID format change)
     ///
     /// Updates actor files to the new ID naming convention where personas use

@@ -1199,6 +1199,33 @@ impl UseCaseCoordinator {
         service.cleanup_methodology_fields(use_case_id, dry_run)
     }
 
+    /// Reinitialize missing methodology fields in use cases
+    ///
+    /// Scans use cases and ensures all fields defined in their enabled methodology
+    /// views are present in the TOML files. Missing fields are initialized with
+    /// empty values based on their type. Existing field values are never overwritten.
+    ///
+    /// # Arguments
+    /// * `use_case_id` - Optional specific use case to reinitialize. If None, all use cases.
+    /// * `dry_run` - If true, shows what would be added without making changes
+    ///
+    /// # Returns
+    /// A tuple of (updated_count, total_checked, details) where:
+    /// - updated_count: number of use cases that had fields added
+    /// - total_checked: number of use cases checked
+    /// - details: vector of (use_case_id, methodology, added_fields) for each updated use case
+    pub fn reinitialize_methodology_fields(
+        &mut self,
+        use_case_id: Option<String>,
+        dry_run: bool,
+    ) -> Result<services::ReinitializeResult> {
+        let mut service = services::MethodologyFieldReinitializeService::new(
+            self.repository.as_ref(),
+            &mut self.use_cases,
+        );
+        service.reinitialize_methodology_fields(use_case_id, dry_run)
+    }
+
     // ========== Update Operations ==========
 
     /// Update basic use case fields
