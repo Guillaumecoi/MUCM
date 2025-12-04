@@ -209,9 +209,7 @@ mod tests {
         .unwrap();
 
         for (methodology, view) in views {
-            use_case
-                .views
-                .push(MethodologyView::new(methodology, view));
+            use_case.views.push(MethodologyView::new(methodology, view));
         }
         use_case
     }
@@ -320,7 +318,7 @@ mod tests {
         );
 
         // Verify no empty methodology entries were created
-        for (methodology, _fields) in &use_cases[0].methodology_fields {
+        for methodology in use_cases[0].methodology_fields.keys() {
             if methodology != "business" {
                 panic!(
                     "Dry-run created unexpected methodology entry: {}",
@@ -383,10 +381,7 @@ mod tests {
         let _result = service.reinitialize_methodology_fields(None, true);
 
         // Existing fields should remain unchanged after dry-run
-        let fields_after = use_cases[0]
-            .methodology_fields
-            .get("business")
-            .unwrap();
+        let fields_after = use_cases[0].methodology_fields.get("business").unwrap();
 
         assert_eq!(fields_before.len(), fields_after.len());
         for (key, value) in fields_before.iter() {
@@ -435,7 +430,8 @@ mod tests {
         let mut service = MethodologyFieldReinitializeService::new(&repository, &mut use_cases);
 
         // Process only specific use case
-        let _result = service.reinitialize_methodology_fields(Some("UC-TEST-002".to_string()), true);
+        let _result =
+            service.reinitialize_methodology_fields(Some("UC-TEST-002".to_string()), true);
 
         // Should attempt to process only the specified use case
         // (will fail without templates but we're testing the selection logic)
@@ -472,4 +468,3 @@ mod tests {
         assert_eq!(fields_added, 0);
     }
 }
-
