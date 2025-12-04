@@ -13,8 +13,8 @@ mod common;
 
 /// Helper to initialize test environment with methodologies
 fn init_test_environment(methodologies: Vec<String>) -> Result<Config> {
-    // Create minimal source-templates for testing
-    common::create_minimal_source_templates(std::path::Path::new("."))?;
+    // Set up isolated test templates (bypasses user config caching)
+    let _template_mgr = common::TestTemplateManager::new()?;
 
     let mut config = Config::default();
     config.templates.methodologies = methodologies.clone();
@@ -25,25 +25,6 @@ fn init_test_environment(methodologies: Vec<String>) -> Result<Config> {
 
     // Copy templates to config directory
     Config::copy_templates_to_config_with_language(None)?;
-
-    // Debug: Check if methodology files exist
-    for methodology in &methodologies {
-        let method_path = std::path::PathBuf::from(format!(
-            ".config/.mucm/template-assets/methodologies/{}/methodology.toml",
-            methodology
-        ));
-        if !method_path.exists() {
-            eprintln!(
-                "WARNING: Methodology file does not exist: {:?}",
-                method_path
-            );
-        } else {
-            let content = std::fs::read_to_string(&method_path)?;
-            if !content.contains("custom_fields") {
-                eprintln!("WARNING: Methodology {} has no custom_fields", methodology);
-            }
-        }
-    }
 
     Ok(config)
 }

@@ -173,6 +173,19 @@ impl TemplateManager {
     pub fn find_source_templates_dir() -> Result<PathBuf> {
         use directories::ProjectDirs;
 
+        // For testing: allow explicit override to use isolated template directory
+        // This enables each test to have its own template environment without cache conflicts
+        if let Ok(test_templates) = std::env::var("MUCM_TEST_TEMPLATES_DIR") {
+            let path = PathBuf::from(test_templates);
+            if path.exists() {
+                return Ok(path);
+            }
+            eprintln!(
+                "Warning: MUCM_TEST_TEMPLATES_DIR set but path doesn't exist: {:?}",
+                path
+            );
+        }
+
         // In test mode, prefer local templates over global to avoid cross-test pollution
         let test_mode = std::env::var("MUCM_TEST_MODE").is_ok();
 
