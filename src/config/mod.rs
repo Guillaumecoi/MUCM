@@ -798,6 +798,19 @@ mod tests {
     use serial_test::serial;
     use tempfile::TempDir;
 
+    /// Ensure tests use project source templates, not user config templates
+    /// 
+    /// This prevents tests from failing due to outdated templates in ~/.config/mucm/templates/
+    fn setup_test_templates_env() {
+        // Point directly to project's source-templates directory using MUCM_TEST_TEMPLATES_DIR
+        // This bypasses user config caching completely
+        let project_root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"));
+        let source_templates = project_root.join("source-templates");
+        unsafe {
+            std::env::set_var("MUCM_TEST_TEMPLATES_DIR", source_templates);
+        }
+    }
+
     /// Helper to initialize a project in a temporary directory with optional language
     fn init_project_with_language(language: Option<String>) -> Result<Config> {
         use crate::config::template_manager::TemplateManager;
@@ -883,6 +896,7 @@ mod tests {
     #[test]
     #[serial]
     fn test_auto_init_process() -> Result<()> {
+        setup_test_templates_env();
         let temp_dir = TempDir::new()?;
         std::env::set_current_dir(&temp_dir)?;
 
@@ -928,6 +942,7 @@ mod tests {
     #[test]
     #[serial]
     fn test_auto_init_language_options() -> Result<()> {
+        setup_test_templates_env();
         // Test with Python
         {
             let temp_dir = TempDir::new()?;
@@ -964,6 +979,7 @@ mod tests {
     #[test]
     #[serial]
     fn test_config_management() -> Result<()> {
+        setup_test_templates_env();
         let temp_dir = TempDir::new()?;
         std::env::set_current_dir(&temp_dir)?;
 
@@ -996,6 +1012,7 @@ mod tests {
     #[test]
     #[serial]
     fn test_available_languages_for_settings() -> Result<()> {
+        setup_test_templates_env();
         let temp_dir = TempDir::new()?;
         std::env::set_current_dir(&temp_dir)?;
 
@@ -1041,6 +1058,7 @@ mod tests {
     #[test]
     #[serial]
     fn test_config_validation() -> Result<()> {
+        setup_test_templates_env();
         let temp_dir = TempDir::new()?;
         std::env::set_current_dir(&temp_dir)?;
 
@@ -1081,6 +1099,7 @@ mod tests {
     #[test]
     #[serial]
     fn test_auto_init_settings_integration() -> Result<()> {
+        setup_test_templates_env();
         let temp_dir = TempDir::new()?;
         std::env::set_current_dir(&temp_dir)?;
 
@@ -1226,6 +1245,7 @@ mod tests {
     #[test]
     #[serial]
     fn test_check_templates_exist() -> Result<()> {
+        setup_test_templates_env();
         let temp_dir = TempDir::new()?;
         std::env::set_current_dir(&temp_dir)?;
 
