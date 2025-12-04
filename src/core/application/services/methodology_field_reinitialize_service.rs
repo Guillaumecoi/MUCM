@@ -197,6 +197,41 @@ mod tests {
         use_case
     }
 
+    fn create_use_case_with_views(id: &str, views: Vec<(&str, &str)>) -> UseCase {
+        let mut use_case = UseCase::new(
+            id.to_string(),
+            "Test Use Case".to_string(),
+            "Test".to_string(),
+            "TST".to_string(),
+            "Test description".to_string(),
+            "medium".to_string(),
+        )
+        .unwrap();
+
+        for (methodology, view) in views {
+            use_case
+                .views
+                .push(MethodologyView::new(methodology, view));
+        }
+        use_case
+    }
+
+    fn create_use_case_with_fields(
+        id: &str,
+        methodology: &str,
+        fields: Vec<(&str, serde_json::Value)>,
+    ) -> UseCase {
+        let mut use_case = create_test_use_case(id);
+        let mut field_map = HashMap::new();
+        for (key, value) in fields {
+            field_map.insert(key.to_string(), value);
+        }
+        use_case
+            .methodology_fields
+            .insert(methodology.to_string(), field_map);
+        use_case
+    }
+
     #[test]
     fn test_reinitialize_nonexistent_use_case() {
         let repository = MockRepository;
@@ -301,4 +336,140 @@ mod tests {
             // Result might fail without templates, we only verify no mutation happened during dry-run
         }
     }
+
+    #[test]
+    fn test_reinitialize_with_multiple_views() {
+        let repository = MockRepository;
+        let mut use_cases = vec![create_use_case_with_views(
+            "UC-TEST-MULTI",
+            vec![
+                ("business", "normal"),
+                ("developer", "advanced"),
+                ("tester", "normal"),
+            ],
+        )];
+
+        let mut service = MethodologyFieldReinitializeService::new(&repository, &mut use_cases);
+
+        // This should try to process all three methodologies
+        // It will fail because we don't have templates, but we're testing the logic flow
+        let _result = service.reinitialize_methodology_fields(None, true);
+
+        // The important part is that it processes all views without panicking
+        // and that dry_run doesn't mutate the state
+        assert_eq!(use_cases[0].methodology_fields.len(), 0);
+    }
+
+    #[test]
+    fn test_reinitialize_preserves_existing_fields() {
+        let repository = MockRepository;
+        let mut use_cases = vec![create_use_case_with_fields(
+            "UC-TEST-PRESERVE",
+            "business",
+            vec![
+                ("existing_field1", serde_json::json!("value1")),
+                ("existing_field2", serde_json::json!(42)),
+                ("existing_field3", serde_json::json!(true)),
+            ],
+        )];
+
+        let fields_before = use_cases[0]
+            .methodology_fields
+            .get("business")
+            .unwrap()
+            .clone();
+
+        let mut service = MethodologyFieldReinitializeService::new(&repository, &mut use_cases);
+        let _result = service.reinitialize_methodology_fields(None, true);
+
+        // Existing fields should remain unchanged after dry-run
+        let fields_after = use_cases[0]
+            .methodology_fields
+            .get("business")
+            .unwrap();
+
+        assert_eq!(fields_before.len(), fields_after.len());
+        for (key, value) in fields_before.iter() {
+            assert_eq!(
+                fields_after.get(key),
+                Some(value),
+                "Field {} should be preserved",
+                key
+            );
+        }
+    }
+
+    #[test]
+    fn test_reinitialize_multiple_use_cases() {
+        let repository = MockRepository;
+        let mut use_cases = vec![
+            create_test_use_case("UC-TEST-001"),
+            create_test_use_case("UC-TEST-002"),
+            create_test_use_case("UC-TEST-003"),
+        ];
+
+        let mut service = MethodologyFieldReinitializeService::new(&repository, &mut use_cases);
+
+        // Process all use cases
+        let _result = service.reinitialize_methodology_fields(None, true);
+
+        // Verify dry-run didn't mutate any of the use cases
+        for uc in &use_cases {
+            assert_eq!(
+                uc.methodology_fields.len(),
+                0,
+                "Use case {} should have no fields after dry-run",
+                uc.id
+            );
+        }
+    }
+
+    #[test]
+    fn test_reinitialize_specific_use_case() {
+        let repository = MockRepository;
+        let mut use_cases = vec![
+            create_test_use_case("UC-TEST-001"),
+            create_test_use_case("UC-TEST-002"),
+        ];
+
+        let mut service = MethodologyFieldReinitializeService::new(&repository, &mut use_cases);
+
+        // Process only specific use case
+        let _result = service.reinitialize_methodology_fields(Some("UC-TEST-002".to_string()), true);
+
+        // Should attempt to process only the specified use case
+        // (will fail without templates but we're testing the selection logic)
+        assert_eq!(use_cases[0].methodology_fields.len(), 0);
+        assert_eq!(use_cases[1].methodology_fields.len(), 0);
+    }
+
+    #[test]
+    fn test_use_case_without_views() {
+        let repository = MockRepository;
+        let mut use_case = create_test_use_case("UC-NO-VIEWS");
+        use_case.views.clear(); // Remove all views
+        let mut use_cases = vec![use_case];
+
+        let mut service = MethodologyFieldReinitializeService::new(&repository, &mut use_cases);
+        let _result = service.reinitialize_methodology_fields(None, true);
+
+        // Should handle gracefully when no views exist
+        assert_eq!(use_cases[0].methodology_fields.len(), 0);
+    }
+
+    #[test]
+    fn test_empty_use_case_list() {
+        let repository = MockRepository;
+        let mut use_cases: Vec<UseCase> = vec![];
+
+        let mut service = MethodologyFieldReinitializeService::new(&repository, &mut use_cases);
+        let result = service.reinitialize_methodology_fields(None, true);
+
+        // Should handle empty list gracefully
+        assert!(result.is_ok());
+        let (use_cases_processed, fields_added, _details) = result.unwrap();
+        assert_eq!(use_cases_processed, 0);
+        assert_eq!(fields_added, 0);
+    }
 }
+
