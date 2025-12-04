@@ -1242,6 +1242,65 @@ impl UseCaseController {
         }
     }
 
+    /// Validate use case fields
+    ///
+    /// Checks for:
+    /// - Missing required fields
+    /// - Irrelevant fields (not defined in current methodology configuration)
+    ///
+    /// Returns warnings only (not errors).
+    ///
+    /// # Arguments
+    /// * `use_case_id` - Optional specific use case to validate. If None, validates all.
+    ///
+    /// # Returns
+    /// DisplayResult with validation warnings
+    ///
+    /// # Errors
+    /// Returns error if validation fails
+    pub fn validate_fields(
+        &mut self,
+        use_case_id: Option<String>,
+    ) -> Result<DisplayResult> {
+        match self
+            .app_service
+            .validate_fields(use_case_id.clone())
+        {
+            Ok(warnings) => {
+                if warnings.is_empty() {
+                    Ok(DisplayResult::success(
+                        "✅ All fields are valid. No issues found.".to_string(),
+                    ))
+                } else {
+                    let mut message = format!("⚠️  Found {} validation warning(s):\n\n", warnings.len());
+
+                    // Group warnings by entity
+                    let mut by_entity: std::collections::HashMap<String, Vec<_>> =
+                        std::collections::HashMap::new();
+                    for warning in warnings {
+                        by_entity
+                            .entry(warning.entity_id.clone())
+                            .or_default()
+                            .push(warning);
+                    }
+
+                    // Display warnings grouped by entity
+                    for (entity_id, entity_warnings) in by_entity {
+                        message.push_str(&format!("{}:\n", entity_id));
+                        for warning in entity_warnings {
+                            message.push_str(&format!("  • {}\n", warning.message));
+                        }
+                        message.push('\n');
+                    }
+
+                    // Warnings are still "success" from operation perspective
+                    Ok(DisplayResult::success(message))
+                }
+            }
+            Err(e) => Ok(DisplayResult::error(e.to_string())),
+        }
+    }
+
     // ========== Update Operations ==========
 
     /// Update basic use case information

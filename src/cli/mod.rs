@@ -28,15 +28,15 @@ use crate::presentation::DisplayResultFormatter;
 use args::{Cli, Commands};
 use interactive::run_interactive_session;
 use standard::{
-    handle_actor_command, handle_cleanup_command, handle_create_command, handle_init_command,
-    handle_languages_command, handle_list_command, handle_list_methodologies_command,
-    handle_methodology_info_command, handle_migrate_command, handle_postcondition_add_command,
-    handle_postcondition_list_command, handle_postcondition_remove_command,
-    handle_precondition_add_command, handle_precondition_list_command,
-    handle_precondition_remove_command, handle_reference_add_command,
-    handle_reference_list_command, handle_reference_remove_command, handle_regenerate_command,
-    handle_reinitialize_command, handle_status_command, handle_usecase_scenario_command,
-    CliRunner,
+    handle_actor_command, handle_check_command, handle_cleanup_command, handle_create_command,
+    handle_init_command, handle_languages_command, handle_list_command,
+    handle_list_methodologies_command, handle_methodology_info_command, handle_migrate_command,
+    handle_postcondition_add_command, handle_postcondition_list_command,
+    handle_postcondition_remove_command, handle_precondition_add_command,
+    handle_precondition_list_command, handle_precondition_remove_command,
+    handle_reference_add_command, handle_reference_list_command, handle_reference_remove_command,
+    handle_regenerate_command, handle_reinitialize_command, handle_status_command,
+    handle_usecase_scenario_command, CliRunner,
 };
 
 /// Execute a command with proper error handling and colored output
@@ -247,6 +247,10 @@ pub fn run() -> Result<()> {
             dry_run,
         } => {
             execute_command(|| handle_reinitialize_command(&mut runner, use_case_id, dry_run));
+            Ok(())
+        }
+        Commands::Check { use_case_id } => {
+            execute_command(|| handle_check_command(&mut runner, use_case_id));
             Ok(())
         }
         Commands::Migrate { dry_run } => {

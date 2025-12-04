@@ -6,6 +6,7 @@
 /// focused on user interaction while the runner manages domain operations.
 // Private modules
 mod actor;
+mod check;
 mod cleanup;
 mod fields;
 mod language;
@@ -17,6 +18,7 @@ mod usecase;
 
 // Explicit public exports
 pub use actor::handle_actor_command;
+pub use check::handle_check_command;
 pub use cleanup::handle_cleanup_command;
 pub use reinitialize::handle_reinitialize_command;
 pub use fields::{

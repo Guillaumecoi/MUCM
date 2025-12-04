@@ -8,6 +8,7 @@ use crate::core::application::creators::{
 use crate::core::application::generators::{
     MarkdownGenerator, OutputManager, OverviewGenerator, TestGenerator,
 };
+use crate::core::application::methodology_field_collector::MethodologyFieldCollector;
 use crate::core::application::services;
 use crate::core::application::services::CleanupResult;
 use crate::core::utils::suggest_alternatives;
@@ -1224,6 +1225,42 @@ impl UseCaseCoordinator {
             &mut self.use_cases,
         );
         service.reinitialize_methodology_fields(use_case_id, dry_run)
+    }
+
+    /// Validate use case fields
+    ///
+    /// Checks use cases for:
+    /// - Missing required fields
+    /// - Irrelevant fields (not defined in current methodology configuration)
+    ///
+    /// Returns warnings only (not errors) to help identify potential issues.
+    ///
+    /// # Arguments
+    /// * `use_case_id` - Optional specific use case to validate. If None, validates all.
+    ///
+    /// # Returns
+    /// Vector of validation warnings
+    pub fn validate_fields(
+        &self,
+        use_case_id: Option<String>,
+    ) -> Result<Vec<services::ValidationWarning>> {
+        // Create field collector for current configuration
+        let field_collector = MethodologyFieldCollector::new()?;
+        let service = services::FieldValidationService::new(&field_collector);
+        let warnings;
+
+        // Validate use cases
+        if let Some(uc_id) = use_case_id {
+            if let Some(use_case) = self.use_cases.iter().find(|uc| uc.id == uc_id) {
+                warnings = service.validate_use_case(use_case);
+            } else {
+                warnings = Vec::new();
+            }
+        } else {
+            warnings = service.validate_use_cases(&self.use_cases);
+        }
+
+        Ok(warnings)
     }
 
     // ========== Update Operations ==========

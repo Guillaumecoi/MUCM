@@ -129,6 +129,17 @@ pub enum Commands {
         #[arg(long, short = 'n')]
         dry_run: bool,
     },
+    /// Check/validate use case fields
+    ///
+    /// Validates that all use cases have:
+    /// - All required fields filled with non-empty values
+    /// - No irrelevant fields (fields not defined in current methodology configuration)
+    ///
+    /// Returns warnings only (not errors) to help identify potential issues.
+    Check {
+        /// Use case ID to validate (e.g., UC-SEC-001). If omitted, validates all.
+        use_case_id: Option<String>,
+    },
     /// Migrate data to new format (v0.2.0: actor ID format change)
     ///
     /// Updates actor files to the new ID naming convention where personas use

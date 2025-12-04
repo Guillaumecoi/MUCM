@@ -666,6 +666,30 @@ impl CliRunner {
         let controller = self.ensure_use_case_controller()?;
         controller.reinitialize_methodology_fields(use_case_id, dry_run)
     }
+
+    /// Validate use case fields
+    ///
+    /// Checks for:
+    /// - Missing required fields
+    /// - Irrelevant fields (not defined in current methodology configuration)
+    ///
+    /// Returns warnings only (not errors).
+    ///
+    /// # Arguments
+    /// * `use_case_id` - Optional specific use case to validate
+    ///
+    /// # Returns
+    /// DisplayResult with validation warnings
+    ///
+    /// # Errors
+    /// Returns error if validation fails
+    pub fn validate_fields(
+        &mut self,
+        use_case_id: Option<String>,
+    ) -> Result<DisplayResult> {
+        let controller = self.ensure_use_case_controller()?;
+        controller.validate_fields(use_case_id)
+    }
 }
 
 #[cfg(test)]
