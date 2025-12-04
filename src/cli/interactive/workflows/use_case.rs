@@ -661,6 +661,136 @@ impl UseCaseWorkflow {
         Ok(())
     }
 
+    /// Interactive reinitialize workflow
+    pub fn reinitialize_use_cases() -> Result<()> {
+        UI::show_section_header("Reinitialize Methodology Fields", "🔄")?;
+
+        UI::show_info(
+            "\nThis will scan use cases and add missing methodology fields.\n\
+             Missing fields are initialized with empty values based on their type:\n\
+             • Arrays: []\n\
+             • Numbers: 0\n\
+             • Booleans: false\n\
+             • Strings: \"\"\n\n\
+             Existing field values are never overwritten.",
+        )?;
+
+        // Ask if they want to preview first
+        let dry_run = Confirm::new("Preview changes without saving?")
+            .with_default(true)
+            .prompt()?;
+
+        // Ask if all or specific use case
+        let all_use_cases = Confirm::new("Reinitialize all use cases?")
+            .with_default(true)
+            .prompt()?;
+
+        let use_case_id = if all_use_cases {
+            None
+        } else {
+            // Let user select a specific use case
+            let mut runner = InteractiveRunner::new();
+            let use_case_ids = runner.get_use_case_ids()?;
+
+            if use_case_ids.is_empty() {
+                UI::show_warning("No use cases found.")?;
+                UI::pause_for_input()?;
+                return Ok(());
+            }
+
+            let selected = Select::new("Select use case:", use_case_ids).prompt()?;
+            Some(selected)
+        };
+
+        // Execute reinitialize
+        let mut runner = crate::cli::standard::CliRunner::new();
+        match runner.reinitialize_methodology_fields(use_case_id.clone(), dry_run) {
+            Ok(result) => {
+                if result.success {
+                    UI::show_success(&result.message)?;
+
+                    if dry_run {
+                        println!();
+                        let apply = Confirm::new("Apply these changes?")
+                            .with_default(true)
+                            .prompt()?;
+
+                        if apply {
+                            match runner.reinitialize_methodology_fields(use_case_id, false) {
+                                Ok(apply_result) => {
+                                    UI::show_success(&apply_result.message)?;
+                                }
+                                Err(e) => {
+                                    UI::show_error(&format!("Failed to apply changes: {}", e))?;
+                                }
+                            }
+                        }
+                    }
+                } else {
+                    UI::show_error(&result.message)?;
+                }
+            }
+            Err(e) => {
+                UI::show_error(&format!("Reinitialize failed: {}", e))?;
+            }
+        }
+
+        UI::pause_for_input()?;
+        Ok(())
+    }
+
+    /// Interactive check/validate workflow
+    pub fn check_use_cases() -> Result<()> {
+        UI::show_section_header("Check Use Case Fields", "🔍")?;
+
+        UI::show_info(
+            "\nThis will validate use case fields and identify:\n\
+             • Empty required fields\n\
+             • Irrelevant fields (not in current methodology)\n\
+             • Missing methodology sections",
+        )?;
+
+        // Ask if all or specific use case
+        let all_use_cases = Confirm::new("Check all use cases?")
+            .with_default(true)
+            .prompt()?;
+
+        let use_case_id = if all_use_cases {
+            None
+        } else {
+            // Let user select a specific use case
+            let mut runner = InteractiveRunner::new();
+            let use_case_ids = runner.get_use_case_ids()?;
+
+            if use_case_ids.is_empty() {
+                UI::show_warning("No use cases found.")?;
+                UI::pause_for_input()?;
+                return Ok(());
+            }
+
+            let selected = Select::new("Select use case:", use_case_ids).prompt()?;
+            Some(selected)
+        };
+
+        // Execute validation
+        let mut runner = crate::cli::standard::CliRunner::new();
+        match runner.validate_fields(use_case_id) {
+            Ok(result) => {
+                if result.success {
+                    UI::show_success(&result.message)?;
+                } else {
+                    UI::show_warning(&result.message)?;
+                }
+            }
+            Err(e) => {
+                UI::show_error(&format!("Validation failed: {}", e))?;
+            }
+        }
+
+        UI::pause_for_input()?;
+        Ok(())
+    }
+
     /// Interactive use case management menu
     pub fn manage_use_cases() -> Result<()> {
         UI::clear_screen()?;
@@ -671,6 +801,8 @@ impl UseCaseWorkflow {
                 "Create New Use Case",
                 "Edit Use Case",
                 "List All Use Cases",
+                "Reinitialize Methodology Fields",
+                "Check/Validate Fields",
                 "Show Project Status",
                 "Back to Main Menu",
             ];
@@ -681,6 +813,8 @@ impl UseCaseWorkflow {
                 "Create New Use Case" => Self::create_use_case()?,
                 "Edit Use Case" => Self::edit_use_case()?,
                 "List All Use Cases" => Self::list_use_cases()?,
+                "Reinitialize Methodology Fields" => Self::reinitialize_use_cases()?,
+                "Check/Validate Fields" => Self::check_use_cases()?,
                 "Show Project Status" => Self::show_status()?,
                 "Back to Main Menu" => break,
                 _ => {}
