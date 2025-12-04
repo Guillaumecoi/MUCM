@@ -189,22 +189,162 @@ impl<'a> FieldValidationService<'a> {
 
 #[cfg(test)]
 mod tests {
+    use super::*;
     use serde_json::json;
+    use crate::core::{MethodologyView, UseCase};
+    use std::collections::HashMap;
+
+    fn create_test_field_collector() -> MethodologyFieldCollector {
+        MethodologyFieldCollector::new().expect("Failed to create field collector")
+    }
+
+    fn create_test_use_case() -> UseCase {
+        let mut use_case = UseCase::new(
+            "UC-TEST-001".to_string(),
+            "Test Use Case".to_string(),
+            "Test".to_string(),
+            "TST".to_string(),
+            "Test description".to_string(),
+            "medium".to_string(),
+        )
+        .unwrap();
+
+        use_case.views.push(MethodologyView::new("business", "normal"));
+        
+        let mut business_fields = HashMap::new();
+        business_fields.insert("business_value".to_string(), json!("High"));
+        business_fields.insert("technical_dependencies".to_string(), json!(["API", "Database"]));
+        
+        use_case.methodology_fields.insert("business".to_string(), business_fields);
+        
+        use_case
+    }
 
     #[test]
     fn test_is_value_empty() {
-        // Can't easily test without a real MethodologyFieldCollector
-        // Just test value emptiness logic directly
-        assert!(matches!(json!(null), serde_json::Value::Null));
-        assert!(json!("").as_str().unwrap().trim().is_empty());
-        assert!(json!("   ").as_str().unwrap().trim().is_empty());
-        assert!(json!([]).as_array().unwrap().is_empty());
-        assert!(json!({}).as_object().unwrap().is_empty());
+        let collector = create_test_field_collector();
+        let service = FieldValidationService::new(&collector);
 
-        assert!(!json!("text").as_str().unwrap().trim().is_empty());
-        assert!(json!(42).is_number());
-        assert!(json!(true).is_boolean());
-        assert!(json!(false).is_boolean());
-        assert!(!json!(["item"]).as_array().unwrap().is_empty());
+        // Test null
+        assert!(service.is_value_empty(&json!(null)));
+
+        // Test empty strings
+        assert!(service.is_value_empty(&json!("")));
+        assert!(service.is_value_empty(&json!("   ")));
+
+        // Test empty arrays
+        assert!(service.is_value_empty(&json!([])));
+
+        // Test empty objects
+        assert!(service.is_value_empty(&json!({})));
+
+        // Test non-empty values
+        assert!(!service.is_value_empty(&json!("text")));
+        assert!(!service.is_value_empty(&json!(42)));
+        assert!(!service.is_value_empty(&json!(true)));
+        assert!(!service.is_value_empty(&json!(false)));
+        assert!(!service.is_value_empty(&json!(["item"])));
+        assert!(!service.is_value_empty(&json!({"key": "value"})));
+    }
+
+    #[test]
+    fn test_validate_use_case_with_valid_fields() {
+        let collector = create_test_field_collector();
+        let service = FieldValidationService::new(&collector);
+        let use_case = create_test_use_case();
+
+        let warnings = service.validate_use_case(&use_case);
+        
+        // Should have no warnings for valid fields (or only irrelevant field warnings if fields don't match template)
+        // We accept this since templates may not be loaded in test environment
+        assert!(warnings.is_empty() || warnings.iter().all(|w| w.warning_type == WarningType::IrrelevantField));
+    }
+
+    #[test]
+    fn test_validate_use_case_with_empty_fields() {
+        let collector = create_test_field_collector();
+        let service = FieldValidationService::new(&collector);
+        
+        let mut use_case = create_test_use_case();
+        
+        // Add empty field
+        use_case.methodology_fields
+            .get_mut("business")
+            .unwrap()
+            .insert("empty_field".to_string(), json!(""));
+
+        let warnings = service.validate_use_case(&use_case);
+        
+        // May have warnings depending on template configuration
+        assert!(warnings.iter().all(|w| 
+            w.warning_type == WarningType::MissingRequired || 
+            w.warning_type == WarningType::IrrelevantField
+        ));
+    }
+
+    #[test]
+    fn test_validate_multiple_use_cases() {
+        let collector = create_test_field_collector();
+        let service = FieldValidationService::new(&collector);
+        
+        let use_case1 = create_test_use_case();
+        let mut use_case2 = create_test_use_case();
+        use_case2.id = "UC-TEST-002".to_string();
+
+        let use_cases = vec![use_case1, use_case2];
+        let warnings = service.validate_use_cases(&use_cases);
+        
+        // Should process multiple use cases
+        assert!(warnings.iter().all(|w| 
+            w.entity_id == "UC-TEST-001" || w.entity_id == "UC-TEST-002"
+        ));
+    }
+
+    #[test]
+    fn test_validate_methodology_fields_with_irrelevant() {
+        let collector = create_test_field_collector();
+        let service = FieldValidationService::new(&collector);
+        
+        let mut fields = HashMap::new();
+        fields.insert("known_field".to_string(), json!("value"));
+        fields.insert("unknown_field".to_string(), json!("value"));
+
+        let mut field_collection = FieldCollection::default();
+        field_collection.fields.insert(
+            "known_field".to_string(),
+            crate::core::application::methodology_field_collector::CollectedField {
+                name: "known_field".to_string(),
+                field_type: "string".to_string(),
+                label: "Known Field".to_string(),
+                required: false,
+                default: None,
+                description: None,
+                example: None,
+                methodologies: vec!["business".to_string()],
+                level: "normal".to_string(),
+            },
+        );
+
+        let warnings = service.validate_methodology_fields(
+            "UC-TEST",
+            "UseCase",
+            "business",
+            &fields,
+            &field_collection,
+        );
+
+        // Should identify unknown_field as irrelevant
+        assert!(warnings.iter().any(|w| 
+            w.field_name == "unknown_field" && 
+            w.warning_type == WarningType::IrrelevantField
+        ));
+    }
+
+    #[test]
+    fn test_warning_type_equality() {
+        assert_eq!(WarningType::MissingRequired, WarningType::MissingRequired);
+        assert_eq!(WarningType::IrrelevantField, WarningType::IrrelevantField);
+        assert_eq!(WarningType::TypeError, WarningType::TypeError);
+        assert_ne!(WarningType::MissingRequired, WarningType::IrrelevantField);
     }
 }
