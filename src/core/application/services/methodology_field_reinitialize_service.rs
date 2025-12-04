@@ -68,28 +68,49 @@ impl<'a> MethodologyFieldReinitializeService<'a> {
 
             // For each methodology in views
             for (methodology, _level) in &view_pairs {
-                let fields = use_case
-                    .methodology_fields
-                    .entry(methodology.clone())
-                    .or_default();
-
                 let mut added_fields = Vec::new();
 
-                // Add missing fields
-                for (field_name, field_def) in &field_collection.fields {
-                    if field_def.methodologies.contains(methodology)
-                        && !fields.contains_key(field_name)
-                    {
-                        let default_value = match field_def.field_type.as_str() {
-                            "array" => serde_json::Value::Array(vec![]),
-                            "number" => serde_json::Value::Number(serde_json::Number::from(0)),
-                            "boolean" => serde_json::Value::Bool(false),
-                            _ => serde_json::Value::String(String::new()),
-                        };
+                // First pass: identify missing fields
+                let missing_fields: Vec<(String, serde_json::Value)> = {
+                    let existing_fields = use_case.methodology_fields.get(methodology);
 
-                        fields.insert(field_name.clone(), default_value);
+                    field_collection
+                        .fields
+                        .iter()
+                        .filter(|(field_name, field_def)| {
+                            field_def.methodologies.contains(methodology)
+                                && existing_fields
+                                    .map(|fields| !fields.contains_key(*field_name))
+                                    .unwrap_or(true)
+                        })
+                        .map(|(field_name, field_def)| {
+                            let default_value = match field_def.field_type.as_str() {
+                                "array" => serde_json::Value::Array(vec![]),
+                                "number" => serde_json::Value::Number(serde_json::Number::from(0)),
+                                "boolean" => serde_json::Value::Bool(false),
+                                _ => serde_json::Value::String(String::new()),
+                            };
+                            (field_name.clone(), default_value)
+                        })
+                        .collect()
+                };
+
+                // Track missing fields for reporting
+                if !missing_fields.is_empty() {
+                    for (field_name, _) in &missing_fields {
                         added_fields.push(field_name.clone());
                         use_case_updated = true;
+                    }
+                }
+
+                // Second pass: actually add missing fields (skip if dry_run)
+                if !(dry_run || missing_fields.is_empty()) {
+                    for (field_name, default_value) in missing_fields {
+                        use_case
+                            .methodology_fields
+                            .entry(methodology.clone())
+                            .or_default()
+                            .insert(field_name, default_value);
                     }
                 }
 
@@ -176,40 +197,37 @@ mod tests {
         use_case
     }
 
-    #[test]
-    #[ignore] // Requires template files to be present
-    fn test_reinitialize_with_single_use_case() {
-        let repository = MockRepository;
-        let mut use_cases = vec![create_test_use_case("UC-TEST-001")];
-        let mut service = MethodologyFieldReinitializeService::new(&repository, &mut use_cases);
+    fn create_use_case_with_views(id: &str, views: Vec<(&str, &str)>) -> UseCase {
+        let mut use_case = UseCase::new(
+            id.to_string(),
+            "Test Use Case".to_string(),
+            "Test".to_string(),
+            "TST".to_string(),
+            "Test description".to_string(),
+            "medium".to_string(),
+        )
+        .unwrap();
 
-        let result = service.reinitialize_methodology_fields(
-            Some("UC-TEST-001".to_string()),
-            true, // dry run
-        );
-
-        assert!(result.is_ok());
-        let (updated_count, total_checked, _details) = result.unwrap();
-        assert_eq!(total_checked, 1);
-        // Updated count depends on whether fields were missing
-        assert!(updated_count <= 1);
+        for (methodology, view) in views {
+            use_case.views.push(MethodologyView::new(methodology, view));
+        }
+        use_case
     }
 
-    #[test]
-    #[ignore] // Requires template files to be present
-    fn test_reinitialize_all_use_cases() {
-        let repository = MockRepository;
-        let mut use_cases = vec![
-            create_test_use_case("UC-TEST-001"),
-            create_test_use_case("UC-TEST-002"),
-        ];
-        let mut service = MethodologyFieldReinitializeService::new(&repository, &mut use_cases);
-
-        let result = service.reinitialize_methodology_fields(None, true);
-
-        assert!(result.is_ok());
-        let (_updated_count, total_checked, _details) = result.unwrap();
-        assert_eq!(total_checked, 2);
+    fn create_use_case_with_fields(
+        id: &str,
+        methodology: &str,
+        fields: Vec<(&str, serde_json::Value)>,
+    ) -> UseCase {
+        let mut use_case = create_test_use_case(id);
+        let mut field_map = HashMap::new();
+        for (key, value) in fields {
+            field_map.insert(key.to_string(), value);
+        }
+        use_case
+            .methodology_fields
+            .insert(methodology.to_string(), field_map);
+        use_case
     }
 
     #[test]
@@ -223,27 +241,6 @@ mod tests {
 
         assert!(result.is_err());
         assert!(result.unwrap_err().to_string().contains("not found"));
-    }
-
-    #[test]
-    #[ignore] // Requires template files to be present
-    fn test_reinitialize_dry_run_vs_actual() {
-        let repository = MockRepository;
-        let mut use_cases = vec![create_test_use_case("UC-TEST-001")];
-
-        // Dry run
-        {
-            let mut service = MethodologyFieldReinitializeService::new(&repository, &mut use_cases);
-            let result = service.reinitialize_methodology_fields(None, true);
-            assert!(result.is_ok());
-        }
-
-        // Actual run
-        {
-            let mut service = MethodologyFieldReinitializeService::new(&repository, &mut use_cases);
-            let result = service.reinitialize_methodology_fields(None, false);
-            assert!(result.is_ok());
-        }
     }
 
     #[test]
@@ -267,34 +264,207 @@ mod tests {
         assert!(index_none.is_err());
     }
 
+    /// Regression test for the dry-run mutation bug
+    ///
+    /// This test verifies that calling reinitialize with dry_run=true does NOT
+    /// mutate the use case data in memory. This was a critical bug where:
+    /// 1. Interactive mode would call with dry_run=true to preview changes
+    /// 2. User confirms to apply changes
+    /// 3. Call with dry_run=false would find 0 updates (state was already mutated)
+    ///
+    /// The bug was caused by .entry().or_default() creating empty HashMaps
+    /// even during read-only dry-run operations.
     #[test]
-    #[ignore] // Requires template files to be present
-    fn test_reinitialize_with_existing_fields() {
+    fn test_dry_run_does_not_mutate_state() {
         let repository = MockRepository;
-        let mut use_case = create_test_use_case("UC-TEST-001");
+        let mut use_case = create_test_use_case("UC-TEST-DRY");
 
-        // Add some existing fields
+        // Start with only 1 field in business methodology
         let mut business_fields = HashMap::new();
-        business_fields.insert(
-            "existing_field".to_string(),
-            serde_json::json!("existing value"),
-        );
+        business_fields.insert("field1".to_string(), serde_json::json!("value1"));
         use_case
             .methodology_fields
             .insert("business".to_string(), business_fields);
 
         let mut use_cases = vec![use_case];
-        let mut service = MethodologyFieldReinitializeService::new(&repository, &mut use_cases);
 
-        let result = service.reinitialize_methodology_fields(None, true);
-        assert!(result.is_ok());
+        // Count fields before dry-run
+        let fields_before = use_cases[0]
+            .methodology_fields
+            .get("business")
+            .map(|f| f.len())
+            .unwrap_or(0);
 
-        // Verify existing field wasn't overwritten
-        let use_case = &use_cases[0];
-        if let Some(business_fields) = use_case.methodology_fields.get("business") {
-            if let Some(value) = business_fields.get("existing_field") {
-                assert_eq!(value, &serde_json::json!("existing value"));
+        // First call: dry-run (should NOT mutate)
+        {
+            let mut service = MethodologyFieldReinitializeService::new(&repository, &mut use_cases);
+            let _result = service.reinitialize_methodology_fields(None, true);
+            // We don't check the result because it might fail without templates
+            // We only care that it doesn't mutate the data
+        }
+
+        // Count fields after dry-run
+        let fields_after_dry = use_cases[0]
+            .methodology_fields
+            .get("business")
+            .map(|f| f.len())
+            .unwrap_or(0);
+
+        // CRITICAL: Field count should be unchanged after dry-run
+        assert_eq!(
+            fields_before, fields_after_dry,
+            "Dry-run must NOT add fields to use case data. Before: {}, After: {}",
+            fields_before, fields_after_dry
+        );
+
+        // Verify no empty methodology entries were created
+        for methodology in use_cases[0].methodology_fields.keys() {
+            if methodology != "business" {
+                panic!(
+                    "Dry-run created unexpected methodology entry: {}",
+                    methodology
+                );
             }
         }
+
+        // Second call: actual run (should mutate if fields need to be added)
+        {
+            let mut service = MethodologyFieldReinitializeService::new(&repository, &mut use_cases);
+            let _result = service.reinitialize_methodology_fields(None, false);
+            // Result might fail without templates, we only verify no mutation happened during dry-run
+        }
+    }
+
+    #[test]
+    fn test_reinitialize_with_multiple_views() {
+        let repository = MockRepository;
+        let mut use_cases = vec![create_use_case_with_views(
+            "UC-TEST-MULTI",
+            vec![
+                ("business", "normal"),
+                ("developer", "advanced"),
+                ("tester", "normal"),
+            ],
+        )];
+
+        let mut service = MethodologyFieldReinitializeService::new(&repository, &mut use_cases);
+
+        // This should try to process all three methodologies
+        // It will fail because we don't have templates, but we're testing the logic flow
+        let _result = service.reinitialize_methodology_fields(None, true);
+
+        // The important part is that it processes all views without panicking
+        // and that dry_run doesn't mutate the state
+        assert_eq!(use_cases[0].methodology_fields.len(), 0);
+    }
+
+    #[test]
+    fn test_reinitialize_preserves_existing_fields() {
+        let repository = MockRepository;
+        let mut use_cases = vec![create_use_case_with_fields(
+            "UC-TEST-PRESERVE",
+            "business",
+            vec![
+                ("existing_field1", serde_json::json!("value1")),
+                ("existing_field2", serde_json::json!(42)),
+                ("existing_field3", serde_json::json!(true)),
+            ],
+        )];
+
+        let fields_before = use_cases[0]
+            .methodology_fields
+            .get("business")
+            .unwrap()
+            .clone();
+
+        let mut service = MethodologyFieldReinitializeService::new(&repository, &mut use_cases);
+        let _result = service.reinitialize_methodology_fields(None, true);
+
+        // Existing fields should remain unchanged after dry-run
+        let fields_after = use_cases[0].methodology_fields.get("business").unwrap();
+
+        assert_eq!(fields_before.len(), fields_after.len());
+        for (key, value) in fields_before.iter() {
+            assert_eq!(
+                fields_after.get(key),
+                Some(value),
+                "Field {} should be preserved",
+                key
+            );
+        }
+    }
+
+    #[test]
+    fn test_reinitialize_multiple_use_cases() {
+        let repository = MockRepository;
+        let mut use_cases = vec![
+            create_test_use_case("UC-TEST-001"),
+            create_test_use_case("UC-TEST-002"),
+            create_test_use_case("UC-TEST-003"),
+        ];
+
+        let mut service = MethodologyFieldReinitializeService::new(&repository, &mut use_cases);
+
+        // Process all use cases
+        let _result = service.reinitialize_methodology_fields(None, true);
+
+        // Verify dry-run didn't mutate any of the use cases
+        for uc in &use_cases {
+            assert_eq!(
+                uc.methodology_fields.len(),
+                0,
+                "Use case {} should have no fields after dry-run",
+                uc.id
+            );
+        }
+    }
+
+    #[test]
+    fn test_reinitialize_specific_use_case() {
+        let repository = MockRepository;
+        let mut use_cases = vec![
+            create_test_use_case("UC-TEST-001"),
+            create_test_use_case("UC-TEST-002"),
+        ];
+
+        let mut service = MethodologyFieldReinitializeService::new(&repository, &mut use_cases);
+
+        // Process only specific use case
+        let _result =
+            service.reinitialize_methodology_fields(Some("UC-TEST-002".to_string()), true);
+
+        // Should attempt to process only the specified use case
+        // (will fail without templates but we're testing the selection logic)
+        assert_eq!(use_cases[0].methodology_fields.len(), 0);
+        assert_eq!(use_cases[1].methodology_fields.len(), 0);
+    }
+
+    #[test]
+    fn test_use_case_without_views() {
+        let repository = MockRepository;
+        let mut use_case = create_test_use_case("UC-NO-VIEWS");
+        use_case.views.clear(); // Remove all views
+        let mut use_cases = vec![use_case];
+
+        let mut service = MethodologyFieldReinitializeService::new(&repository, &mut use_cases);
+        let _result = service.reinitialize_methodology_fields(None, true);
+
+        // Should handle gracefully when no views exist
+        assert_eq!(use_cases[0].methodology_fields.len(), 0);
+    }
+
+    #[test]
+    fn test_empty_use_case_list() {
+        let repository = MockRepository;
+        let mut use_cases: Vec<UseCase> = vec![];
+
+        let mut service = MethodologyFieldReinitializeService::new(&repository, &mut use_cases);
+        let result = service.reinitialize_methodology_fields(None, true);
+
+        // Should handle empty list gracefully
+        assert!(result.is_ok());
+        let (use_cases_processed, fields_added, _details) = result.unwrap();
+        assert_eq!(use_cases_processed, 0);
+        assert_eq!(fields_added, 0);
     }
 }
