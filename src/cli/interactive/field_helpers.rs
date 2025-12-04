@@ -294,7 +294,9 @@ impl FieldHelpers {
 
                     if items.is_empty() {
                         if required {
-                            UI::show_warning("  ⚠️  This field is required. Please add at least one item.")?;
+                            UI::show_warning(
+                                "  ⚠️  This field is required. Please add at least one item.",
+                            )?;
                             continue;
                         }
                         return Ok(None);
@@ -312,7 +314,7 @@ impl FieldHelpers {
                         let num_str = Text::new(&prompt_text)
                             .with_help_message(&help_msg)
                             .prompt()?;
-                        
+
                         if num_str.parse::<f64>().is_ok() {
                             return Ok(Some(num_str));
                         } else {
@@ -349,12 +351,12 @@ impl FieldHelpers {
                         let input = Text::new(&prompt_text)
                             .with_help_message(&help_msg)
                             .prompt()?;
-                        
+
                         if input.trim().is_empty() {
                             UI::show_warning("  ⚠️  This field is required and cannot be empty.")?;
                             continue;
                         }
-                        
+
                         return Ok(Some(input));
                     }
                 } else {
