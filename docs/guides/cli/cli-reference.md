@@ -913,6 +913,110 @@ mucm cleanup UC-SEC-001
 mucm cleanup UC-SEC-001 --dry-run
 ```
 
+---
+
+### `reinitialize`
+
+Reinitialize missing methodology fields in TOML files. Ensures all fields defined in enabled 
+methodology views are present in use cases. Missing fields are initialized with appropriate 
+empty values based on their type. Existing field values are never overwritten.
+
+```bash
+mucm reinitialize [OPTIONS] [USE_CASE_ID]
+```
+
+**Arguments:**
+- `[USE_CASE_ID]`: Use case ID to reinitialize (e.g., UC-SEC-001). If omitted, reinitializes all use cases
+
+**Options:**
+- `-n, --dry-run`: Show what would be added without making changes
+
+**Field Initialization by Type:**
+- Arrays: `[]` (empty array)
+- Numbers: `0`
+- Booleans: `false`
+- Strings: `""` (empty string)
+
+**Use Cases:**
+- After adding new fields to methodology templates
+- After upgrading methodology definitions
+- When migrating projects with incomplete field sets
+- To ensure consistency across all use cases
+
+**Examples:**
+```bash
+# Preview what fields would be added to all use cases
+mucm reinitialize --dry-run
+
+# Reinitialize all use cases
+mucm reinitialize
+
+# Reinitialize specific use case
+mucm reinitialize UC-SEC-001
+
+# Preview for specific use case
+mucm reinitialize UC-SEC-001 --dry-run
+```
+
+**Example Output:**
+```
+Reinitialized UC-SEC-001:
+  + business.technical_dependencies: []
+  + business.estimated_effort: 0
+  + developer.api_endpoints: []
+
+Reinitialized UC-API-001:
+  + business.roi_metrics: ""
+  + tester.automation_required: false
+
+Summary: 2 use cases updated, 5 fields added
+```
+
+---
+
+### `check`
+
+Check and validate use case fields. Validates that all use cases have required fields 
+filled with non-empty values and identifies irrelevant fields (fields not defined in 
+the current methodology configuration). Returns warnings to help identify potential issues.
+
+```bash
+mucm check [USE_CASE_ID]
+```
+
+**Arguments:**
+- `[USE_CASE_ID]`: Use case ID to validate (e.g., UC-SEC-001). If omitted, validates all use cases
+
+**Validation Checks:**
+- Empty required fields (should have values)
+- Irrelevant fields (not defined in current methodology)
+- Missing methodology sections
+- Field type consistency
+
+**Examples:**
+```bash
+# Check all use cases
+mucm check
+
+# Check specific use case
+mucm check UC-SEC-001
+```
+
+**Example Output:**
+```
+Validating UC-SEC-001...
+⚠ Warning: Empty field 'business.business_value' in methodology 'business'
+⚠ Warning: Empty field 'developer.implementation_notes' in methodology 'developer'
+
+Validating UC-API-001...
+⚠ Warning: Irrelevant field 'old_field_name' in methodology 'business'
+  (Field not defined in current methodology configuration)
+
+Summary: 2 use cases validated, 3 warnings found
+```
+
+---
+
 ### `interactive`
 
 Launch interactive mode for guided workflows.

@@ -1168,6 +1168,134 @@ impl UseCaseController {
         }
     }
 
+    /// Reinitialize missing methodology fields in use cases
+    ///
+    /// Scans use cases and ensures all fields defined in their enabled methodology
+    /// views are present. Missing fields are initialized with empty values.
+    /// Existing field values are never overwritten.
+    ///
+    /// # Arguments
+    /// * `use_case_id` - Optional specific use case to reinitialize. If None, all use cases.
+    /// * `dry_run` - If true, shows what would be added without making changes
+    ///
+    /// # Returns
+    /// DisplayResult with summary of reinitialize operation
+    ///
+    /// # Errors
+    /// Returns error if use case not found or reinitialize fails
+    pub fn reinitialize_methodology_fields(
+        &mut self,
+        use_case_id: Option<String>,
+        dry_run: bool,
+    ) -> Result<DisplayResult> {
+        match self
+            .app_service
+            .reinitialize_methodology_fields(use_case_id.clone(), dry_run)
+        {
+            Ok((updated_count, total_checked, details)) => {
+                if dry_run {
+                    let mut message = format!(
+                        "🔍 Dry run: Would update {} of {} use case(s)\n",
+                        updated_count, total_checked
+                    );
+
+                    if !details.is_empty() {
+                        message.push_str("\nMissing fields that would be added:\n");
+                        for (uc_id, methodology, fields) in details {
+                            message.push_str(&format!(
+                                "  • {} [{}]: {}\n",
+                                uc_id,
+                                methodology,
+                                fields.join(", ")
+                            ));
+                        }
+                        message.push_str("\nRun without --dry-run to add these fields.");
+                    } else {
+                        message.push_str("\nAll use cases have complete field sets.");
+                    }
+
+                    Ok(DisplayResult::success(message))
+                } else {
+                    let mut message = format!(
+                        "✨ Reinitialized {} of {} use case(s)\n",
+                        updated_count, total_checked
+                    );
+
+                    if !details.is_empty() {
+                        message.push_str("\nAdded fields:\n");
+                        for (uc_id, methodology, fields) in details {
+                            message.push_str(&format!(
+                                "  • {} [{}]: {}\n",
+                                uc_id,
+                                methodology,
+                                fields.join(", ")
+                            ));
+                        }
+                    } else {
+                        message.push_str("\nAll use cases already have complete field sets.");
+                    }
+
+                    Ok(DisplayResult::success(message))
+                }
+            }
+            Err(e) => Ok(DisplayResult::error(e.to_string())),
+        }
+    }
+
+    /// Validate use case fields
+    ///
+    /// Checks for:
+    /// - Missing required fields
+    /// - Irrelevant fields (not defined in current methodology configuration)
+    ///
+    /// Returns warnings only (not errors).
+    ///
+    /// # Arguments
+    /// * `use_case_id` - Optional specific use case to validate. If None, validates all.
+    ///
+    /// # Returns
+    /// DisplayResult with validation warnings
+    ///
+    /// # Errors
+    /// Returns error if validation fails
+    pub fn validate_fields(&mut self, use_case_id: Option<String>) -> Result<DisplayResult> {
+        match self.app_service.validate_fields(use_case_id.clone()) {
+            Ok(warnings) => {
+                if warnings.is_empty() {
+                    Ok(DisplayResult::success(
+                        "✅ All fields are valid. No issues found.".to_string(),
+                    ))
+                } else {
+                    let mut message =
+                        format!("⚠️  Found {} validation warning(s):\n\n", warnings.len());
+
+                    // Group warnings by entity
+                    let mut by_entity: std::collections::HashMap<String, Vec<_>> =
+                        std::collections::HashMap::new();
+                    for warning in warnings {
+                        by_entity
+                            .entry(warning.entity_id.clone())
+                            .or_default()
+                            .push(warning);
+                    }
+
+                    // Display warnings grouped by entity
+                    for (entity_id, entity_warnings) in by_entity {
+                        message.push_str(&format!("{}:\n", entity_id));
+                        for warning in entity_warnings {
+                            message.push_str(&format!("  • {}\n", warning.message));
+                        }
+                        message.push('\n');
+                    }
+
+                    // Warnings are still "success" from operation perspective
+                    Ok(DisplayResult::success(message))
+                }
+            }
+            Err(e) => Ok(DisplayResult::error(e.to_string())),
+        }
+    }
+
     // ========== Update Operations ==========
 
     /// Update basic use case information
