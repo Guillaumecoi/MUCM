@@ -1668,7 +1668,7 @@ mod tests {
     #[serial]
     fn test_custom_fields_end_to_end_flow() -> Result<()> {
         setup_test_templates_env();
-        
+
         // Skip test if source templates can't be found
         // This can happen when running all tests together
         if crate::config::TemplateManager::find_source_templates_dir().is_err() {

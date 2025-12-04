@@ -289,7 +289,7 @@ key_features = []
         };
 
         fs::write(method_dir.join("methodology.toml"), content)?;
-        
+
         // Create minimal but functional templates with key placeholders
         let template_content = r#"# {{id}}: {{title}}
 

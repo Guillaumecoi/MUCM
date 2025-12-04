@@ -13,7 +13,7 @@ fn setup_test_env() -> TempDir {
     unsafe {
         std::env::set_var("MUCM_TEST_TEMPLATES_DIR", source_templates);
     }
-    
+
     // Create temp dir for test artifacts
     // Config files aren't needed for template rendering tests
     TempDir::new().unwrap()

@@ -1104,7 +1104,7 @@ inherits = ["Normal"]
     }
 
     /// Setup test environment to use project source templates
-    /// 
+    ///
     /// This bypasses user config templates by setting MUCM_TEST_TEMPLATES_DIR
     fn setup_test_templates_env() {
         let project_root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"));

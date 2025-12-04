@@ -12,9 +12,11 @@ use tempfile::TempDir;
 mod common;
 
 /// Helper to initialize test environment with methodologies
-fn init_test_environment(methodologies: Vec<String>) -> Result<Config> {
+fn init_test_environment(
+    methodologies: Vec<String>,
+) -> Result<(Config, common::TestTemplateManager)> {
     // Set up isolated test templates (bypasses user config caching)
-    let _template_mgr = common::TestTemplateManager::new()?;
+    let template_mgr = common::TestTemplateManager::new()?;
 
     let mut config = Config::default();
     config.templates.methodologies = methodologies.clone();
@@ -26,7 +28,7 @@ fn init_test_environment(methodologies: Vec<String>) -> Result<Config> {
     // Copy templates to config directory
     Config::copy_templates_to_config_with_language(None)?;
 
-    Ok(config)
+    Ok((config, template_mgr))
 }
 
 /// Test that methodology fields are collected and stored correctly
@@ -36,7 +38,7 @@ fn test_methodology_fields_storage() -> Result<()> {
     let temp_dir = TempDir::new()?;
     env::set_current_dir(&temp_dir)?;
 
-    init_test_environment(vec!["business".to_string()])?;
+    let (_config, _template_mgr) = init_test_environment(vec!["business".to_string()])?;
     let mut service = UseCaseCoordinator::load()?;
 
     // Create use case with business view
@@ -77,7 +79,8 @@ fn test_cleanup_orphaned_fields() -> Result<()> {
     let temp_dir = TempDir::new()?;
     env::set_current_dir(&temp_dir)?;
 
-    init_test_environment(vec!["business".to_string(), "feature".to_string()])?;
+    let (_config, _template_mgr) =
+        init_test_environment(vec!["business".to_string(), "feature".to_string()])?;
     let mut service = UseCaseCoordinator::load()?;
 
     // Create use case with both views
@@ -180,7 +183,7 @@ fn test_field_inheritance() -> Result<()> {
     let temp_dir = TempDir::new()?;
     env::set_current_dir(&temp_dir)?;
 
-    init_test_environment(vec!["business".to_string()])?;
+    let (_config, _template_mgr) = init_test_environment(vec!["business".to_string()])?;
     let collector = MethodologyFieldCollector::new()?;
 
     // Normal level
@@ -208,7 +211,8 @@ fn test_multi_methodology_storage() -> Result<()> {
     let temp_dir = TempDir::new()?;
     env::set_current_dir(&temp_dir)?;
 
-    init_test_environment(vec!["business".to_string(), "feature".to_string()])?;
+    let (_config, _template_mgr) =
+        init_test_environment(vec!["business".to_string(), "feature".to_string()])?;
     let mut service = UseCaseCoordinator::load()?;
 
     // Create with multiple views
@@ -240,7 +244,8 @@ fn test_all_fields_present_in_toml_when_empty() -> Result<()> {
     let temp_dir = TempDir::new()?;
     env::set_current_dir(&temp_dir)?;
 
-    init_test_environment(vec!["developer".to_string(), "feature".to_string()])?;
+    let (_config, _template_mgr) =
+        init_test_environment(vec!["developer".to_string(), "feature".to_string()])?;
     let mut service = UseCaseCoordinator::load()?;
 
     // Create use case with developer:normal and feature:normal WITHOUT filling any fields
@@ -333,7 +338,7 @@ fn test_advanced_level_has_all_fields_including_inherited() -> Result<()> {
     let temp_dir = TempDir::new()?;
     env::set_current_dir(&temp_dir)?;
 
-    init_test_environment(vec!["developer".to_string()])?;
+    let (_config, _template_mgr) = init_test_environment(vec!["developer".to_string()])?;
     let mut service = UseCaseCoordinator::load()?;
 
     // Create use case with developer:advanced (inherits from normal)
