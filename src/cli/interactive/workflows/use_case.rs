@@ -143,11 +143,16 @@ impl UseCaseWorkflow {
             .with_help_message("Person responsible for reviewing this use case")
             .prompt_skippable()?;
 
-        // Collect preconditions
+        // Collect preconditions with use case references
+        let use_cases = runner.get_available_use_cases()?;
+        let available_use_cases: Vec<String> = use_cases
+            .iter()
+            .map(|uc| format!("{} - {}", uc.id, uc.title))
+            .collect();
         let preconditions = prompts::collect_conditions(
             "preconditions",
-            false, // No use case references for now (simpler flow)
-            vec![],
+            true, // Allow use case references
+            available_use_cases,
         )?;
 
         // Collect postconditions
