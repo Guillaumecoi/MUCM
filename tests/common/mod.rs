@@ -71,6 +71,29 @@ template_file = "test.hbs"
     for methodology in &["business", "developer", "feature", "tester"] {
         let method_dir = methodologies_dir.join(methodology);
         fs::create_dir_all(&method_dir)?;
+        
+        // Add methodology-specific custom fields for tests (must match new format)
+        let custom_fields = match *methodology {
+            "developer" => r#"
+
+[levels.normal.custom_fields]
+api_endpoints = { label = "API Endpoints", type = "array", required = false }
+database_tables = { label = "Database Tables", type = "array", required = false }
+
+[levels.advanced.custom_fields]
+performance_requirements = { label = "Performance Requirements", type = "text", required = false }
+security_considerations = { label = "Security Considerations", type = "text", required = false }
+technical_dependencies = { label = "Technical Dependencies", type = "array", required = false }
+"#,
+            "feature" => r#"
+
+[levels.normal.custom_fields]
+user_segment = { label = "User Segment", type = "string", required = false }
+acceptance_criteria = { label = "Acceptance Criteria", type = "array", required = false }
+"#,
+            _ => "",
+        };
+        
         fs::write(
             method_dir.join("methodology.toml"),
             format!(
@@ -109,10 +132,15 @@ abbreviation = "a"
 filename = "uc_advanced.hbs"
 description = "Advanced level"
 inherits = ["Normal"]
+{}
+[usage]
+when_to_use = []
+key_features = []
 "#,
                 methodology,
                 &methodology[..3],
-                methodology
+                methodology,
+                custom_fields
             ),
         )?;
         fs::write(method_dir.join("uc_normal.hbs"), "# Template\n")?;
