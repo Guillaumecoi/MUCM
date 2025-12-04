@@ -5,7 +5,6 @@
 //! use cases, personas, scenarios, and other entities.
 
 use anyhow::Result;
-use colored::Colorize;
 use inquire::{Confirm, Select, Text};
 use serde_json::Value as JsonValue;
 
@@ -254,10 +253,9 @@ impl FieldHelpers {
                 Ok(Some(result.to_string()))
             }
             "array" => {
-                // Show field name as colored header
+                // Show field name as header
                 println!();
-                let colored_label = format!("> {}:", label).bright_cyan().bold();
-                println!("{}", colored_label);
+                println!("> {}:", label);
                 println!();
 
                 // Build help message with instructions
