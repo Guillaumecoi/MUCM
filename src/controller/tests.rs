@@ -1103,6 +1103,17 @@ inherits = ["Normal"]
         Ok(())
     }
 
+    /// Setup test environment to use project source templates
+    /// 
+    /// This bypasses user config templates by setting MUCM_TEST_TEMPLATES_DIR
+    fn setup_test_templates_env() {
+        let project_root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"));
+        let source_templates = project_root.join("source-templates");
+        unsafe {
+            env::set_var("MUCM_TEST_TEMPLATES_DIR", source_templates);
+        }
+    }
+
     fn setup_empty_dir() -> TempDir {
         let temp_dir = TempDir::new().unwrap();
         env::set_current_dir(&temp_dir).unwrap();
@@ -1955,6 +1966,7 @@ inherits = ["Normal"]
     #[test]
     #[serial]
     fn test_get_available_languages() {
+        setup_test_templates_env();
         let _temp_dir = setup_empty_dir();
 
         let result = ProjectController::get_available_languages();
@@ -2695,6 +2707,7 @@ inherits = ["Normal"]
     #[test]
     #[serial]
     fn test_sync_templates_overview_preservation() {
+        setup_test_templates_env();
         use std::fs;
         let _temp_dir = setup_empty_dir();
 
@@ -2748,6 +2761,7 @@ inherits = ["Normal"]
     #[test]
     #[serial]
     fn test_get_available_scenario_templates_after_init() {
+        setup_test_templates_env();
         let _temp_dir = setup_empty_dir();
 
         let params = create_test_init_params(
@@ -2803,6 +2817,7 @@ inherits = ["Normal"]
     #[test]
     #[serial]
     fn test_set_default_scenario_template_success() {
+        setup_test_templates_env();
         let _temp_dir = setup_empty_dir();
 
         let params = create_test_init_params(

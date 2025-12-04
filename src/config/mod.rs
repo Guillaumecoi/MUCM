@@ -799,7 +799,7 @@ mod tests {
     use tempfile::TempDir;
 
     /// Ensure tests use project source templates, not user config templates
-    /// 
+    ///
     /// This prevents tests from failing due to outdated templates in ~/.config/mucm/templates/
     fn setup_test_templates_env() {
         // Point directly to project's source-templates directory using MUCM_TEST_TEMPLATES_DIR

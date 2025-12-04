@@ -7,6 +7,13 @@ use tempfile::TempDir;
 /// Setup test environment with initialized config
 /// Note: Does NOT change directories - runs from workspace root where source-templates exists
 fn setup_test_env() -> TempDir {
+    // Point to project source templates to avoid loading from user config
+    let project_root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"));
+    let source_templates = project_root.join("source-templates");
+    unsafe {
+        std::env::set_var("MUCM_TEST_TEMPLATES_DIR", source_templates);
+    }
+    
     // Create temp dir for test artifacts
     // Config files aren't needed for template rendering tests
     TempDir::new().unwrap()

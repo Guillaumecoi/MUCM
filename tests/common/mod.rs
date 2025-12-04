@@ -289,10 +289,34 @@ key_features = []
         };
 
         fs::write(method_dir.join("methodology.toml"), content)?;
-        fs::write(method_dir.join("uc_normal.hbs"), "# Template\n")?;
-        fs::write(method_dir.join("uc_simple.hbs"), "# Template\n")?;
-        fs::write(method_dir.join("uc_detailed.hbs"), "# Template\n")?;
-        fs::write(method_dir.join("uc_advanced.hbs"), "# Template\n")?;
+        
+        // Create minimal but functional templates with key placeholders
+        let template_content = r#"# {{id}}: {{title}}
+
+**Category:** {{category}}
+**Status:** {{status}}
+**Priority:** {{priority}}
+
+## Description
+
+{{#if description}}
+{{description}}
+{{else}}
+_No description provided._
+{{/if}}
+
+## Summary
+
+{{#if summary}}
+{{summary}}
+{{else}}
+_No summary provided._
+{{/if}}
+"#;
+        fs::write(method_dir.join("uc_normal.hbs"), template_content)?;
+        fs::write(method_dir.join("uc_simple.hbs"), template_content)?;
+        fs::write(method_dir.join("uc_detailed.hbs"), template_content)?;
+        fs::write(method_dir.join("uc_advanced.hbs"), template_content)?;
     }
 
     // Create scenario templates directory

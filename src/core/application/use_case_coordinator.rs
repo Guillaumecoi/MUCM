@@ -1483,6 +1483,15 @@ mod tests {
     use std::path::{Path, PathBuf};
     use tempfile::TempDir;
 
+    /// Setup test environment to use project source templates
+    fn setup_test_templates_env() {
+        let project_root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"));
+        let source_templates = project_root.join("source-templates");
+        unsafe {
+            env::set_var("MUCM_TEST_TEMPLATES_DIR", source_templates);
+        }
+    }
+
     /// RAII guard that restores the original working directory on drop
     struct DirGuard {
         original: PathBuf,
@@ -1658,6 +1667,8 @@ mod tests {
     #[test]
     #[serial]
     fn test_custom_fields_end_to_end_flow() -> Result<()> {
+        setup_test_templates_env();
+        
         // Skip test if source templates can't be found
         // This can happen when running all tests together
         if crate::config::TemplateManager::find_source_templates_dir().is_err() {
