@@ -118,7 +118,7 @@ impl<'a> FieldValidationService<'a> {
         let mut warnings = Vec::new();
 
         // Check for irrelevant fields (exist in TOML but not in definitions)
-        for (field_name, _value) in fields {
+        for field_name in fields.keys() {
             if !field_collection.fields.contains_key(field_name) {
                 warnings.push(ValidationWarning {
                     warning_type: WarningType::IrrelevantField,
@@ -136,7 +136,10 @@ impl<'a> FieldValidationService<'a> {
         // Check for missing required fields
         for (field_name, field_def) in &field_collection.fields {
             // Only check if this field belongs to the current methodology
-            if field_def.methodologies.contains(&methodology_name.to_string()) && field_def.required
+            if field_def
+                .methodologies
+                .contains(&methodology_name.to_string())
+                && field_def.required
             {
                 if let Some(value) = fields.get(field_name) {
                     // Field exists, check if it's empty
@@ -186,7 +189,6 @@ impl<'a> FieldValidationService<'a> {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use serde_json::json;
 
     #[test]

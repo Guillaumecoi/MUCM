@@ -17,10 +17,7 @@ use crate::cli::standard::CliRunner;
 ///
 /// # Returns
 /// Ok(()) on successful validation, Err on failure
-pub fn handle_check_command(
-    runner: &mut CliRunner,
-    use_case_id: Option<String>,
-) -> Result<()> {
+pub fn handle_check_command(runner: &mut CliRunner, use_case_id: Option<String>) -> Result<()> {
     let result = runner.validate_fields(use_case_id)?;
     println!("{}", result);
     Ok(())

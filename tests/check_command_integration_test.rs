@@ -46,7 +46,9 @@ fn test_use_case_with_empty_fields() {
     )
     .unwrap();
 
-    use_case.views.push(MethodologyView::new("business", "normal"));
+    use_case
+        .views
+        .push(MethodologyView::new("business", "normal"));
 
     // Add fields with empty values (which would be flagged by validation)
     let mut business_fields = HashMap::new();
@@ -83,7 +85,9 @@ fn test_use_case_with_custom_fields() {
     )
     .unwrap();
 
-    use_case.views.push(MethodologyView::new("developer", "normal"));
+    use_case
+        .views
+        .push(MethodologyView::new("developer", "normal"));
 
     // Add fields that might not be in methodology definition (irrelevant fields)
     let mut dev_fields = HashMap::new();
@@ -120,7 +124,9 @@ fn test_use_case_with_valid_fields() {
     )
     .unwrap();
 
-    use_case.views.push(MethodologyView::new("business", "simple"));
+    use_case
+        .views
+        .push(MethodologyView::new("business", "simple"));
 
     // Add properly filled fields
     let mut business_fields = HashMap::new();
@@ -128,7 +134,10 @@ fn test_use_case_with_valid_fields() {
         "business_value".to_string(),
         json!("Enables faster customer onboarding"),
     );
-    business_fields.insert("stakeholders".to_string(), json!(["Product Manager", "CEO"]));
+    business_fields.insert(
+        "stakeholders".to_string(),
+        json!(["Product Manager", "CEO"]),
+    );
     use_case
         .methodology_fields
         .insert("business".to_string(), business_fields);
@@ -161,7 +170,9 @@ fn test_use_case_missing_methodology_section() {
     .unwrap();
 
     // Has view but no methodology fields
-    use_case.views.push(MethodologyView::new("tester", "normal"));
+    use_case
+        .views
+        .push(MethodologyView::new("tester", "normal"));
     // Not adding any methodology fields
 
     repository.save(&use_case).unwrap();
@@ -190,8 +201,12 @@ fn test_use_case_multiple_views_partial_fields() {
     .unwrap();
 
     // Two views
-    use_case.views.push(MethodologyView::new("business", "simple"));
-    use_case.views.push(MethodologyView::new("developer", "normal"));
+    use_case
+        .views
+        .push(MethodologyView::new("business", "simple"));
+    use_case
+        .views
+        .push(MethodologyView::new("developer", "normal"));
 
     // Only add fields for business, not developer
     let mut business_fields = HashMap::new();
@@ -226,7 +241,9 @@ fn test_field_types_validation() {
     )
     .unwrap();
 
-    use_case.views.push(MethodologyView::new("developer", "normal"));
+    use_case
+        .views
+        .push(MethodologyView::new("developer", "normal"));
 
     // Add fields of different types
     let mut dev_fields = HashMap::new();

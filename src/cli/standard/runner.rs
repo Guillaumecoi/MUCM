@@ -683,10 +683,7 @@ impl CliRunner {
     ///
     /// # Errors
     /// Returns error if validation fails
-    pub fn validate_fields(
-        &mut self,
-        use_case_id: Option<String>,
-    ) -> Result<DisplayResult> {
+    pub fn validate_fields(&mut self, use_case_id: Option<String>) -> Result<DisplayResult> {
         let controller = self.ensure_use_case_controller()?;
         controller.validate_fields(use_case_id)
     }

@@ -46,7 +46,9 @@ fn test_add_methodology_fields_to_use_case() {
     )
     .unwrap();
 
-    use_case.views.push(MethodologyView::new("business", "normal"));
+    use_case
+        .views
+        .push(MethodologyView::new("business", "normal"));
 
     // Add methodology fields
     let mut business_fields = HashMap::new();
@@ -84,7 +86,9 @@ fn test_initialize_empty_fields() {
     )
     .unwrap();
 
-    use_case.views.push(MethodologyView::new("developer", "normal"));
+    use_case
+        .views
+        .push(MethodologyView::new("developer", "normal"));
 
     // Initialize with empty values
     let mut dev_fields = HashMap::new();
@@ -123,7 +127,9 @@ fn test_update_fields_preserves_existing() {
     )
     .unwrap();
 
-    use_case.views.push(MethodologyView::new("business", "normal"));
+    use_case
+        .views
+        .push(MethodologyView::new("business", "normal"));
 
     // Add initial fields
     let mut business_fields = HashMap::new();
@@ -140,7 +146,7 @@ fn test_update_fields_preserves_existing() {
 
     let fields = uc.methodology_fields.get_mut("business").unwrap();
     fields.insert("stakeholders".to_string(), json!(["PM"]));
-    
+
     repository.save(uc).unwrap();
 
     // Reload and verify both fields exist
@@ -169,8 +175,12 @@ fn test_multiple_views_separate_fields() {
     .unwrap();
 
     // Add two views
-    use_case.views.push(MethodologyView::new("business", "simple"));
-    use_case.views.push(MethodologyView::new("developer", "normal"));
+    use_case
+        .views
+        .push(MethodologyView::new("business", "simple"));
+    use_case
+        .views
+        .push(MethodologyView::new("developer", "normal"));
 
     // Add fields for both methodologies
     let mut business_fields = HashMap::new();

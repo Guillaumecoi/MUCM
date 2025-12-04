@@ -1258,21 +1258,16 @@ impl UseCaseController {
     ///
     /// # Errors
     /// Returns error if validation fails
-    pub fn validate_fields(
-        &mut self,
-        use_case_id: Option<String>,
-    ) -> Result<DisplayResult> {
-        match self
-            .app_service
-            .validate_fields(use_case_id.clone())
-        {
+    pub fn validate_fields(&mut self, use_case_id: Option<String>) -> Result<DisplayResult> {
+        match self.app_service.validate_fields(use_case_id.clone()) {
             Ok(warnings) => {
                 if warnings.is_empty() {
                     Ok(DisplayResult::success(
                         "✅ All fields are valid. No issues found.".to_string(),
                     ))
                 } else {
-                    let mut message = format!("⚠️  Found {} validation warning(s):\n\n", warnings.len());
+                    let mut message =
+                        format!("⚠️  Found {} validation warning(s):\n\n", warnings.len());
 
                     // Group warnings by entity
                     let mut by_entity: std::collections::HashMap<String, Vec<_>> =

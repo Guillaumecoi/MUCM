@@ -34,7 +34,7 @@ fn create_test_repository() -> (TempDir, Box<dyn UseCaseRepository>) {
 #[test]
 #[serial]
 fn test_array_field_reinitialization() {
-    let (_temp_dir, mut repository) = create_test_repository();
+    let (_temp_dir, repository) = create_test_repository();
 
     // Create a use case with business methodology view
     let mut use_case = UseCase::new(
@@ -48,7 +48,9 @@ fn test_array_field_reinitialization() {
     .unwrap();
 
     // Add a view that requires array fields
-    use_case.views.push(MethodologyView::new("business", "normal"));
+    use_case
+        .views
+        .push(MethodologyView::new("business", "normal"));
 
     // Simulate field editing: add methodology but skip array field
     // This represents the bug scenario where technical_dependencies would be missing
@@ -60,13 +62,11 @@ fn test_array_field_reinitialization() {
         .methodology_fields
         .insert("business".to_string(), business_fields);
 
-    repository
-        .save(&use_case)
-        .expect("Failed to save use case");
+    repository.save(&use_case).expect("Failed to save use case");
 
     // Now simulate the fix: reinitialize missing fields
     // In the actual implementation, this happens in edit_methodology_fields
-    let mut business_fields = use_case
+    let business_fields = use_case
         .methodology_fields
         .get_mut("business")
         .expect("Business fields should exist");
@@ -81,9 +81,7 @@ fn test_array_field_reinitialization() {
         .expect("Failed to save use case after fix");
 
     // Reload and verify the field exists as an empty array
-    let all_use_cases = repository
-        .load_all()
-        .expect("Failed to load use cases");
+    let all_use_cases = repository.load_all().expect("Failed to load use cases");
     let loaded = all_use_cases
         .iter()
         .find(|uc| uc.id == use_case.id)
@@ -109,7 +107,7 @@ fn test_array_field_reinitialization() {
 #[test]
 #[serial]
 fn test_number_field_reinitialization() {
-    let (_temp_dir, mut repository) = create_test_repository();
+    let (_temp_dir, repository) = create_test_repository();
 
     let mut use_case = UseCase::new(
         "UC-002".to_string(),
@@ -121,7 +119,9 @@ fn test_number_field_reinitialization() {
     )
     .unwrap();
 
-    use_case.views.push(MethodologyView::new("developer", "normal"));
+    use_case
+        .views
+        .push(MethodologyView::new("developer", "normal"));
 
     // Add some fields but skip a number field
     let mut dev_fields = HashMap::new();
@@ -132,12 +132,10 @@ fn test_number_field_reinitialization() {
         .methodology_fields
         .insert("developer".to_string(), dev_fields);
 
-    repository
-        .save(&use_case)
-        .expect("Failed to save use case");
+    repository.save(&use_case).expect("Failed to save use case");
 
     // Apply the fix for number fields
-    let mut dev_fields = use_case
+    let dev_fields = use_case
         .methodology_fields
         .get_mut("developer")
         .expect("Developer fields should exist");
@@ -151,9 +149,7 @@ fn test_number_field_reinitialization() {
         .save(&use_case)
         .expect("Failed to save use case after fix");
 
-    let all_use_cases = repository
-        .load_all()
-        .expect("Failed to load use cases");
+    let all_use_cases = repository.load_all().expect("Failed to load use cases");
     let loaded = all_use_cases
         .iter()
         .find(|uc| uc.id == use_case.id)
@@ -179,7 +175,7 @@ fn test_number_field_reinitialization() {
 #[test]
 #[serial]
 fn test_boolean_field_reinitialization() {
-    let (_temp_dir, mut repository) = create_test_repository();
+    let (_temp_dir, repository) = create_test_repository();
 
     let mut use_case = UseCase::new(
         "UC-003".to_string(),
@@ -191,7 +187,9 @@ fn test_boolean_field_reinitialization() {
     )
     .unwrap();
 
-    use_case.views.push(MethodologyView::new("tester", "normal"));
+    use_case
+        .views
+        .push(MethodologyView::new("tester", "normal"));
 
     let mut tester_fields = HashMap::new();
     tester_fields.insert("test_approach".to_string(), json!("Manual testing"));
@@ -201,12 +199,10 @@ fn test_boolean_field_reinitialization() {
         .methodology_fields
         .insert("tester".to_string(), tester_fields);
 
-    repository
-        .save(&use_case)
-        .expect("Failed to save use case");
+    repository.save(&use_case).expect("Failed to save use case");
 
     // Apply the fix for boolean fields
-    let mut tester_fields = use_case
+    let tester_fields = use_case
         .methodology_fields
         .get_mut("tester")
         .expect("Tester fields should exist");
@@ -220,9 +216,7 @@ fn test_boolean_field_reinitialization() {
         .save(&use_case)
         .expect("Failed to save use case after fix");
 
-    let all_use_cases = repository
-        .load_all()
-        .expect("Failed to load use cases");
+    let all_use_cases = repository.load_all().expect("Failed to load use cases");
     let loaded = all_use_cases
         .iter()
         .find(|uc| uc.id == use_case.id)
@@ -248,7 +242,7 @@ fn test_boolean_field_reinitialization() {
 #[test]
 #[serial]
 fn test_string_field_reinitialization() {
-    let (_temp_dir, mut repository) = create_test_repository();
+    let (_temp_dir, repository) = create_test_repository();
 
     let mut use_case = UseCase::new(
         "UC-004".to_string(),
@@ -260,7 +254,9 @@ fn test_string_field_reinitialization() {
     )
     .unwrap();
 
-    use_case.views.push(MethodologyView::new("business", "simple"));
+    use_case
+        .views
+        .push(MethodologyView::new("business", "simple"));
 
     let mut business_fields = HashMap::new();
     business_fields.insert("business_value".to_string(), json!("High"));
@@ -270,12 +266,10 @@ fn test_string_field_reinitialization() {
         .methodology_fields
         .insert("business".to_string(), business_fields);
 
-    repository
-        .save(&use_case)
-        .expect("Failed to save use case");
+    repository.save(&use_case).expect("Failed to save use case");
 
     // Apply the fix for string fields
-    let mut business_fields = use_case
+    let business_fields = use_case
         .methodology_fields
         .get_mut("business")
         .expect("Business fields should exist");
@@ -288,9 +282,7 @@ fn test_string_field_reinitialization() {
         .save(&use_case)
         .expect("Failed to save use case after fix");
 
-    let all_use_cases = repository
-        .load_all()
-        .expect("Failed to load use cases");
+    let all_use_cases = repository.load_all().expect("Failed to load use cases");
     let loaded = all_use_cases
         .iter()
         .find(|uc| uc.id == use_case.id)
@@ -316,7 +308,7 @@ fn test_string_field_reinitialization() {
 #[test]
 #[serial]
 fn test_existing_fields_not_overwritten() {
-    let (_temp_dir, mut repository) = create_test_repository();
+    let (_temp_dir, repository) = create_test_repository();
 
     let mut use_case = UseCase::new(
         "UC-005".to_string(),
@@ -328,7 +320,9 @@ fn test_existing_fields_not_overwritten() {
     )
     .unwrap();
 
-    use_case.views.push(MethodologyView::new("business", "normal"));
+    use_case
+        .views
+        .push(MethodologyView::new("business", "normal"));
 
     // Add fields with existing values
     let mut business_fields = HashMap::new();
@@ -342,12 +336,10 @@ fn test_existing_fields_not_overwritten() {
         .methodology_fields
         .insert("business".to_string(), business_fields);
 
-    repository
-        .save(&use_case)
-        .expect("Failed to save use case");
+    repository.save(&use_case).expect("Failed to save use case");
 
     // Apply reinitialization logic (should not change existing values)
-    let mut business_fields = use_case
+    let business_fields = use_case
         .methodology_fields
         .get_mut("business")
         .expect("Business fields should exist");
@@ -361,9 +353,7 @@ fn test_existing_fields_not_overwritten() {
         .save(&use_case)
         .expect("Failed to save use case after fix");
 
-    let all_use_cases = repository
-        .load_all()
-        .expect("Failed to load use cases");
+    let all_use_cases = repository.load_all().expect("Failed to load use cases");
     let loaded = all_use_cases
         .iter()
         .find(|uc| uc.id == use_case.id)
