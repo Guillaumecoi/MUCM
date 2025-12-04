@@ -318,4 +318,75 @@ mod tests {
             }
         }
     }
+
+    /// Regression test for the dry-run mutation bug
+    ///
+    /// This test verifies that calling reinitialize with dry_run=true does NOT
+    /// mutate the use case data in memory. This was a critical bug where:
+    /// 1. Interactive mode would call with dry_run=true to preview changes
+    /// 2. User confirms to apply changes
+    /// 3. Call with dry_run=false would find 0 updates (state was already mutated)
+    ///
+    /// The bug was caused by .entry().or_default() creating empty HashMaps
+    /// even during read-only dry-run operations.
+    #[test]
+    fn test_dry_run_does_not_mutate_state() {
+        let repository = MockRepository;
+        let mut use_case = create_test_use_case("UC-TEST-DRY");
+
+        // Start with only 1 field in business methodology
+        let mut business_fields = HashMap::new();
+        business_fields.insert("field1".to_string(), serde_json::json!("value1"));
+        use_case
+            .methodology_fields
+            .insert("business".to_string(), business_fields);
+
+        let mut use_cases = vec![use_case];
+
+        // Count fields before dry-run
+        let fields_before = use_cases[0]
+            .methodology_fields
+            .get("business")
+            .map(|f| f.len())
+            .unwrap_or(0);
+
+        // First call: dry-run (should NOT mutate)
+        {
+            let mut service = MethodologyFieldReinitializeService::new(&repository, &mut use_cases);
+            let _result = service.reinitialize_methodology_fields(None, true);
+            // We don't check the result because it might fail without templates
+            // We only care that it doesn't mutate the data
+        }
+
+        // Count fields after dry-run
+        let fields_after_dry = use_cases[0]
+            .methodology_fields
+            .get("business")
+            .map(|f| f.len())
+            .unwrap_or(0);
+
+        // CRITICAL: Field count should be unchanged after dry-run
+        assert_eq!(
+            fields_before, fields_after_dry,
+            "Dry-run must NOT add fields to use case data. Before: {}, After: {}",
+            fields_before, fields_after_dry
+        );
+
+        // Verify no empty methodology entries were created
+        for (methodology, _fields) in &use_cases[0].methodology_fields {
+            if methodology != "business" {
+                panic!(
+                    "Dry-run created unexpected methodology entry: {}",
+                    methodology
+                );
+            }
+        }
+
+        // Second call: actual run (should mutate if fields need to be added)
+        {
+            let mut service = MethodologyFieldReinitializeService::new(&repository, &mut use_cases);
+            let _result = service.reinitialize_methodology_fields(None, false);
+            // Result might fail without templates, we only verify no mutation happened during dry-run
+        }
+    }
 }

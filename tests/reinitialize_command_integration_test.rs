@@ -231,3 +231,5 @@ fn test_use_case_without_methodology_fields() {
     assert_eq!(uc.id, "UC-005");
     assert_eq!(uc.title, "Test Use Case");
 }
+
+
