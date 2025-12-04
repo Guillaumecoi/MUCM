@@ -22,14 +22,8 @@ fn setup_test_env() -> (TempDir, UseCaseController) {
     let temp_dir = TempDir::new().unwrap();
     env::set_current_dir(&temp_dir).unwrap();
 
-    // Set CARGO_MANIFEST_DIR for template discovery
-    let project_root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"));
-    unsafe {
-        env::set_var("CARGO_MANIFEST_DIR", project_root);
-    }
-
-    // Create minimal source-templates for testing
-    common::create_minimal_source_templates(std::path::Path::new(".")).unwrap();
+    // Set up isolated test templates (bypasses user config caching)
+    let _template_mgr = common::TestTemplateManager::new().unwrap();
 
     // Create default config
     let config = Config::default();

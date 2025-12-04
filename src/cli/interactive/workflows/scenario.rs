@@ -118,6 +118,12 @@ impl ScenarioWorkflow {
             .prompt()
             .ok();
 
+        // Prompt for status
+        let statuses = vec!["Planned", "InProgress", "Implemented", "Tested", "Deployed"];
+        let status = Select::new("Status:", statuses)
+            .with_help_message("Select the current status of this scenario")
+            .prompt()?;
+
         // Collect preconditions using prompts
         let preconditions = prompts::collect_conditions(
             "preconditions",
@@ -147,6 +153,27 @@ impl ScenarioWorkflow {
             preconditions,
             postconditions,
         )?;
+
+        // Update status if not default
+        if status != "Planned" {
+            let scenario_id = result
+                .message
+                .split(':')
+                .nth(1)
+                .and_then(|part| part.trim().split(" - ").next())
+                .map(|id| id.trim())
+                .unwrap_or("");
+            if !scenario_id.is_empty() {
+                controller.edit_scenario(
+                    use_case_id.to_string(),
+                    scenario_id.to_string(),
+                    None,
+                    None,
+                    None,
+                    Some(status.to_string()),
+                )?;
+            }
+        }
 
         UI::show_success(&result.message)?;
 

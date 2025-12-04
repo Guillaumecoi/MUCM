@@ -12,9 +12,11 @@ use tempfile::TempDir;
 mod common;
 
 /// Helper to initialize test environment with methodologies
-fn init_test_environment(methodologies: Vec<String>) -> Result<Config> {
-    // Create minimal source-templates for testing
-    common::create_minimal_source_templates(std::path::Path::new("."))?;
+fn init_test_environment(
+    methodologies: Vec<String>,
+) -> Result<(Config, common::TestTemplateManager)> {
+    // Set up isolated test templates (bypasses user config caching)
+    let template_mgr = common::TestTemplateManager::new()?;
 
     let mut config = Config::default();
     config.templates.methodologies = methodologies.clone();
@@ -26,7 +28,7 @@ fn init_test_environment(methodologies: Vec<String>) -> Result<Config> {
     // Copy templates to config directory
     Config::copy_templates_to_config_with_language(None)?;
 
-    Ok(config)
+    Ok((config, template_mgr))
 }
 
 /// Test that methodology fields are collected and stored correctly
@@ -36,7 +38,7 @@ fn test_methodology_fields_storage() -> Result<()> {
     let temp_dir = TempDir::new()?;
     env::set_current_dir(&temp_dir)?;
 
-    init_test_environment(vec!["business".to_string()])?;
+    let (_config, _template_mgr) = init_test_environment(vec!["business".to_string()])?;
     let mut service = UseCaseCoordinator::load()?;
 
     // Create use case with business view
@@ -77,7 +79,8 @@ fn test_cleanup_orphaned_fields() -> Result<()> {
     let temp_dir = TempDir::new()?;
     env::set_current_dir(&temp_dir)?;
 
-    init_test_environment(vec!["business".to_string(), "feature".to_string()])?;
+    let (_config, _template_mgr) =
+        init_test_environment(vec!["business".to_string(), "feature".to_string()])?;
     let mut service = UseCaseCoordinator::load()?;
 
     // Create use case with both views
@@ -180,7 +183,7 @@ fn test_field_inheritance() -> Result<()> {
     let temp_dir = TempDir::new()?;
     env::set_current_dir(&temp_dir)?;
 
-    init_test_environment(vec!["business".to_string()])?;
+    let (_config, _template_mgr) = init_test_environment(vec!["business".to_string()])?;
     let collector = MethodologyFieldCollector::new()?;
 
     // Normal level
@@ -208,7 +211,8 @@ fn test_multi_methodology_storage() -> Result<()> {
     let temp_dir = TempDir::new()?;
     env::set_current_dir(&temp_dir)?;
 
-    init_test_environment(vec!["business".to_string(), "feature".to_string()])?;
+    let (_config, _template_mgr) =
+        init_test_environment(vec!["business".to_string(), "feature".to_string()])?;
     let mut service = UseCaseCoordinator::load()?;
 
     // Create with multiple views
@@ -240,7 +244,8 @@ fn test_all_fields_present_in_toml_when_empty() -> Result<()> {
     let temp_dir = TempDir::new()?;
     env::set_current_dir(&temp_dir)?;
 
-    init_test_environment(vec!["developer".to_string(), "feature".to_string()])?;
+    let (_config, _template_mgr) =
+        init_test_environment(vec!["developer".to_string(), "feature".to_string()])?;
     let mut service = UseCaseCoordinator::load()?;
 
     // Create use case with developer:normal and feature:normal WITHOUT filling any fields
@@ -266,8 +271,8 @@ fn test_all_fields_present_in_toml_when_empty() -> Result<()> {
 
     // Developer:normal should have these fields defined in methodology.toml
     assert!(
-        developer_fields.contains_key("api_endpoint"),
-        "api_endpoint field should be present (even if empty)"
+        developer_fields.contains_key("api_endpoints"),
+        "api_endpoints field should be present (even if empty)"
     );
     assert!(
         developer_fields.contains_key("database_tables"),
@@ -276,9 +281,9 @@ fn test_all_fields_present_in_toml_when_empty() -> Result<()> {
 
     // Verify the fields are empty (no value provided)
     assert_eq!(
-        developer_fields.get("api_endpoint"),
-        Some(&serde_json::Value::String(String::new())),
-        "api_endpoint should be empty string"
+        developer_fields.get("api_endpoints"),
+        Some(&serde_json::Value::Array(vec![])),
+        "api_endpoints should be empty array"
     );
     assert_eq!(
         developer_fields.get("database_tables"),
@@ -333,7 +338,7 @@ fn test_advanced_level_has_all_fields_including_inherited() -> Result<()> {
     let temp_dir = TempDir::new()?;
     env::set_current_dir(&temp_dir)?;
 
-    init_test_environment(vec!["developer".to_string()])?;
+    let (_config, _template_mgr) = init_test_environment(vec!["developer".to_string()])?;
     let mut service = UseCaseCoordinator::load()?;
 
     // Create use case with developer:advanced (inherits from normal)
@@ -357,8 +362,8 @@ fn test_advanced_level_has_all_fields_including_inherited() -> Result<()> {
 
     // Check inherited fields from normal level
     assert!(
-        developer_fields.contains_key("api_endpoint"),
-        "Inherited field api_endpoint should be present"
+        developer_fields.contains_key("api_endpoints"),
+        "Inherited field api_endpoints should be present"
     );
     assert!(
         developer_fields.contains_key("database_tables"),
@@ -379,8 +384,8 @@ fn test_advanced_level_has_all_fields_including_inherited() -> Result<()> {
         "Advanced field technical_dependencies should be present"
     );
     assert!(
-        developer_fields.contains_key("error_handling"),
-        "Advanced field error_handling should be present"
+        developer_fields.contains_key("error_scenarios"),
+        "Advanced field error_scenarios should be present"
     );
 
     // Verify all are empty (no values provided)

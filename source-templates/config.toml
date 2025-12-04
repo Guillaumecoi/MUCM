@@ -32,13 +32,19 @@ backend = "toml"                      # Options: "toml" or "sqlite"
 # These extra fields can be added by editing TOML files directly or through the interactive CLI.
 # Methodology-specific custom fields are defined in each methodology's config.toml file.
 [extra_fields]
-author = { type = "string", required = false }
-reviewer = { type = "string", required = false }
+author = { type = "string", required = false, description = "Person responsible for creating this use case", example = "John Smith" }
+reviewer = { type = "string", required = false, description = "Person responsible for reviewing this use case", example = "Jane Doe" }
 
 # Timestamp management - automatically track when use cases are created/modified
 [metadata]
 created = true                        # Auto-set creation timestamp
 last_updated = true                   # Auto-update modification timestamp
+date_format = "%d/%m/%Y"              # Date display format (default: day/month/year)
+                                      # Common formats:
+                                      # - "%d/%m/%Y" - European: 03/12/2025
+                                      # - "%m/%d/%Y" - US: 12/03/2025
+                                      # - "%Y-%m-%d" - ISO: 2025-12-03
+                                      # - "%B %d, %Y" - Long: December 03, 2025
 
 # Actor configuration - extend personas with Sommerville-aligned fields
 # Based on software engineering best practices (Sommerville), personas represent

@@ -41,8 +41,8 @@ fn create_toml_repository() -> (TempDir, Box<dyn UseCaseRepository>) {
     let temp_dir = TempDir::new().unwrap();
     env::set_current_dir(&temp_dir).unwrap();
 
-    // Create minimal source-templates for testing
-    common::create_minimal_source_templates(std::path::Path::new(".")).unwrap();
+    // Set up isolated test templates (bypasses user config caching)
+    let _template_mgr = common::TestTemplateManager::new().unwrap();
 
     // Initialize basic config structure using the same approach as config tests
     use mucm::config::ConfigFileManager;

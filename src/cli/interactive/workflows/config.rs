@@ -212,7 +212,7 @@ impl ConfigWorkflow {
 
         // Sync template files with current config (copy new, remove old)
         use crate::controller::ProjectController;
-        match ProjectController::sync_templates() {
+        match ProjectController::sync_templates(false) {
             Ok(_) => {
                 UI::show_success("✅ Configuration saved and templates synced!")?;
             }

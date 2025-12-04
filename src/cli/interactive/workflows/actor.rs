@@ -319,23 +319,43 @@ impl ActorWorkflow {
         // Prompt for each field
         let mut updated_fields = HashMap::new();
 
-        UI::show_info("Edit fields (smart input based on field type):")?;
+        UI::show_info("Fill in custom fields (press Enter to skip optional fields):")?;
 
         for (field_name, field_def) in &field_config {
             let current_json = current_values.get(field_name);
-            let help_msg = field_def
-                .description
-                .clone()
-                .unwrap_or_else(|| format!("{} field", field_def.field_type));
 
-            // Use FieldHelpers to handle different field types automatically
-            if let Some(new_value) = FieldHelpers::edit_by_type(
-                &field_def.field_type,
-                field_name,
-                current_json,
-                &help_msg,
-            )? {
-                updated_fields.insert(field_name.clone(), new_value);
+            // Check if this is a new field (no current value) or editing existing
+            let is_new_field = current_json.is_none()
+                || matches!(current_json, Some(serde_json::Value::Null))
+                || matches!(current_json, Some(serde_json::Value::String(s)) if s.is_empty())
+                || matches!(current_json, Some(serde_json::Value::Array(a)) if a.is_empty());
+
+            let new_value = if is_new_field {
+                // Use prompt_by_type for new fields (better formatting with description and example)
+                FieldHelpers::prompt_by_type(
+                    &field_def.field_type,
+                    field_name,
+                    field_def.required,
+                    field_def.description.as_deref(),
+                    field_def.example.as_deref(),
+                )?
+            } else {
+                // Use edit_by_type for existing fields (shows current value)
+                let help_msg = field_def
+                    .description
+                    .clone()
+                    .unwrap_or_else(|| format!("{} field", field_def.field_type));
+
+                FieldHelpers::edit_by_type(
+                    &field_def.field_type,
+                    field_name,
+                    current_json,
+                    &help_msg,
+                )?
+            };
+
+            if let Some(value) = new_value {
+                updated_fields.insert(field_name.clone(), value);
             }
         }
 

@@ -17,9 +17,11 @@
 {{roi_estimate}}
 
 {{/if}}
-{{#if strategic_priority}}
-### Strategic Priority
-{{strategic_priority}}
+{{#if strategic_priorities}}
+### Strategic Priorities
+{{#each strategic_priorities}}
+- {{this}}
+{{/each}}
 
 {{/if}}
 

@@ -52,6 +52,12 @@ impl MarkdownGenerator {
         // Convert to HashMap for template engine compatibility
         let mut data: HashMap<String, Value> = serde_json::from_value(use_case_json)?;
 
+        // Format dates according to config
+        crate::core::utils::format_dates_from_metadata(
+            &mut data,
+            &self.config.metadata.date_format,
+        );
+
         // Merge extra fields into top-level HashMap so templates can access them directly
         if let Some(Value::Object(extra_map)) = data.remove("extra") {
             for (key, value) in extra_map {
@@ -204,5 +210,263 @@ mod tests {
 
         // Verify standard field takes priority
         assert_eq!(data["author"], json!("Standard Author"));
+    }
+
+    #[test]
+    fn test_date_formatting_default() {
+        use chrono::{TimeZone, Utc};
+
+        // Create a use case with known timestamps
+        let mut use_case = UseCase::new(
+            "UC-TEST-001".to_string(),
+            "Test Use Case".to_string(),
+            "Test".to_string(),
+            "TES".to_string(),
+            "Test description".to_string(),
+            "Medium".to_string(),
+        )
+        .unwrap();
+
+        // Set specific timestamps
+        use_case.metadata.created_at = Utc.with_ymd_and_hms(2025, 12, 3, 10, 30, 0).unwrap();
+        use_case.metadata.updated_at = Utc.with_ymd_and_hms(2025, 12, 3, 15, 45, 0).unwrap();
+
+        // Convert to JSON (this triggers RFC3339 serialization)
+        let use_case_json = serde_json::to_value(&use_case).unwrap();
+        let mut data: HashMap<String, Value> = serde_json::from_value(use_case_json).unwrap();
+
+        // Apply date formatting logic with default format
+        let date_format = "%d/%m/%Y";
+        if let Some(Value::Object(metadata)) = data.get("metadata").cloned() {
+            if let Some(Value::String(created_at)) = metadata.get("created_at") {
+                if let Ok(dt) = chrono::DateTime::parse_from_rfc3339(created_at) {
+                    let formatted = dt.format(date_format).to_string();
+                    data.insert("created_date".to_string(), Value::String(formatted.clone()));
+                    data.insert("created".to_string(), Value::String(formatted));
+                }
+            }
+            if let Some(Value::String(updated_at)) = metadata.get("updated_at") {
+                if let Ok(dt) = chrono::DateTime::parse_from_rfc3339(updated_at) {
+                    let formatted = dt.format(date_format).to_string();
+                    data.insert("last_updated".to_string(), Value::String(formatted));
+                }
+            }
+        }
+
+        // Verify formatted dates are present
+        assert_eq!(data["created_date"], json!("03/12/2025"));
+        assert_eq!(data["created"], json!("03/12/2025"));
+        assert_eq!(data["last_updated"], json!("03/12/2025"));
+    }
+
+    #[test]
+    fn test_date_formatting_us_format() {
+        use chrono::{TimeZone, Utc};
+
+        let mut use_case = UseCase::new(
+            "UC-TEST-001".to_string(),
+            "Test Use Case".to_string(),
+            "Test".to_string(),
+            "TES".to_string(),
+            "Test description".to_string(),
+            "Medium".to_string(),
+        )
+        .unwrap();
+
+        use_case.metadata.created_at = Utc.with_ymd_and_hms(2025, 12, 3, 10, 30, 0).unwrap();
+        use_case.metadata.updated_at = Utc.with_ymd_and_hms(2025, 12, 3, 15, 45, 0).unwrap();
+
+        let use_case_json = serde_json::to_value(&use_case).unwrap();
+        let mut data: HashMap<String, Value> = serde_json::from_value(use_case_json).unwrap();
+
+        // Apply date formatting logic with US format
+        let date_format = "%m/%d/%Y";
+        if let Some(Value::Object(metadata)) = data.get("metadata").cloned() {
+            if let Some(Value::String(created_at)) = metadata.get("created_at") {
+                if let Ok(dt) = chrono::DateTime::parse_from_rfc3339(created_at) {
+                    let formatted = dt.format(date_format).to_string();
+                    data.insert("created_date".to_string(), Value::String(formatted.clone()));
+                    data.insert("created".to_string(), Value::String(formatted));
+                }
+            }
+            if let Some(Value::String(updated_at)) = metadata.get("updated_at") {
+                if let Ok(dt) = chrono::DateTime::parse_from_rfc3339(updated_at) {
+                    let formatted = dt.format(date_format).to_string();
+                    data.insert("last_updated".to_string(), Value::String(formatted));
+                }
+            }
+        }
+
+        // Verify US format dates
+        assert_eq!(data["created_date"], json!("12/03/2025"));
+        assert_eq!(data["created"], json!("12/03/2025"));
+        assert_eq!(data["last_updated"], json!("12/03/2025"));
+    }
+
+    #[test]
+    fn test_date_formatting_iso_format() {
+        use chrono::{TimeZone, Utc};
+
+        let mut use_case = UseCase::new(
+            "UC-TEST-001".to_string(),
+            "Test Use Case".to_string(),
+            "Test".to_string(),
+            "TES".to_string(),
+            "Test description".to_string(),
+            "Medium".to_string(),
+        )
+        .unwrap();
+
+        use_case.metadata.created_at = Utc.with_ymd_and_hms(2025, 12, 3, 10, 30, 0).unwrap();
+        use_case.metadata.updated_at = Utc.with_ymd_and_hms(2025, 12, 3, 15, 45, 0).unwrap();
+
+        let use_case_json = serde_json::to_value(&use_case).unwrap();
+        let mut data: HashMap<String, Value> = serde_json::from_value(use_case_json).unwrap();
+
+        // Apply date formatting logic with ISO format
+        let date_format = "%Y-%m-%d";
+        if let Some(Value::Object(metadata)) = data.get("metadata").cloned() {
+            if let Some(Value::String(created_at)) = metadata.get("created_at") {
+                if let Ok(dt) = chrono::DateTime::parse_from_rfc3339(created_at) {
+                    let formatted = dt.format(date_format).to_string();
+                    data.insert("created_date".to_string(), Value::String(formatted.clone()));
+                    data.insert("created".to_string(), Value::String(formatted));
+                }
+            }
+            if let Some(Value::String(updated_at)) = metadata.get("updated_at") {
+                if let Ok(dt) = chrono::DateTime::parse_from_rfc3339(updated_at) {
+                    let formatted = dt.format(date_format).to_string();
+                    data.insert("last_updated".to_string(), Value::String(formatted));
+                }
+            }
+        }
+
+        // Verify ISO format dates
+        assert_eq!(data["created_date"], json!("2025-12-03"));
+        assert_eq!(data["created"], json!("2025-12-03"));
+        assert_eq!(data["last_updated"], json!("2025-12-03"));
+    }
+
+    #[test]
+    fn test_date_formatting_long_format() {
+        use chrono::{TimeZone, Utc};
+
+        let mut use_case = UseCase::new(
+            "UC-TEST-001".to_string(),
+            "Test Use Case".to_string(),
+            "Test".to_string(),
+            "TES".to_string(),
+            "Test description".to_string(),
+            "Medium".to_string(),
+        )
+        .unwrap();
+
+        use_case.metadata.created_at = Utc.with_ymd_and_hms(2025, 12, 3, 10, 30, 0).unwrap();
+        use_case.metadata.updated_at = Utc.with_ymd_and_hms(2025, 12, 3, 15, 45, 0).unwrap();
+
+        let use_case_json = serde_json::to_value(&use_case).unwrap();
+        let mut data: HashMap<String, Value> = serde_json::from_value(use_case_json).unwrap();
+
+        // Apply date formatting logic with long format
+        let date_format = "%B %d, %Y";
+        if let Some(Value::Object(metadata)) = data.get("metadata").cloned() {
+            if let Some(Value::String(created_at)) = metadata.get("created_at") {
+                if let Ok(dt) = chrono::DateTime::parse_from_rfc3339(created_at) {
+                    let formatted = dt.format(date_format).to_string();
+                    data.insert("created_date".to_string(), Value::String(formatted.clone()));
+                    data.insert("created".to_string(), Value::String(formatted));
+                }
+            }
+            if let Some(Value::String(updated_at)) = metadata.get("updated_at") {
+                if let Ok(dt) = chrono::DateTime::parse_from_rfc3339(updated_at) {
+                    let formatted = dt.format(date_format).to_string();
+                    data.insert("last_updated".to_string(), Value::String(formatted));
+                }
+            }
+        }
+
+        // Verify long format dates
+        assert_eq!(data["created_date"], json!("December 03, 2025"));
+        assert_eq!(data["created"], json!("December 03, 2025"));
+        assert_eq!(data["last_updated"], json!("December 03, 2025"));
+    }
+
+    #[test]
+    fn test_date_formatting_with_time() {
+        use chrono::{TimeZone, Utc};
+
+        let mut use_case = UseCase::new(
+            "UC-TEST-001".to_string(),
+            "Test Use Case".to_string(),
+            "Test".to_string(),
+            "TES".to_string(),
+            "Test description".to_string(),
+            "Medium".to_string(),
+        )
+        .unwrap();
+
+        use_case.metadata.created_at = Utc.with_ymd_and_hms(2025, 12, 3, 10, 30, 45).unwrap();
+        use_case.metadata.updated_at = Utc.with_ymd_and_hms(2025, 12, 3, 15, 45, 30).unwrap();
+
+        let use_case_json = serde_json::to_value(&use_case).unwrap();
+        let mut data: HashMap<String, Value> = serde_json::from_value(use_case_json).unwrap();
+
+        // Apply date formatting logic with date and time
+        let date_format = "%Y-%m-%d %H:%M:%S";
+        if let Some(Value::Object(metadata)) = data.get("metadata").cloned() {
+            if let Some(Value::String(created_at)) = metadata.get("created_at") {
+                if let Ok(dt) = chrono::DateTime::parse_from_rfc3339(created_at) {
+                    let formatted = dt.format(date_format).to_string();
+                    data.insert("created_date".to_string(), Value::String(formatted.clone()));
+                    data.insert("created".to_string(), Value::String(formatted));
+                }
+            }
+            if let Some(Value::String(updated_at)) = metadata.get("updated_at") {
+                if let Ok(dt) = chrono::DateTime::parse_from_rfc3339(updated_at) {
+                    let formatted = dt.format(date_format).to_string();
+                    data.insert("last_updated".to_string(), Value::String(formatted));
+                }
+            }
+        }
+
+        // Verify format with time
+        assert_eq!(data["created_date"], json!("2025-12-03 10:30:45"));
+        assert_eq!(data["created"], json!("2025-12-03 10:30:45"));
+        assert_eq!(data["last_updated"], json!("2025-12-03 15:45:30"));
+    }
+
+    #[test]
+    fn test_date_formatting_handles_serialization() {
+        use chrono::{TimeZone, Utc};
+
+        // Test that our date formatting works correctly with the serialization process
+        let mut use_case = UseCase::new(
+            "UC-TEST-001".to_string(),
+            "Test Use Case".to_string(),
+            "Test".to_string(),
+            "TES".to_string(),
+            "Test description".to_string(),
+            "Medium".to_string(),
+        )
+        .unwrap();
+
+        use_case.metadata.created_at = Utc.with_ymd_and_hms(2025, 12, 3, 10, 30, 0).unwrap();
+        use_case.metadata.updated_at = Utc.with_ymd_and_hms(2025, 12, 3, 15, 45, 0).unwrap();
+
+        // Serialize to JSON (this produces RFC3339 strings)
+        let use_case_json = serde_json::to_value(&use_case).unwrap();
+        let data: HashMap<String, Value> = serde_json::from_value(use_case_json).unwrap();
+
+        // Verify that metadata contains RFC3339 formatted strings
+        if let Some(Value::Object(metadata)) = data.get("metadata") {
+            if let Some(Value::String(created_at)) = metadata.get("created_at") {
+                // Should be able to parse as RFC3339
+                assert!(chrono::DateTime::parse_from_rfc3339(created_at).is_ok());
+            }
+            if let Some(Value::String(updated_at)) = metadata.get("updated_at") {
+                // Should be able to parse as RFC3339
+                assert!(chrono::DateTime::parse_from_rfc3339(updated_at).is_ok());
+            }
+        }
     }
 }

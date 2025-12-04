@@ -249,5 +249,15 @@ pub fn run() -> Result<()> {
             // This case is handled above, but included for completeness
             run_interactive_session()
         }
+        Commands::SyncTemplates { force } => {
+            use crate::controller::ProjectController;
+            match ProjectController::sync_templates(force) {
+                Ok(result) => {
+                    DisplayResultFormatter::display(&result);
+                    Ok(())
+                }
+                Err(e) => Err(e),
+            }
+        }
     }
 }

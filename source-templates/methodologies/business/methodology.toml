@@ -28,9 +28,9 @@ description = "Standard business documentation covering essential stakeholder ne
 inherits = []
 
 [levels.normal.custom_fields]
-business_value = { label = "Business Value", type = "text", required = false, description = "Quantifiable business impact and value proposition" }
-roi_estimate = { label = "ROI Estimate", type = "string", required = false, description = "Expected return on investment with timeframe" }
-strategic_priority = { label = "Strategic Priority", type = "string", required = false, description = "Alignment with organizational strategy (Critical, High, Medium, Low)" }
+business_value = { label = "Business Value", type = "text", required = false, description = "Quantifiable business impact and value proposition", example = "Reduce support costs by 30% while improving customer satisfaction" }
+roi_estimate = { label = "ROI Estimate", type = "string", required = false, description = "Expected return on investment with timeframe", example = "180% ROI within 18 months, annual savings of $120,000" }
+strategic_priorities = { label = "Strategic Priorities", type = "array", required = false, description = "Alignment with organizational strategies and initiatives", example = "Digital transformation initiative, Customer experience improvement" }
 
 [levels.advanced]
 name = "Advanced"
@@ -42,8 +42,8 @@ description = "Comprehensive business case with financial analysis, stakeholder 
 inherits = ["Normal"]
 
 [levels.advanced.custom_fields]
-# Inherits: business_value, roi_estimate, strategic_priority (from normal)
-cost_estimate = { label = "Cost Estimate", type = "text", required = false, description = "Detailed breakdown of implementation and operational costs" }
+# Inherits: business_value, roi_estimate, strategic_priorities (from normal)
+cost_estimate = { label = "Cost Estimate", type = "text", required = false, description = "Detailed breakdown of implementation and operational costs", example = "$80,000 initial implementation + $15,000 annual maintenance" }
 
 [usage]
 when_to_use = [
@@ -68,19 +68,6 @@ best_practices = [
     "Use business-friendly language, avoid technical jargon",
     "Align use cases with organizational goals and strategy"
 ]
-
-[examples]
-
-[examples.basic]
-title = "Customer Self-Service Portal"
-business_value = "Reduce support costs by 30% while improving customer satisfaction"
-
-[examples.detailed]
-title = "Automated Invoice Processing"
-business_value = "Reduce processing time from 2 days to 2 hours, eliminate 95% of manual data entry errors, improve vendor relations"
-roi_estimate = "180% ROI within 18 months, annual savings of $120,000"
-strategic_priority = "High - supports digital transformation initiative"
-cost_estimate = "$80,000 initial implementation + $15,000 annual maintenance"
 
 [related_methodologies]
 feature = "For product feature specifications"

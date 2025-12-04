@@ -1103,6 +1103,17 @@ inherits = ["Normal"]
         Ok(())
     }
 
+    /// Setup test environment to use project source templates
+    ///
+    /// This bypasses user config templates by setting MUCM_TEST_TEMPLATES_DIR
+    fn setup_test_templates_env() {
+        let project_root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"));
+        let source_templates = project_root.join("source-templates");
+        unsafe {
+            env::set_var("MUCM_TEST_TEMPLATES_DIR", source_templates);
+        }
+    }
+
     fn setup_empty_dir() -> TempDir {
         let temp_dir = TempDir::new().unwrap();
         env::set_current_dir(&temp_dir).unwrap();
@@ -1849,7 +1860,7 @@ inherits = ["Normal"]
         ProjectController::init_project(params).unwrap();
 
         // Test sync_templates (should preserve existing files)
-        let result = ProjectController::sync_templates();
+        let result = ProjectController::sync_templates(false);
 
         assert!(result.is_ok(), "Sync templates should succeed");
         let display = result.unwrap();
@@ -1955,6 +1966,7 @@ inherits = ["Normal"]
     #[test]
     #[serial]
     fn test_get_available_languages() {
+        setup_test_templates_env();
         let _temp_dir = setup_empty_dir();
 
         let result = ProjectController::get_available_languages();
@@ -2531,7 +2543,7 @@ inherits = ["Normal"]
             assert_eq!(content_before, custom_content);
 
             // Sync templates again
-            let result = ProjectController::sync_templates();
+            let result = ProjectController::sync_templates(false);
             assert!(result.is_ok(), "Sync should succeed");
 
             // Verify our customization was preserved
@@ -2582,7 +2594,7 @@ inherits = ["Normal"]
         ProjectController::add_methodologies(vec!["business".to_string()]).unwrap();
 
         // Sync templates
-        let result = ProjectController::sync_templates();
+        let result = ProjectController::sync_templates(false);
         assert!(result.is_ok(), "Sync should succeed");
 
         // Verify business was added
@@ -2632,7 +2644,7 @@ inherits = ["Normal"]
 
             // Sync multiple times
             for i in 1..=5 {
-                let result = ProjectController::sync_templates();
+                let result = ProjectController::sync_templates(false);
                 assert!(result.is_ok(), "Sync #{} should succeed", i);
 
                 // Verify content is still preserved
@@ -2677,7 +2689,7 @@ inherits = ["Normal"]
         ProjectController::remove_methodologies(vec!["business".to_string()]).unwrap();
 
         // Sync templates - this should remove the business folder
-        ProjectController::sync_templates().unwrap();
+        ProjectController::sync_templates(false).unwrap();
 
         // Verify business folder was deleted
         assert!(
@@ -2695,6 +2707,7 @@ inherits = ["Normal"]
     #[test]
     #[serial]
     fn test_sync_templates_overview_preservation() {
+        setup_test_templates_env();
         use std::fs;
         let _temp_dir = setup_empty_dir();
 
@@ -2721,7 +2734,7 @@ inherits = ["Normal"]
 
         // Add another methodology and sync
         ProjectController::add_methodologies(vec!["business".to_string()]).unwrap();
-        ProjectController::sync_templates().unwrap();
+        ProjectController::sync_templates(false).unwrap();
 
         // Verify overview customization preserved
         let content = fs::read_to_string(overview_file).unwrap();
@@ -2748,6 +2761,7 @@ inherits = ["Normal"]
     #[test]
     #[serial]
     fn test_get_available_scenario_templates_after_init() {
+        setup_test_templates_env();
         let _temp_dir = setup_empty_dir();
 
         let params = create_test_init_params(
@@ -2803,6 +2817,7 @@ inherits = ["Normal"]
     #[test]
     #[serial]
     fn test_set_default_scenario_template_success() {
+        setup_test_templates_env();
         let _temp_dir = setup_empty_dir();
 
         let params = create_test_init_params(

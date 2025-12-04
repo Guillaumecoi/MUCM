@@ -824,6 +824,64 @@ mucm persona delete <PERSONA_ID>
 mucm persona delete power-user-sarah
 ```
 
+### `sync-templates`
+
+Synchronize project templates with the latest versions from MUCM source templates.
+
+After upgrading MUCM or when templates are updated, use this command to pull the latest 
+template versions into your project's `.mucm/templates/` directory.
+
+```bash
+mucm sync-templates [OPTIONS]
+```
+
+**Options:**
+- `--force`: Overwrite existing templates (default: preserve existing files)
+
+**Behavior:**
+
+**Default Mode (Safe):**
+- Only copies template files that don't exist in `.mucm/templates/`
+- Preserves customized templates
+- Adds new templates from MUCM updates
+- Safe for projects with modified templates
+
+**Force Mode (`--force`):**
+- Overwrites ALL template files with latest versions
+- Use after MUCM upgrade to get all improvements
+- Use to restore defaults after breaking changes
+- ⚠️ **Warning**: Loses all template customizations
+
+**When to Use:**
+- After upgrading MUCM to get new methodology templates
+- To pull in newly added template functionality
+- To restore default templates with `--force`
+- To ensure team members have consistent template versions
+- After adding new methodologies to MUCM
+
+**Examples:**
+```bash
+# Safe sync - add new templates, preserve customizations
+mucm sync-templates
+
+# Force sync - overwrite all templates with defaults
+mucm sync-templates --force
+
+# After upgrade workflow
+cargo install mucm --force  # Upgrade MUCM
+cd my-project
+mucm sync-templates        # Pull in new templates
+```
+
+**What Gets Synced:**
+- Methodology templates (`.mucm/templates/methodologies/`)
+- Use case templates (`.mucm/templates/*.hbs`)
+- Scenario templates (`.mucm/templates/scenarios/`)
+- Actor templates (`.mucm/templates/actor.hbs`)
+- Language templates (`.mucm/templates/languages/`)
+
+---
+
 ### `cleanup`
 
 Clean up orphaned methodology fields from TOML files. After changing views or methodologies, 

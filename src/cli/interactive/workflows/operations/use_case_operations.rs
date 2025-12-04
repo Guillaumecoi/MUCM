@@ -7,7 +7,7 @@ use anyhow::{Context, Result};
 use inquire::{Confirm, Select, Text};
 use std::collections::HashMap;
 
-use crate::cli::interactive::{runner::InteractiveRunner, ui::UI};
+use crate::cli::interactive::{field_helpers::FieldHelpers, runner::InteractiveRunner, ui::UI};
 use crate::controller::CategoryController;
 
 /// Collect methodology views from user
@@ -129,96 +129,14 @@ pub fn prompt_methodology_fields(
             UI::show_info(&format!("\n📋 {} Fields:", methodology_name))?;
 
             for field in fields {
-                let default_help = format!("{} ({})", field.label, field.field_type);
-                let help_msg = field.description.as_deref().unwrap_or(&default_help);
-
-                let prompt_text = if field.required {
-                    format!("{} (required):", field.label)
-                } else {
-                    format!("{} (optional):", field.label)
-                };
-
-                // Handle different field types
-                let value = match field.field_type.as_str() {
-                    "boolean" => {
-                        // For boolean fields, use Confirm prompt
-                        let default = field
-                            .default
-                            .as_ref()
-                            .and_then(|d| d.parse::<bool>().ok())
-                            .unwrap_or(false);
-
-                        let result = Confirm::new(&prompt_text)
-                            .with_default(default)
-                            .with_help_message(help_msg)
-                            .prompt()?;
-
-                        Some(result.to_string())
-                    }
-                    "array" => {
-                        // For array fields, collect items one by one
-                        UI::show_info(
-                            "  💡 Enter items one at a time. Press Enter on empty line when done.",
-                        )?;
-
-                        let mut items = Vec::new();
-                        let mut item_num = 1;
-
-                        loop {
-                            let item_prompt = format!("  Item {}: ", item_num);
-                            let result = Text::new(&item_prompt)
-                                .with_help_message(help_msg)
-                                .prompt_skippable()?;
-
-                            match result {
-                                Some(item) if !item.trim().is_empty() => {
-                                    items.push(item.trim().to_string());
-                                    item_num += 1;
-                                }
-                                _ => break,
-                            }
-                        }
-
-                        if items.is_empty() {
-                            None // Will be handled by required field logic below
-                        } else {
-                            Some(items.join(", "))
-                        }
-                    }
-                    "number" => {
-                        // For number fields, validate input
-                        let result = Text::new(&prompt_text)
-                            .with_help_message(help_msg)
-                            .prompt_skippable()?;
-
-                        if let Some(num_str) = result {
-                            // Validate it's a number
-                            if num_str.parse::<f64>().is_err() {
-                                UI::show_warning(&format!(
-                                    "  ⚠️  '{}' is not a valid number. Skipping field.",
-                                    num_str
-                                ))?;
-                                None
-                            } else {
-                                Some(num_str)
-                            }
-                        } else {
-                            None
-                        }
-                    }
-                    "string" => {
-                        // Default: string input
-                        Text::new(&prompt_text)
-                            .with_help_message(help_msg)
-                            .prompt_skippable()?
-                    }
-                    _ => {
-                        // Unknown field type defaults to string input
-                        Text::new(&prompt_text)
-                            .with_help_message(help_msg)
-                            .prompt_skippable()?
-                    }
-                };
+                // Use FieldHelpers to handle different field types automatically
+                let value = FieldHelpers::prompt_by_type(
+                    &field.field_type,
+                    &field.label,
+                    field.required,
+                    field.description.as_deref(),
+                    field.example.as_deref(),
+                )?;
 
                 // Check if required field is missing
                 if field.required && value.is_none() {
