@@ -1,0 +1,82 @@
+# {{emoji}} {{name}}
+
+**ID:** `{{id}}`  
+**Type:** {{actor_type}}
+
+{{#if (eq actor_type "Persona")}}
+## Background
+{{#if background}}
+{{background}}
+{{else}}
+*Not specified*
+{{/if}}
+
+## Job Role
+{{#if job_role}}
+{{job_role}}
+{{else}}
+*Not specified*
+{{/if}}
+
+## Education
+{{#if education}}
+{{education}}
+{{else}}
+*Not specified*
+{{/if}}
+
+## Technical Experience
+{{#if technical_experience}}
+{{technical_experience}}
+{{else}}
+*Not specified*
+{{/if}}
+
+## Motivation for Product
+{{#if motivation_for_product}}
+{{motivation_for_product}}
+{{else}}
+*Not specified*
+{{/if}}
+{{else}}
+## Description
+{{#if description}}
+{{description}}
+{{else}}
+System actor: {{name}}
+{{/if}}
+
+{{#if responsibilities}}
+## Responsibilities
+{{responsibilities}}
+{{/if}}
+
+{{#if integration_points}}
+## Integration Points
+{{integration_points}}
+{{/if}}
+{{/if}}
+
+{{#if extra}}
+## Additional Information
+{{#each extra}}
+{{#unless (or (eq @key "emoji") (eq @key "background") (eq @key "job_role") (eq @key "education") (eq @key "technical_experience") (eq @key "motivation_for_product") (eq @key "description") (eq @key "responsibilities") (eq @key "integration_points"))}}
+### {{@key}}
+{{#if (is_array this)}}
+{{#each this}}
+- {{this}}
+{{/each}}
+{{else if (is_object this)}}
+```json
+{{json this}}
+```
+{{else}}
+{{this}}
+{{/if}}
+{{/unless}}
+{{/each}}
+{{/if}}
+
+---
+*Created: {{created}}*  
+{{#if last_updated}}*Last Updated: {{last_updated}}*{{/if}}
