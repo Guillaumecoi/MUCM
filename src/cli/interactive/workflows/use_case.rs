@@ -142,16 +142,10 @@ impl UseCaseWorkflow {
                 .label
                 .clone()
                 .unwrap_or_else(|| field_name.clone());
-            let required_suffix = if field_config.required {
-                ""
-            } else {
-                " (optional)"
-            };
-            let prompt_label = format!("{}{}:", label, required_suffix);
 
             let value = FieldHelpers::prompt_by_type(
                 &field_config.field_type,
-                &prompt_label,
+                &label,
                 field_config.required,
                 field_config.description.as_deref(),
                 field_config.example.as_deref(),
