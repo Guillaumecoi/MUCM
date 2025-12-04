@@ -131,7 +131,7 @@ mod tests {
 
     // Mock repository for testing
     struct MockRepository;
-    
+
     impl UseCaseRepository for MockRepository {
         fn save(&self, _use_case: &UseCase) -> Result<()> {
             Ok(())
@@ -170,7 +170,9 @@ mod tests {
         )
         .unwrap();
 
-        use_case.views.push(MethodologyView::new("business", "normal"));
+        use_case
+            .views
+            .push(MethodologyView::new("business", "normal"));
         use_case
     }
 
@@ -216,10 +218,8 @@ mod tests {
         let mut use_cases = vec![create_test_use_case("UC-TEST-001")];
         let mut service = MethodologyFieldReinitializeService::new(&repository, &mut use_cases);
 
-        let result = service.reinitialize_methodology_fields(
-            Some("UC-NONEXISTENT".to_string()),
-            true,
-        );
+        let result =
+            service.reinitialize_methodology_fields(Some("UC-NONEXISTENT".to_string()), true);
 
         assert!(result.is_err());
         assert!(result.unwrap_err().to_string().contains("not found"));
@@ -230,7 +230,7 @@ mod tests {
     fn test_reinitialize_dry_run_vs_actual() {
         let repository = MockRepository;
         let mut use_cases = vec![create_test_use_case("UC-TEST-001")];
-        
+
         // Dry run
         {
             let mut service = MethodologyFieldReinitializeService::new(&repository, &mut use_cases);
@@ -272,11 +272,16 @@ mod tests {
     fn test_reinitialize_with_existing_fields() {
         let repository = MockRepository;
         let mut use_case = create_test_use_case("UC-TEST-001");
-        
+
         // Add some existing fields
         let mut business_fields = HashMap::new();
-        business_fields.insert("existing_field".to_string(), serde_json::json!("existing value"));
-        use_case.methodology_fields.insert("business".to_string(), business_fields);
+        business_fields.insert(
+            "existing_field".to_string(),
+            serde_json::json!("existing value"),
+        );
+        use_case
+            .methodology_fields
+            .insert("business".to_string(), business_fields);
 
         let mut use_cases = vec![use_case];
         let mut service = MethodologyFieldReinitializeService::new(&repository, &mut use_cases);
