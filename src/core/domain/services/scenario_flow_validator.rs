@@ -243,7 +243,7 @@ impl ScenarioFlowValidator {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::core::domain::{Actor, Metadata, Priority, ScenarioStep, ScenarioType};
+    use crate::core::domain::{Metadata, Priority, ScenarioStep, ScenarioType};
 
     fn create_test_use_case() -> UseCase {
         UseCase {
@@ -271,19 +271,17 @@ mod tests {
             "Main Scenario".to_string(),
             "Test".to_string(),
             ScenarioType::HappyPath,
-            Actor::User,
+            "user".to_string(),
         );
 
         scenario.add_step(ScenarioStep::new(
             "1".to_string(),
-            Actor::User,
-            "action".to_string(),
+            "user".to_string(),
             "desc".to_string(),
         ));
         scenario.add_step(ScenarioStep::new(
             "2".to_string(),
-            Actor::System,
-            "action".to_string(),
+            "system".to_string(),
             "desc".to_string(),
         ));
 
@@ -292,8 +290,7 @@ mod tests {
         // Add a step with letter suffix - should fail for main scenario
         scenario.add_step(ScenarioStep::new(
             "3a".to_string(),
-            Actor::User,
-            "action".to_string(),
+            "user".to_string(),
             "desc".to_string(),
         ));
 
@@ -310,24 +307,21 @@ mod tests {
             "Main".to_string(),
             "Test".to_string(),
             ScenarioType::HappyPath,
-            Actor::User,
+            "user".to_string(),
         );
         main_scenario.add_step(ScenarioStep::new(
             "1".to_string(),
-            Actor::User,
-            "action".to_string(),
+            "user".to_string(),
             "desc".to_string(),
         ));
         main_scenario.add_step(ScenarioStep::new(
             "2".to_string(),
-            Actor::System,
-            "action".to_string(),
+            "system".to_string(),
             "desc".to_string(),
         ));
         main_scenario.add_step(ScenarioStep::new(
             "3".to_string(),
-            Actor::User,
-            "action".to_string(),
+            "user".to_string(),
             "desc".to_string(),
         ));
 
@@ -339,7 +333,7 @@ mod tests {
             "Extension".to_string(),
             "Test".to_string(),
             ScenarioType::Extension,
-            Actor::User,
+            "user".to_string(),
         );
         extension.is_main = false;
         extension.extends_scenario_id = Some("UC-TEST-001-S01".to_string());
@@ -360,14 +354,13 @@ mod tests {
             "Test".to_string(),
             "Test".to_string(),
             ScenarioType::HappyPath,
-            Actor::User,
+            "user".to_string(),
         );
 
         for i in 1..=10 {
             scenario.add_step(ScenarioStep::new(
                 i.to_string(),
-                Actor::User,
-                "action".to_string(),
+                "user".to_string(),
                 "desc".to_string(),
             ));
         }

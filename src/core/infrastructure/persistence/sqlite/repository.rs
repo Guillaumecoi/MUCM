@@ -143,8 +143,8 @@ impl SqliteUseCaseRepository {
             let step_rows = steps_stmt.query_map([&scenario_id], |row| {
                 Ok(ScenarioStep {
                     order: row.get(0)?,
-                    actor: row.get(1)?,
-                    receiver: row.get(2)?,
+                    acting_actor: row.get(1)?,
+                    receiving_actor: row.get(2)?,
                     action: row.get(3)?,
                     description: row.get(4)?,
                     notes: row.get(5)?,
@@ -212,11 +212,11 @@ impl SqliteUseCaseRepository {
             })?;
             let references: Vec<ScenarioReference> = ref_rows.collect::<Result<Vec<_>, _>>()?;
 
-            // For backward compatibility, derive primary_actor from first step or default to User
+            // For backward compatibility, derive primary_actor from first step or default to "user"
             let primary_actor = steps
                 .first()
-                .map(|s| s.actor.clone())
-                .unwrap_or(crate::core::domain::Actor::User);
+                .map(|s| s.acting_actor.clone())
+                .unwrap_or_else(|| "user".to_string());
 
             scenarios.push(Scenario {
                 id: scenario_id,
@@ -226,6 +226,7 @@ impl SqliteUseCaseRepository {
                 status,
                 is_main: true, // Default to main for existing scenarios
                 primary_actor,
+                supporting_actors: Vec::new(), // Empty for existing scenarios
                 persona,
                 extends_scenario_id: None,
                 extends_at_step: None,
@@ -361,7 +362,7 @@ impl SqliteUseCaseRepository {
                 tx.execute(
                     "INSERT INTO scenario_steps (scenario_id, step_order, actor, receiver, action, description, notes)
                      VALUES (?, ?, ?, ?, ?, ?, ?)",
-                    params![scenario.id, step.order, step.actor, step.receiver, step.action, step.description, step.notes],
+                    params![scenario.id, step.order, step.acting_actor, step.receiving_actor, step.action, step.description, step.notes],
                 )
                 .context("Failed to save scenario step")?;
             }

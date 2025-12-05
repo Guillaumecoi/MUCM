@@ -9,6 +9,7 @@ fn test_actor_markdown_date_formatting() -> Result<()> {
     let actor = ActorEntity {
         id: "test-payment".to_string(),
         name: "Test Payment Gateway".to_string(),
+        call_name: Some("Payment Gateway".to_string()),
         actor_type: ActorType::ExternalService,
         emoji: "💳".to_string(),
         extra: HashMap::new(),

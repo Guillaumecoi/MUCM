@@ -603,21 +603,21 @@ impl UseCaseCoordinator {
             &self.scenario_creator,
         );
 
-        // Use first actor as primary actor, default to User if none provided
+        // Use first actor as primary actor, default to "user" if none provided
         let primary_actor = if let Some(first_actor) = params.actors.first() {
-            first_actor.clone().into()
+            first_actor.clone()
         } else {
-            crate::core::domain::Actor::User
+            "user".to_string()
         };
 
         let scenario_params = ScenarioParams {
             title: params.title,
             scenario_type: params.scenario_type,
             description: params.description,
-            primary_actor,
+            primary_actor: primary_actor.to_string(),
             preconditions: params.preconditions,
             postconditions: params.postconditions,
-            actors: params.actors,
+            supporting_actors: params.actors,
         };
 
         scenario_service.add_scenario(use_case_id, scenario_params)
@@ -858,7 +858,7 @@ impl UseCaseCoordinator {
             extends_at_step: params.extends_at_step,
             title: params.title,
             description: Some(params.description),
-            primary_actor: params.primary_actor,
+            primary_actor: params.primary_actor.to_string(),
         };
         scenario_service.create_extension_scenario(use_case_id, ext_params, params.returns_at_step)
     }

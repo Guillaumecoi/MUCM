@@ -1,4 +1,3 @@
-use super::Actor;
 use serde::{Deserialize, Serialize};
 use std::cmp::Ordering;
 
@@ -96,18 +95,19 @@ pub struct ScenarioStep {
     /// Step order (e.g., "1", "2", "3a", "3b" for hierarchical numbering)
     pub order: String,
 
-    /// Technical actor performing the action (sender)
-    pub actor: Actor,
+    /// Actor call name performing the action (e.g., "guest", "system")
+    pub acting_actor: String,
 
-    /// Optional receiving actor (who/what receives the action)
+    /// Optional receiving actor call name (who/what receives the action)
     #[serde(default)]
-    pub receiver: Option<Actor>,
+    pub receiving_actor: Option<String>,
 
     /// What action is performed (e.g., "enters", "verifies", "returns")
     pub action: String,
 
-    /// Full description of what happens
-    pub description: String,
+    /// Full description of what happens (optional - can be auto-generated)
+    #[serde(default)]
+    pub description: Option<String>,
 
     /// Additional notes or technical details
     #[serde(default)]
@@ -115,54 +115,53 @@ pub struct ScenarioStep {
 }
 
 impl ScenarioStep {
-    /// Create a new scenario step with sender and optional receiver
-    pub fn new(order: String, actor: Actor, action: String, description: String) -> Self {
+    /// Create a new scenario step with acting actor
+    pub fn new(order: String, acting_actor: String, action: String) -> Self {
         Self {
             order,
-            actor,
-            receiver: None,
+            acting_actor,
+            receiving_actor: None,
             action,
-            description,
+            description: None,
             notes: None,
         }
     }
 
-    /// Create a new scenario step with both sender and receiver
+    /// Create a new scenario step with both acting and receiving actors
     pub fn with_receiver(
         order: String,
-        sender: Actor,
-        receiver: Actor,
+        acting_actor: String,
+        receiving_actor: String,
         action: String,
-        description: String,
     ) -> Self {
         Self {
             order,
-            actor: sender,
-            receiver: Some(receiver),
+            acting_actor,
+            receiving_actor: Some(receiving_actor),
             action,
-            description,
+            description: None,
             notes: None,
         }
     }
 
-    /// Get the sender actor
-    pub fn sender(&self) -> &Actor {
-        &self.actor
+    /// Get the acting actor call name
+    pub fn acting_actor(&self) -> &str {
+        &self.acting_actor
     }
 
-    /// Get the receiver actor if present
-    pub fn receiver(&self) -> Option<&Actor> {
-        self.receiver.as_ref()
+    /// Get the receiving actor call name if present
+    pub fn receiving_actor(&self) -> Option<&str> {
+        self.receiving_actor.as_deref()
     }
 
-    /// Set the receiver actor
-    pub fn set_receiver(&mut self, receiver: Actor) {
-        self.receiver = Some(receiver);
+    /// Set the receiving actor
+    pub fn set_receiving_actor(&mut self, receiving_actor: String) {
+        self.receiving_actor = Some(receiving_actor);
     }
 
-    /// Clear the receiver actor
-    pub fn clear_receiver(&mut self) {
-        self.receiver = None;
+    /// Clear the receiving actor
+    pub fn clear_receiving_actor(&mut self) {
+        self.receiving_actor = None;
     }
 }
 
@@ -174,16 +173,15 @@ mod tests {
     fn test_scenario_step_creation() {
         let step = ScenarioStep::new(
             "1".to_string(),
-            Actor::User,
-            "enters".to_string(),
-            "username and password".to_string(),
+            "user".to_string(),
+            "enters username and password".to_string(),
         );
 
         assert_eq!(step.order, "1");
-        assert_eq!(step.actor, Actor::User);
-        assert_eq!(step.receiver, None);
-        assert_eq!(step.action, "enters");
-        assert_eq!(step.description, "username and password");
+        assert_eq!(step.acting_actor, "user");
+        assert_eq!(step.receiving_actor, None);
+        assert_eq!(step.action, "enters username and password");
+        assert_eq!(step.description, None);
         assert!(step.notes.is_none());
     }
 
@@ -191,58 +189,53 @@ mod tests {
     fn test_scenario_step_with_receiver() {
         let step = ScenarioStep::with_receiver(
             "1".to_string(),
-            Actor::User,
-            Actor::System,
-            "submits".to_string(),
-            "login form".to_string(),
+            "user".to_string(),
+            "system".to_string(),
+            "submits login form".to_string(),
         );
 
         assert_eq!(step.order, "1");
-        assert_eq!(step.actor, Actor::User);
-        assert_eq!(step.receiver, Some(Actor::System));
-        assert_eq!(step.action, "submits");
-        assert_eq!(step.description, "login form");
+        assert_eq!(step.acting_actor, "user");
+        assert_eq!(step.receiving_actor, Some("system".to_string()));
+        assert_eq!(step.action, "submits login form");
+        assert_eq!(step.description, None);
     }
 
     #[test]
     fn test_scenario_step_receiver_methods() {
         let mut step = ScenarioStep::new(
             "1".to_string(),
-            Actor::User,
-            "enters".to_string(),
-            "data".to_string(),
+            "user".to_string(),
+            "enters data".to_string(),
         );
 
-        assert_eq!(step.receiver(), None);
+        assert_eq!(step.receiving_actor(), None);
 
-        step.set_receiver(Actor::Database);
-        assert_eq!(step.receiver(), Some(&Actor::Database));
+        step.set_receiving_actor("database".to_string());
+        assert_eq!(step.receiving_actor(), Some("database"));
 
-        step.clear_receiver();
-        assert_eq!(step.receiver(), None);
+        step.clear_receiving_actor();
+        assert_eq!(step.receiving_actor(), None);
     }
 
     #[test]
     fn test_scenario_step_equality() {
         let step1 = ScenarioStep::new(
             "1".to_string(),
-            Actor::User,
-            "enters".to_string(),
-            "data".to_string(),
+            "user".to_string(),
+            "enters data".to_string(),
         );
 
         let step2 = ScenarioStep::new(
             "1".to_string(),
-            Actor::User,
-            "enters".to_string(),
-            "data".to_string(),
+            "user".to_string(),
+            "enters data".to_string(),
         );
 
         let step3 = ScenarioStep::new(
             "2".to_string(),
-            Actor::User,
-            "enters".to_string(),
-            "data".to_string(),
+            "user".to_string(),
+            "enters data".to_string(),
         );
 
         assert_eq!(step1, step2);
@@ -253,25 +246,22 @@ mod tests {
     fn test_scenario_step_equality_with_receiver() {
         let step1 = ScenarioStep::with_receiver(
             "1".to_string(),
-            Actor::User,
-            Actor::System,
-            "submits".to_string(),
-            "form".to_string(),
+            "user".to_string(),
+            "system".to_string(),
+            "submits form".to_string(),
         );
 
         let step2 = ScenarioStep::with_receiver(
             "1".to_string(),
-            Actor::User,
-            Actor::System,
-            "submits".to_string(),
-            "form".to_string(),
+            "user".to_string(),
+            "system".to_string(),
+            "submits form".to_string(),
         );
 
         let step3 = ScenarioStep::new(
             "1".to_string(),
-            Actor::User,
-            "submits".to_string(),
-            "form".to_string(),
+            "user".to_string(),
+            "submits form".to_string(),
         );
 
         assert_eq!(step1, step2);
@@ -282,23 +272,21 @@ mod tests {
     fn test_scenario_step_custom_actor() {
         let step = ScenarioStep::new(
             "1".to_string(),
-            Actor::custom("PaymentGateway"),
-            "processes".to_string(),
-            "payment transaction".to_string(),
+            "payment-gateway".to_string(),
+            "processes payment transaction".to_string(),
         );
 
-        assert_eq!(step.actor, Actor::Custom("PaymentGateway".to_string()));
+        assert_eq!(step.acting_actor, "payment-gateway");
     }
 
     #[test]
-    fn test_scenario_step_sender_getter() {
+    fn test_scenario_step_acting_actor_getter() {
         let step = ScenarioStep::new(
             "1".to_string(),
-            Actor::User,
-            "action".to_string(),
-            "desc".to_string(),
+            "user".to_string(),
+            "performs action".to_string(),
         );
-        assert_eq!(step.sender(), &Actor::User);
+        assert_eq!(step.acting_actor(), "user");
     }
 
     #[test]

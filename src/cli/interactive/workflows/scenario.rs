@@ -144,6 +144,9 @@ impl ScenarioWorkflow {
             Some(postconditions)
         };
 
+        // Select primary actor
+        let primary_actor = prompts::select_actor("Select primary actor:")?;
+
         // Controller handles creating main scenarios - no type selection needed
         let mut controller = ScenarioController::new()?;
         let result = controller.create_main_scenario(
@@ -152,6 +155,7 @@ impl ScenarioWorkflow {
             description,
             preconditions,
             postconditions,
+            primary_actor,
         )?;
 
         // Update status if not default
@@ -195,7 +199,7 @@ impl ScenarioWorkflow {
         if add_steps && !scenario_id.is_empty() {
             println!("\n  📝 Adding steps to: {}\n", title);
             loop {
-                let actor = prompts::select_actor("Select actor for this step:", true)?;
+                let actor = prompts::select_actor("Select actor for this step:")?;
 
                 let add_receiver = Confirm::new("Add a receiving actor?")
                     .with_default(false)
@@ -203,7 +207,7 @@ impl ScenarioWorkflow {
                     .prompt()?;
 
                 let receiver = if add_receiver {
-                    prompts::select_actor("Select actor for this step:", true)?
+                    Some(prompts::select_actor("Select receiving actor:")?)
                 } else {
                     None
                 };
@@ -219,7 +223,7 @@ impl ScenarioWorkflow {
                     scenario_id.to_string(),
                     description,
                     None,
-                    actor,
+                    Some(actor),
                     receiver,
                 )?;
 
@@ -485,13 +489,13 @@ impl ScenarioWorkflow {
             } else {
                 for step in &scenario.steps {
                     let receiver_str = step
-                        .receiver()
-                        .map(|r| format!(" → {}", r.name()))
+                        .receiving_actor()
+                        .map(|r| format!(" → {}", r))
                         .unwrap_or_default();
                     println!(
                         "    {}. {}{} - {}",
                         step.order,
-                        step.sender().name(),
+                        step.acting_actor(),
                         receiver_str,
                         step.action
                     );
@@ -520,7 +524,7 @@ impl ScenarioWorkflow {
 
             match choice {
                 "Add step" => {
-                    let actor = prompts::select_actor("Select actor for this step:", true)?;
+                    let actor = prompts::select_actor("Select actor for this step:")?;
 
                     let add_receiver = Confirm::new("Add a receiving actor?")
                         .with_default(false)
@@ -528,7 +532,7 @@ impl ScenarioWorkflow {
                         .prompt()?;
 
                     let receiver = if add_receiver {
-                        prompts::select_actor("Select actor for this step:", true)?
+                        Some(prompts::select_actor("Select actor for this step:")?)
                     } else {
                         None
                     };
@@ -544,7 +548,7 @@ impl ScenarioWorkflow {
                         scenario_id.to_string(),
                         description,
                         None,
-                        actor,
+                        Some(actor),
                         receiver,
                     )?;
 
@@ -567,14 +571,14 @@ impl ScenarioWorkflow {
                     let step_order: u32 =
                         selected_step.split('.').next().unwrap().trim().parse()?;
 
-                    let actor = prompts::select_actor("Select actor for this step:", true)?;
+                    let actor = prompts::select_actor("Select actor for this step:")?;
                     let new_description = Text::new("Step description:").prompt()?;
 
                     let result = controller.edit_step(
                         use_case_id.to_string(),
                         scenario_id.to_string(),
                         step_order,
-                        actor,
+                        Some(actor),
                         new_description,
                     )?;
 
@@ -744,8 +748,7 @@ impl ScenarioWorkflow {
                     };
 
                     // Select primary actor
-                    let primary_actor = prompts::select_actor("Select actor for this step:", true)?
-                        .unwrap_or_else(|| "User".to_string());
+                    let primary_actor = prompts::select_actor("Select actor for this step:")?;
 
                     // Create the extension scenario
                     let params = crate::controller::CreateExtensionParams {
@@ -1166,14 +1169,14 @@ impl ScenarioWorkflow {
             .trim()
             .to_string();
 
-        let actor = prompts::select_actor("Select actor for this step:", true)?;
+        let actor = prompts::select_actor("Select actor for this step:")?;
 
         let add_receiver = Confirm::new("Add a receiving actor?")
             .with_default(false)
             .prompt()?;
 
         let receiver = if add_receiver {
-            prompts::select_actor("Select actor for this step:", true)?
+            Some(prompts::select_actor("Select actor for this step:")?)
         } else {
             None
         };
@@ -1184,7 +1187,7 @@ impl ScenarioWorkflow {
             use_case_id: use_case_id.to_string(),
             scenario_id: scenario_id.to_string(),
             after_step: after_step_order,
-            actor: actor.unwrap_or_else(|| "User".to_string()),
+            actor,
             receiver,
             action: description,
             expected_result: None,
@@ -1378,8 +1381,7 @@ impl ScenarioWorkflow {
             .prompt()?;
 
         // Select primary actor
-        let actor = prompts::select_actor("Select actor for this step:", true)?
-            .unwrap_or_else(|| "User".to_string());
+        let actor = prompts::select_actor("Select actor for this step:")?;
 
         // Create extension
         let params = crate::controller::CreateExtensionParams {
@@ -1413,14 +1415,14 @@ impl ScenarioWorkflow {
             if !scenario_id.is_empty() {
                 println!("\n  📝 Adding steps to extension: {}\n", title);
                 loop {
-                    let step_actor = prompts::select_actor("Select actor for this step:", true)?;
+                    let step_actor = prompts::select_actor("Select actor for this step:")?;
 
                     let add_receiver = Confirm::new("Add a receiving actor?")
                         .with_default(false)
                         .prompt()?;
 
                     let receiver = if add_receiver {
-                        prompts::select_actor("Select actor for this step:", true)?
+                        Some(prompts::select_actor("Select actor for this step:")?)
                     } else {
                         None
                     };
@@ -1432,7 +1434,7 @@ impl ScenarioWorkflow {
                         scenario_id.to_string(),
                         step_description,
                         None,
-                        step_actor,
+                        Some(step_actor),
                         receiver,
                     )?;
 
@@ -1699,15 +1701,14 @@ impl ScenarioWorkflow {
             .to_string();
 
         // Get step details
-        let actor = prompts::select_actor("Select actor for this step:", true)?
-            .unwrap_or_else(|| "User".to_string());
+        let actor = prompts::select_actor("Select actor for this step:")?;
 
         let add_receiver = Confirm::new("Add a receiving actor?")
             .with_default(false)
             .prompt()?;
 
         let receiver = if add_receiver {
-            prompts::select_actor("Select actor for this step:", true)?
+            Some(prompts::select_actor("Select actor for this step:")?)
         } else {
             None
         };

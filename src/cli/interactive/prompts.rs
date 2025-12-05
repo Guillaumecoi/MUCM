@@ -35,7 +35,7 @@ use crate::cli::interactive::runner::InteractiveRunner;
 /// * `include_defaults` - Whether to include "User", "System", "Default (Actor)" options
 ///
 /// # Returns
-/// * `Ok(Some(String))` - Selected actor in format "User", "System", or "ref:ID"
+/// * `Ok(Some(String))` - Selected actor ID ("user", "system", or actor/persona ID)
 /// * `Ok(None)` - User selected "Default (Actor)" (no specific actor)
 /// * `Err` - User cancelled or error occurred
 ///
@@ -43,54 +43,69 @@ use crate::cli::interactive::runner::InteractiveRunner;
 /// ```ignore
 /// let actor = select_actor("Select actor for this step:", true)?;
 /// ```
-pub fn select_actor(prompt: &str, include_defaults: bool) -> Result<Option<String>> {
+pub fn select_actor(prompt: &str) -> Result<String> {
     let runner = InteractiveRunner::new();
-    let available_actors = runner.get_available_actors()?;
+    let available_actors_display = runner.get_available_actors()?;
 
-    let mut all_options = Vec::new();
-
-    if include_defaults {
-        all_options.push("User".to_string());
-        all_options.push("System".to_string());
-        all_options.push("Default (Actor)".to_string());
+    if available_actors_display.is_empty() {
+        // No actors exist, create one
+        println!("No actors found. Let's create one.");
+        return create_actor_inline();
     }
 
-    all_options.extend(available_actors);
+    let mut all_options = Vec::new();
+    all_options.push("➕ Create New Actor".to_string());
+    all_options.extend(available_actors_display);
 
     let choice = Select::new(prompt, all_options).prompt()?;
 
-    if choice == "Default (Actor)" {
-        Ok(None)
-    } else if choice == "User" || choice == "System" {
-        Ok(Some(choice))
+    if choice == "➕ Create New Actor" {
+        create_actor_inline()
     } else {
-        // Extract ID from "emoji name (id)" format
-        if let Some(id) = parse_actor_id(&choice) {
-            Ok(Some(format!("ref:{}", id)))
-        } else {
-            Ok(Some(choice))
+        // Parse ID from display format: "emoji name (id)"
+        if let Some(id_part) = choice.rsplit('(').next() {
+            if let Some(id) = id_part.strip_suffix(')') {
+                return Ok(id.trim().to_string());
+            }
         }
+        // Fallback: try extracting text between last ( and )
+        if let Some(open_paren) = choice.rfind('(') {
+            if let Some(close_paren) = choice.rfind(')') {
+                if close_paren > open_paren {
+                    return Ok(choice[open_paren + 1..close_paren].trim().to_string());
+                }
+            }
+        }
+        // Last resort: return the whole string
+        Ok(choice)
     }
+}
+
+/// Create an actor inline and return its ID
+fn create_actor_inline() -> Result<String> {
+    use crate::core::utils::slugify_for_id;
+    use inquire::Text;
+
+    let name = Text::new("Actor name:")
+        .with_help_message("Display name (e.g., 'Admin User', 'Payment API')")
+        .prompt()?;
+
+    let function = Text::new("Function/Role:")
+        .with_help_message("Role or function (e.g., 'Administrator', 'Service')")
+        .prompt()?;
+
+    // Generate ID from name only (function is a separate field)
+    let id = slugify_for_id(&name);
+    println!("  Generated ID: {}", id);
+
+    let mut runner = InteractiveRunner::new();
+    runner.create_persona_interactive(id.clone(), name, function)?;
+
+    Ok(id)
 }
 
 /// Parse actor ID from formatted display string
 ///
-/// Extracts the ID from a string in format "emoji name (id)"\
-///
-/// # Arguments
-/// * `formatted_string` - The formatted actor string
-///
-/// # Returns
-/// * `Some(String)` - Extracted actor ID
-/// * `None` - Parsing failed
-pub fn parse_actor_id(formatted_string: &str) -> Option<String> {
-    formatted_string
-        .split('(')
-        .nth(1)
-        .and_then(|s| s.strip_suffix(')'))
-        .map(|s| s.to_string())
-}
-
 /// Select methodology and level
 ///
 /// Two-step selection: first methodology (with description), then level (with description).
@@ -427,33 +442,11 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_parse_actor_id() {
-        assert_eq!(
-            parse_actor_id("👤 John Doe (user-123)"),
-            Some("user-123".to_string())
-        );
-        assert_eq!(
-            parse_actor_id("🤖 API Service (api-service)"),
-            Some("api-service".to_string())
-        );
-        assert_eq!(parse_actor_id("invalid"), None);
-        assert_eq!(parse_actor_id("no parentheses"), None);
-    }
-
-    #[test]
     fn test_capitalize_first() {
         assert_eq!(capitalize_first("hello"), "Hello");
         assert_eq!(capitalize_first("world"), "World");
         assert_eq!(capitalize_first("HELLO"), "HELLO");
         assert_eq!(capitalize_first("h"), "H");
         assert_eq!(capitalize_first(""), "");
-    }
-
-    #[test]
-    fn test_parse_actor_id_edge_cases() {
-        assert_eq!(parse_actor_id("(empty)"), Some("empty".to_string()));
-        assert_eq!(parse_actor_id("("), None);
-        assert_eq!(parse_actor_id(")"), None);
-        assert_eq!(parse_actor_id(""), None);
     }
 }

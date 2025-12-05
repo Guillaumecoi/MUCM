@@ -195,98 +195,35 @@ pub fn create_or_select_category() -> Result<(String, String)> {
                 .with_help_message("3+ uppercase letters for use case IDs (e.g., 'AUT', 'USR')")
                 .prompt()?;
 
-            // Validate abbreviation before proceeding
-            let validation_result =
-                category_controller.create_category(full_name.clone(), abbr.clone())?;
-            if validation_result.success {
-                UI::show_success(&validation_result.message)?;
-                break abbr;
-            } else {
-                UI::show_error(&validation_result.message)?;
-                // Loop will retry
+            // Basic validation (length and format)
+            if abbr.len() < 3 || !abbr.chars().all(char::is_alphanumeric) {
+                UI::show_error("Abbreviation must be at least 3 alphanumeric characters")?;
+                continue;
             }
+
+            // Check for existing abbreviation collision BEFORE creating
+            if let Some(existing) = category_controller.detect_collision(&abbr)? {
+                UI::show_warning(&format!(
+                    "⚠️  Abbreviation '{}' is already used by category '{}'",
+                    abbr, existing.full_name
+                ))?;
+                continue; // Ask for a different abbreviation
+            }
+
+            // No collision - break out with valid abbreviation
+            break abbr;
         };
 
-        // Category was already created in the validation loop above, now check for collision
-        if let Some(existing) = category_controller.detect_collision(&abbreviation)? {
-            UI::show_warning(&format!(
-                "⚠️  Abbreviation '{}' is already used by category '{}'",
-                abbreviation, existing.full_name
-            ))?;
-
-            // Suggest auto-resolution
-            let (new_abbr, existing_abbr) = category_controller
-                .suggest_collision_resolution(&full_name, &existing)
-                .ok_or_else(|| anyhow::anyhow!("Could not generate collision resolution"))?;
-
-            UI::show_info(&format!(
-                "💡 Suggested resolution:\n   • {}: {} → {}\n   • {}: {} → {}",
-                full_name,
-                abbreviation,
-                new_abbr,
-                existing.full_name,
-                existing.abbreviation,
-                existing_abbr
-            ))?;
-
-            let choices = vec![
-                "Auto-resolve both categories",
-                "Edit abbreviation manually",
-                "Cancel",
-            ];
-
-            match Select::new("How would you like to proceed?", choices).prompt()? {
-                "Auto-resolve both categories" => {
-                    // Update existing category
-                    category_controller
-                        .update_abbreviation(&existing.abbreviation, &existing_abbr)?;
-
-                    // Create new category with resolved abbreviation
-                    let result =
-                        category_controller.create_category(full_name.clone(), new_abbr.clone())?;
-                    UI::show_success(&result.message)?;
-
-                    Ok((full_name, new_abbr))
-                }
-                "Edit abbreviation manually" => {
-                    // Let user enter a different abbreviation
-                    let new_abbreviation = Text::new("Enter a different abbreviation:")
-                        .with_help_message("Must be at least 3 characters, alphanumeric")
-                        .prompt()?;
-
-                    // Validate new abbreviation
-                    if new_abbreviation.len() < 3
-                        || !new_abbreviation.chars().all(char::is_alphanumeric)
-                    {
-                        anyhow::bail!("Abbreviation must be at least 3 alphanumeric characters");
-                    }
-
-                    // Check for collision again
-                    if category_controller
-                        .detect_collision(&new_abbreviation)?
-                        .is_some()
-                    {
-                        anyhow::bail!(
-                            "Abbreviation '{}' is still in use. Please try again.",
-                            new_abbreviation
-                        );
-                    }
-
-                    // Create with new abbreviation
-                    let result = category_controller
-                        .create_category(full_name.clone(), new_abbreviation.clone())?;
-                    UI::show_success(&result.message)?;
-
-                    Ok((full_name, new_abbreviation))
-                }
-                _ => {
-                    anyhow::bail!("Category creation cancelled");
-                }
-            }
-        } else {
-            // No collision, category was already created in validation loop
-            Ok((full_name, abbreviation))
+        // Now create the category (no collision at this point)
+        let validation_result =
+            category_controller.create_category(full_name.clone(), abbreviation.clone())?;
+        if !validation_result.success {
+            anyhow::bail!("{}", validation_result.message);
         }
+        UI::show_success(&validation_result.message)?;
+
+        // Category created successfully - return the result
+        Ok((full_name, abbreviation))
     } else {
         // Parse existing category selection
         let (full_name, abbr) = selection

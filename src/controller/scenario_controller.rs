@@ -3,7 +3,7 @@
 //! Manages scenario operations within use cases including CRUD operations,
 //! step management, references, and persona assignments.
 
-use crate::controller::DisplayResult;
+use crate::controller::{DisplayMessage, DisplayResult};
 use crate::core::{ScenarioType, Status, UseCaseCoordinator};
 use anyhow::Result;
 use std::collections::HashMap;
@@ -86,6 +86,7 @@ impl ScenarioController {
         description: Option<String>,
         preconditions: Option<Vec<String>>,
         postconditions: Option<Vec<String>>,
+        primary_actor: String,
     ) -> Result<DisplayResult> {
         // Always create as main scenario with HappyPath type
         let params = crate::core::AddScenarioParams {
@@ -94,16 +95,17 @@ impl ScenarioController {
             description,
             preconditions: preconditions.unwrap_or_default(),
             postconditions: postconditions.unwrap_or_default(),
-            actors: Vec::new(),
+            actors: vec![primary_actor],
         };
         let scenario_id = self.app_service.add_scenario(&use_case_id, params)?;
 
         // Regenerate markdown to reflect the new scenario
         self.app_service.regenerate_markdown(&use_case_id)?;
 
-        Ok(DisplayResult::success(format!(
-            "✅ Created main scenario: {} - {}",
-            scenario_id, title
+        Ok(DisplayResult::success(DisplayMessage::created(
+            "main scenario",
+            &scenario_id,
+            &title,
         )))
     }
 
@@ -152,9 +154,10 @@ impl ScenarioController {
         // Regenerate markdown to reflect the new scenario
         self.app_service.regenerate_markdown(&use_case_id)?;
 
-        Ok(DisplayResult::success(format!(
-            "✅ Created scenario: {} - {}",
-            scenario_id, title
+        Ok(DisplayResult::success(DisplayMessage::created(
+            "scenario",
+            &scenario_id,
+            &title,
         )))
     }
 
@@ -205,9 +208,9 @@ impl ScenarioController {
         // Regenerate markdown to reflect changes
         self.app_service.regenerate_markdown(&use_case_id)?;
 
-        Ok(DisplayResult::success(format!(
-            "✅ Updated scenario: {}",
-            scenario_id
+        Ok(DisplayResult::success(DisplayMessage::updated(
+            "scenario",
+            &scenario_id,
         )))
     }
 
@@ -230,9 +233,9 @@ impl ScenarioController {
         // Regenerate markdown to reflect the deletion
         self.app_service.regenerate_markdown(&use_case_id)?;
 
-        Ok(DisplayResult::success(format!(
-            "✅ Deleted scenario: {}",
-            scenario_id
+        Ok(DisplayResult::success(DisplayMessage::deleted(
+            "scenario",
+            &scenario_id,
         )))
     }
 
@@ -295,6 +298,36 @@ impl ScenarioController {
             .ok_or_else(|| anyhow::anyhow!("Scenario {} not found", scenario_id))
     }
 
+    /// Resolve an actor ID to its call name or display name
+    ///
+    /// # Arguments
+    /// * `actor_id` - The actor ID to resolve
+    ///
+    /// # Returns
+    /// The actor's call_name, or name, or the ID itself if not found
+    fn resolve_actor_call_name(&self, actor_id: &str) -> String {
+        // Special cases for common actors
+        if actor_id == "user" || actor_id == "system" {
+            return actor_id.to_string();
+        }
+
+        // Try to load actor controller to look up the actor
+        if let Ok(actor_controller) = crate::controller::ActorController::new() {
+            // Try as persona first
+            if let Ok(persona) = actor_controller.get_persona(actor_id) {
+                return persona.get_call_name().to_string();
+            }
+
+            // Try as system actor
+            if let Ok(actor) = actor_controller.get_actor(actor_id) {
+                return actor.get_call_name().to_string();
+            }
+        }
+
+        // Fallback to the ID itself
+        actor_id.to_string()
+    }
+
     /// Add a step to a scenario
     ///
     /// # Arguments
@@ -325,27 +358,31 @@ impl ScenarioController {
         });
 
         let order_str = order.to_string();
-        let actor_name = actor.unwrap_or_else(|| "Actor".to_string());
+        let actor_str = actor.unwrap_or_else(|| "user".to_string());
+
+        // Resolve actor ID to call name for better readability
+        let actor_call_name = self.resolve_actor_call_name(&actor_str);
+        let receiver_call_name = receiver.as_ref().map(|r| self.resolve_actor_call_name(r));
 
         let params = crate::core::AddScenarioStepParams {
             order: order_str,
-            actor: actor_name.clone(),
-            receiver: receiver.clone(),
+            actor: actor_call_name.clone(),
+            receiver: receiver_call_name.clone(),
             action: step_description.clone(),
             expected_result: None,
         };
         self.app_service
             .add_scenario_step(&use_case_id, &scenario_id, params)?;
 
-        let message = if let Some(ref recv) = receiver {
+        let message = if let Some(ref recv) = receiver_call_name {
             format!(
                 "✅ Added step {} to scenario {} ({} → {})",
-                order, scenario_id, actor_name, recv
+                order, scenario_id, actor_call_name, recv
             )
         } else {
             format!(
                 "✅ Added step {} to scenario {} (actor: {})",
-                order, scenario_id, actor_name
+                order, scenario_id, actor_call_name
             )
         };
 
@@ -466,9 +503,9 @@ impl ScenarioController {
         // Regenerate markdown to reflect persona assignment
         self.app_service.regenerate_markdown(&use_case_id)?;
 
-        Ok(DisplayResult::success(format!(
-            "✅ Assigned persona {} to scenario {}",
-            persona_id, scenario_id
+        Ok(DisplayResult::success(DisplayMessage::added(
+            &format!("persona {}", persona_id),
+            &format!("scenario {}", scenario_id),
         )))
     }
 
@@ -518,9 +555,9 @@ impl ScenarioController {
         // Regenerate markdown to reflect new reference
         self.app_service.regenerate_markdown(&use_case_id)?;
 
-        Ok(DisplayResult::success(format!(
-            "✅ Added reference to scenario {}",
-            scenario_id
+        Ok(DisplayResult::success(DisplayMessage::added(
+            "reference",
+            &format!("scenario {}", scenario_id),
         )))
     }
 
@@ -604,9 +641,9 @@ impl ScenarioController {
         self.app_service.save_use_case(&use_case)?;
         self.app_service.regenerate_markdown(&use_case_id)?;
 
-        Ok(DisplayResult::success(format!(
-            "✅ Added precondition to scenario {}",
-            scenario_id
+        Ok(DisplayResult::success(DisplayMessage::added(
+            "precondition",
+            &format!("scenario {}", scenario_id),
         )))
     }
 
@@ -728,9 +765,9 @@ impl ScenarioController {
         self.app_service.save_use_case(&use_case)?;
         self.app_service.regenerate_markdown(&use_case_id)?;
 
-        Ok(DisplayResult::success(format!(
-            "✅ Added postcondition to scenario {}",
-            scenario_id
+        Ok(DisplayResult::success(DisplayMessage::added(
+            "postcondition",
+            &format!("scenario {}", scenario_id),
         )))
     }
 
@@ -809,33 +846,18 @@ impl ScenarioController {
     /// Get available actors (personas + system actors) for selection
     ///
     /// # Returns
-    /// Vector of actor display strings (emoji + name + id)
+    /// Vector of actor display strings using centralized display formatting
     pub fn get_available_actors(&self) -> Result<Vec<String>> {
         use crate::controller::ActorController;
 
         let actor_controller = ActorController::new()?;
 
-        // Get personas
-        let personas = actor_controller.list_personas()?;
-        let mut actors: Vec<String> = personas
+        // Get all actors and use centralized display formatting
+        let all_actors = actor_controller.list_actors(None)?;
+        let actors: Vec<String> = all_actors
             .iter()
-            .map(|p| {
-                let emoji = p
-                    .extra
-                    .get("emoji")
-                    .and_then(|v| v.as_str())
-                    .unwrap_or("🙂");
-                format!("{} {} ({})", emoji, p.name, p.id)
-            })
+            .map(|a| a.display_for_selection())
             .collect();
-
-        // Get system actors only (not personas)
-        let system_actors = actor_controller.list_actors(Some(crate::core::ActorType::System))?;
-        actors.extend(
-            system_actors
-                .iter()
-                .map(|a| format!("{} {} ({})", a.emoji, a.name, a.id)),
-        );
 
         Ok(actors)
     }
@@ -1320,6 +1342,7 @@ mod tests {
                 None,
                 None,
                 None,
+                "user".to_string(),
             )
             .unwrap();
 
@@ -1359,6 +1382,7 @@ mod tests {
                 None,
                 None,
                 None,
+                "user".to_string(),
             )
             .unwrap();
 
@@ -1438,6 +1462,7 @@ mod tests {
                 None,
                 None,
                 None,
+                "user".to_string(),
             )
             .unwrap();
 
@@ -1483,6 +1508,7 @@ mod tests {
                 None,
                 Some(vec!["User must be logged in".to_string()]),
                 None,
+                "user".to_string(),
             )
             .unwrap();
 
@@ -1525,6 +1551,7 @@ mod tests {
                 None,
                 None,
                 Some(vec!["Session is created".to_string()]),
+                "user".to_string(),
             )
             .unwrap();
 
@@ -1567,6 +1594,7 @@ mod tests {
                 Some("Original description".to_string()),
                 None,
                 None,
+                "user".to_string(),
             )
             .unwrap();
 
@@ -1609,6 +1637,7 @@ mod tests {
                 None,
                 None,
                 None,
+                "user".to_string(),
             )
             .unwrap();
 
@@ -1644,6 +1673,7 @@ mod tests {
                 None,
                 None,
                 None,
+                "user".to_string(),
             )
             .unwrap();
 
@@ -1660,7 +1690,7 @@ mod tests {
             .unwrap();
 
         assert!(result.is_success());
-        assert!(result.message.contains("Assigned persona"));
+        assert!(result.message.contains("Added persona"));
 
         // Verify persona was assigned
         let scenario = controller.get_scenario(&use_case_id, &scenario_id).unwrap();
@@ -1682,6 +1712,7 @@ mod tests {
                 None,
                 None,
                 None,
+                "user".to_string(),
             )
             .unwrap();
 
@@ -1729,6 +1760,7 @@ mod tests {
                 None,
                 None,
                 None,
+                "user".to_string(),
             )
             .unwrap();
 
@@ -1770,6 +1802,7 @@ mod tests {
                 None,
                 None,
                 None,
+                "user".to_string(),
             )
             .unwrap();
 
@@ -1824,6 +1857,7 @@ mod tests {
                 None,
                 None,
                 None,
+                "user".to_string(),
             )
             .unwrap();
 
@@ -1877,6 +1911,7 @@ mod tests {
                 None,
                 None,
                 None,
+                "user".to_string(),
             )
             .unwrap();
 
@@ -1949,6 +1984,7 @@ mod tests {
                 None,
                 None,
                 None,
+                "user".to_string(),
             )
             .unwrap();
 
@@ -2021,6 +2057,7 @@ mod tests {
                 None,
                 None,
                 None,
+                "user".to_string(),
             )
             .unwrap();
 
@@ -2086,6 +2123,7 @@ mod tests {
                 None,
                 None,
                 None,
+                "user".to_string(),
             )
             .unwrap();
 
@@ -2162,6 +2200,7 @@ mod tests {
                 None,
                 None,
                 None,
+                "user".to_string(),
             )
             .unwrap();
 
@@ -2225,6 +2264,7 @@ mod tests {
                 None,
                 None,
                 None,
+                "user".to_string(),
             )
             .unwrap();
 
@@ -2294,6 +2334,7 @@ mod tests {
                 None,
                 None,
                 None,
+                "user".to_string(),
             )
             .unwrap();
 
@@ -2369,6 +2410,7 @@ mod tests {
                 None,
                 None,
                 None,
+                "user".to_string(),
             )
             .unwrap();
 

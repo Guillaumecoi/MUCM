@@ -1,4 +1,4 @@
-use super::{Actor, Condition, ScenarioReference, ScenarioStep, ScenarioType, Status};
+use super::{Condition, ScenarioReference, ScenarioStep, ScenarioType, Status};
 use crate::core::domain::entities::scenario_step::StepOrder;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -77,8 +77,12 @@ pub struct Scenario {
     #[serde(default = "default_is_main")]
     pub is_main: bool,
 
-    /// Primary actor for this scenario (required)
-    pub primary_actor: Actor,
+    /// Primary actor ID for this scenario (required) - used as default for steps
+    pub primary_actor: String,
+
+    /// Supporting actor IDs used in this scenario
+    #[serde(default)]
+    pub supporting_actors: Vec<String>,
 
     /// Persona this scenario is designed for (optional, in addition to primary_actor)
     #[serde(default)]
@@ -131,7 +135,7 @@ impl Scenario {
         title: String,
         description: String,
         scenario_type: ScenarioType,
-        primary_actor: Actor,
+        primary_actor: String,
     ) -> Self {
         Self {
             id,
@@ -141,6 +145,7 @@ impl Scenario {
             status: Status::Planned,
             is_main: true,
             primary_actor,
+            supporting_actors: Vec::new(),
             persona: None,
             extends_scenario_id: None,
             extends_at_step: None,
@@ -156,6 +161,21 @@ impl Scenario {
 
     /// Add a step to the scenario
     pub fn add_step(&mut self, step: ScenarioStep) {
+        // Collect actors from this step into supporting_actors
+        let acting = step.acting_actor().to_string();
+        // Add acting_actor if it's not the primary actor
+        if acting != self.primary_actor && !self.supporting_actors.contains(&acting) {
+            self.supporting_actors.push(acting);
+        }
+
+        // Add receiving_actor if present and not already tracked
+        if let Some(receiver) = step.receiving_actor() {
+            let recv_str = receiver.to_string();
+            if recv_str != self.primary_actor && !self.supporting_actors.contains(&recv_str) {
+                self.supporting_actors.push(recv_str);
+            }
+        }
+
         self.steps.push(step);
         self.steps
             .sort_by(|a, b| StepOrder::compare(&a.order, &b.order));
@@ -243,7 +263,6 @@ impl Scenario {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::core::domain::entities::Actor;
     use serde_json::json;
 
     #[test]
@@ -253,7 +272,7 @@ mod tests {
             "Successful login".to_string(),
             "User successfully logs in with valid credentials".to_string(),
             ScenarioType::HappyPath,
-            Actor::User,
+            "user".to_string(),
         );
 
         assert_eq!(scenario.id, "UC-AUTH-001-S01");
@@ -265,7 +284,8 @@ mod tests {
         assert_eq!(scenario.scenario_type, ScenarioType::HappyPath);
         assert_eq!(scenario.status, Status::Planned);
         assert!(scenario.is_main);
-        assert_eq!(scenario.primary_actor, Actor::User);
+        assert_eq!(scenario.primary_actor, "user");
+        assert!(scenario.supporting_actors.is_empty());
         assert!(scenario.persona.is_none());
         assert!(scenario.extends_scenario_id.is_none());
         assert!(scenario.steps.is_empty());
@@ -282,20 +302,18 @@ mod tests {
             "Successful login".to_string(),
             "User successfully logs in".to_string(),
             ScenarioType::HappyPath,
-            Actor::User,
+            "user".to_string(),
         );
 
         let step1 = ScenarioStep::new(
             "2".to_string(),
-            Actor::User,
-            "enters".to_string(),
-            "credentials".to_string(),
+            "user".to_string(),
+            "enters credentials".to_string(),
         );
         let step2 = ScenarioStep::new(
             "1".to_string(),
-            Actor::User,
-            "navigates".to_string(),
-            "to login page".to_string(),
+            "user".to_string(),
+            "navigates to login page".to_string(),
         );
 
         scenario.add_step(step1);
@@ -314,7 +332,7 @@ mod tests {
             "Successful login".to_string(),
             "User successfully logs in".to_string(),
             ScenarioType::HappyPath,
-            Actor::User,
+            "user".to_string(),
         );
 
         scenario.add_precondition(Condition::new("User has account".to_string()));
@@ -331,7 +349,7 @@ mod tests {
             "Successful login".to_string(),
             "User successfully logs in".to_string(),
             ScenarioType::HappyPath,
-            Actor::User,
+            "user".to_string(),
         );
 
         scenario.add_postcondition(Condition::new("User is authenticated".to_string()));
@@ -346,7 +364,7 @@ mod tests {
             "Successful login".to_string(),
             "User successfully logs in".to_string(),
             ScenarioType::HappyPath,
-            Actor::User,
+            "user".to_string(),
         );
 
         assert_eq!(scenario.status, Status::Planned);
@@ -362,14 +380,13 @@ mod tests {
             "Successful login".to_string(),
             "User successfully logs in".to_string(),
             ScenarioType::HappyPath,
-            Actor::User,
+            "user".to_string(),
         );
 
         scenario.add_step(ScenarioStep::new(
             "1".to_string(),
-            Actor::User,
-            "enters".to_string(),
-            "credentials".to_string(),
+            "user".to_string(),
+            "enters credentials".to_string(),
         ));
         scenario.add_precondition(Condition::new("Valid account".to_string()));
         scenario

@@ -17,6 +17,7 @@
 
 use crate::config::Config;
 use crate::controller::dto::DisplayResult;
+use crate::controller::DisplayMessage;
 use crate::core::{
     ActorEntity, ActorMarkdownGenerator, ActorRepository, ActorType, Persona, PersonaRepository,
     SqliteActorRepository, TomlActorRepository,
@@ -138,15 +139,15 @@ impl ActorController {
             eprintln!("Warning: Failed to generate actor markdown: {}", e);
         }
 
-        Ok(DisplayResult::success(format!(
-            "✅ Created persona: {} {} ({})",
-            persona
-                .extra
-                .get("emoji")
-                .and_then(|v| v.as_str())
-                .unwrap_or("🙂"),
-            persona.name,
-            persona.id
+        let emoji = persona
+            .extra
+            .get("emoji")
+            .and_then(|v| v.as_str())
+            .unwrap_or("🙂");
+        Ok(DisplayResult::success(DisplayMessage::created(
+            "persona",
+            &persona.id,
+            &format!("{} {}", emoji, persona.name),
         )))
     }
 
@@ -207,9 +208,10 @@ impl ActorController {
             eprintln!("Warning: Failed to generate actor markdown: {}", e);
         }
 
-        Ok(DisplayResult::success(format!(
-            "✅ Created system actor: {} {} ({})",
-            final_emoji, name, id
+        Ok(DisplayResult::success(DisplayMessage::created(
+            "system actor",
+            &id,
+            &format!("{} {}", final_emoji, name),
         )))
     }
 
@@ -235,7 +237,7 @@ impl ActorController {
 
         for actor in standard_actors {
             if self.actor_repository.actor_exists(&actor.id)? {
-                skipped.push(format!("{} {}", actor.emoji, actor.name));
+                skipped.push(actor.display());
             } else {
                 self.actor_repository.save_actor(&actor)?;
                 created_count += 1;
@@ -311,9 +313,8 @@ impl ActorController {
         // Save updated actor
         self.actor_repository.save_actor(&actor)?;
 
-        Ok(DisplayResult::success(format!(
-            "✅ Updated name for actor: {}",
-            id
+        Ok(DisplayResult::success(DisplayMessage::updated(
+            "actor", &id,
         )))
     }
 
@@ -346,9 +347,9 @@ impl ActorController {
         // Save updated persona
         self.persona_repository.save(&persona)?;
 
-        Ok(DisplayResult::success(format!(
-            "Updated persona: {}",
-            persona.id
+        Ok(DisplayResult::success(DisplayMessage::updated(
+            "persona",
+            &persona.id,
         )))
     }
 
@@ -406,7 +407,7 @@ impl ActorController {
         self.persona_repository.save(&persona)?;
 
         Ok(DisplayResult::success(format!(
-            "Updated custom fields for persona: {}",
+            "✅ Updated custom fields for persona: {}",
             persona.id
         )))
     }
@@ -433,7 +434,9 @@ impl ActorController {
         // Delete the actor
         self.actor_repository.delete_actor(&id)?;
 
-        Ok(DisplayResult::success(format!("🗑️  Deleted actor: {}", id)))
+        Ok(DisplayResult::success(DisplayMessage::deleted(
+            "actor", &id,
+        )))
     }
 
     /// Delete a persona (legacy method for backward compatibility).
@@ -458,7 +461,9 @@ impl ActorController {
         // Delete the persona
         self.persona_repository.delete(&id)?;
 
-        Ok(DisplayResult::success(format!("Deleted persona: {}", id)))
+        Ok(DisplayResult::success(DisplayMessage::deleted(
+            "persona", &id,
+        )))
     }
 
     /// Get a single persona by ID.

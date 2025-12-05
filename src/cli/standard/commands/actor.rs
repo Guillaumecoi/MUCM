@@ -139,15 +139,6 @@ fn show_actor_with_controller(controller: &ActorController, id: &str) -> Result<
     Ok(())
 }
 
-/// Helper function to check if an Actor matches an ID
-fn actor_matches(actor: &crate::core::Actor, id: &str) -> bool {
-    use crate::core::Actor;
-    match actor {
-        Actor::ActorRef(actor_id) => actor_id == id,
-        _ => false,
-    }
-}
-
 /// List use cases that reference an actor
 fn list_use_cases_for_actor(id: &str) -> Result<()> {
     use crate::controller::UseCaseController;
@@ -160,10 +151,9 @@ fn list_use_cases_for_actor(id: &str) -> Result<()> {
         .filter(|uc| {
             // Check if actor is referenced in any scenario step (as actor or receiver)
             uc.scenarios.iter().any(|s| {
-                s.steps.iter().any(|step| {
-                    actor_matches(&step.actor, id)
-                        || step.receiver.as_ref().is_some_and(|r| actor_matches(r, id))
-                })
+                s.steps
+                    .iter()
+                    .any(|step| step.acting_actor() == id || (step.receiving_actor() == Some(id)))
             })
         })
         .collect();
@@ -185,10 +175,9 @@ fn list_use_cases_for_actor(id: &str) -> Result<()> {
             .scenarios
             .iter()
             .filter(|s| {
-                s.steps.iter().any(|step| {
-                    actor_matches(&step.actor, id)
-                        || step.receiver.as_ref().is_some_and(|r| actor_matches(r, id))
-                })
+                s.steps
+                    .iter()
+                    .any(|step| step.acting_actor() == id || (step.receiving_actor() == Some(id)))
             })
             .collect();
         for scenario in referencing_scenarios {

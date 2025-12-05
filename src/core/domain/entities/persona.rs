@@ -19,6 +19,11 @@ pub struct Persona {
     /// Display name (required)
     pub name: String,
 
+    /// Short call name for use in scenarios (e.g., "guest", "admin")
+    /// Defaults to full name if not specified
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub call_name: Option<String>,
+
     /// Function/role of the persona (e.g., "System Administrator", "End User")
     pub function: String,
 
@@ -36,10 +41,33 @@ impl Persona {
         Self {
             id,
             name,
+            call_name: None,
             function,
             metadata: Metadata::new(),
             extra: HashMap::new(),
         }
+    }
+
+    /// Create a new persona with call_name
+    pub fn with_call_name(
+        id: String,
+        name: String,
+        call_name: Option<String>,
+        function: String,
+    ) -> Self {
+        Self {
+            id,
+            name,
+            call_name,
+            function,
+            metadata: Metadata::new(),
+            extra: HashMap::new(),
+        }
+    }
+
+    /// Get the call name, defaulting to full name if not set
+    pub fn get_call_name(&self) -> &str {
+        self.call_name.as_deref().unwrap_or(&self.name)
     }
 
     /// Create a persona from config fields
@@ -96,6 +124,7 @@ impl Persona {
         super::ActorEntity {
             id: self.id.clone(),
             name: self.name.clone(),
+            call_name: self.call_name.clone(),
             actor_type: super::ActorType::Persona,
             emoji: self.emoji().to_string(),
             metadata: self.metadata.clone(),
@@ -117,6 +146,7 @@ impl Persona {
             Some(Self {
                 id: actor.id.clone(),
                 name: actor.name.clone(),
+                call_name: actor.call_name.clone(),
                 function,
                 metadata: actor.metadata.clone(),
                 extra: actor.extra.clone(),
