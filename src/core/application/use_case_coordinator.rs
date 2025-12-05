@@ -614,10 +614,10 @@ impl UseCaseCoordinator {
             title: params.title,
             scenario_type: params.scenario_type,
             description: params.description,
-            primary_actor,
+            primary_actor: primary_actor.to_string(),
             preconditions: params.preconditions,
             postconditions: params.postconditions,
-            actors: params.actors,
+            supporting_actors: params.actors,
         };
 
         scenario_service.add_scenario(use_case_id, scenario_params)
@@ -858,7 +858,7 @@ impl UseCaseCoordinator {
             extends_at_step: params.extends_at_step,
             title: params.title,
             description: Some(params.description),
-            primary_actor: params.primary_actor,
+            primary_actor: params.primary_actor.to_string(),
         };
         scenario_service.create_extension_scenario(use_case_id, ext_params, params.returns_at_step)
     }

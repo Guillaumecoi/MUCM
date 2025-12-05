@@ -485,13 +485,13 @@ impl ScenarioWorkflow {
             } else {
                 for step in &scenario.steps {
                     let receiver_str = step
-                        .receiver()
-                        .map(|r| format!(" → {}", r.name()))
+                        .receiving_actor()
+                        .map(|r| format!(" → {}", r))
                         .unwrap_or_default();
                     println!(
                         "    {}. {}{} - {}",
                         step.order,
-                        step.sender().name(),
+                        step.acting_actor(),
                         receiver_str,
                         step.action
                     );

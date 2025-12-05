@@ -265,7 +265,7 @@ impl ExtensionPointUpdater {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::core::domain::{Actor, Metadata, Priority, ScenarioStep, ScenarioType};
+    use crate::core::domain::{Metadata, Priority, ScenarioStep, ScenarioType};
 
     fn create_test_use_case_with_extensions() -> UseCase {
         let mut use_case = UseCase {
@@ -291,13 +291,12 @@ mod tests {
             "Main".to_string(),
             "Test".to_string(),
             ScenarioType::HappyPath,
-            Actor::User,
+            "user".to_string(),
         );
         for i in 1..=5 {
             main_scenario.add_step(ScenarioStep::new(
                 i.to_string(),
-                Actor::User,
-                "action".to_string(),
+                "user".to_string(),
                 format!("Step {}", i),
             ));
         }
@@ -308,7 +307,7 @@ mod tests {
             "Extension".to_string(),
             "Test".to_string(),
             ScenarioType::Extension,
-            Actor::User,
+            "user".to_string(),
         );
         extension.is_main = false;
         extension.extends_scenario_id = Some("UC-TEST-001-S01".to_string());
