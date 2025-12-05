@@ -85,6 +85,11 @@ pub struct ActorEntity {
     /// Display name (e.g., "Jack", "Payment Gateway")
     pub name: String,
 
+    /// Short call name for use in scenarios (e.g., "guest", "database")
+    /// Defaults to full name if not specified
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub call_name: Option<String>,
+
     /// Type of actor
     pub actor_type: ActorType,
 
@@ -108,11 +113,36 @@ impl ActorEntity {
         Self {
             id,
             name,
+            call_name: None,
             actor_type,
             emoji,
             metadata: Metadata::new(),
             extra: HashMap::new(),
         }
+    }
+
+    /// Create a new actor with call_name
+    pub fn with_call_name(
+        id: String,
+        name: String,
+        call_name: Option<String>,
+        actor_type: ActorType,
+        emoji: String,
+    ) -> Self {
+        Self {
+            id,
+            name,
+            call_name,
+            actor_type,
+            emoji,
+            metadata: Metadata::new(),
+            extra: HashMap::new(),
+        }
+    }
+
+    /// Get the call name, defaulting to full name if not set
+    pub fn get_call_name(&self) -> &str {
+        self.call_name.as_deref().unwrap_or(&self.name)
     }
 
     /// Create a persona actor with default emoji

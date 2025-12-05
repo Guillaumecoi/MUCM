@@ -144,6 +144,7 @@ impl ActorRepository for SqliteActorRepository {
                 Ok(ActorEntity {
                     id: row.get(0)?,
                     name: row.get(1)?,
+                    call_name: None,  // TODO: Add call_name column to schema
                     actor_type,
                     emoji: row.get(3)?,
                     metadata: Metadata {
@@ -188,6 +189,7 @@ impl ActorRepository for SqliteActorRepository {
                     Ok(ActorEntity {
                         id: row.get(0)?,
                         name: row.get(1)?,
+                        call_name: None,  // TODO: Add call_name column to schema
                         actor_type,
                         emoji: row.get(3)?,
                         metadata: Metadata {
