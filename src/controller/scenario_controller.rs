@@ -296,10 +296,10 @@ impl ScenarioController {
     }
 
     /// Resolve an actor ID to its call name or display name
-    /// 
+    ///
     /// # Arguments
     /// * `actor_id` - The actor ID to resolve
-    /// 
+    ///
     /// # Returns
     /// The actor's call_name, or name, or the ID itself if not found
     fn resolve_actor_call_name(&self, actor_id: &str) -> String {
@@ -314,7 +314,7 @@ impl ScenarioController {
             if let Ok(persona) = actor_controller.get_persona(actor_id) {
                 return persona.get_call_name().to_string();
             }
-            
+
             // Try as system actor
             if let Ok(actor) = actor_controller.get_actor(actor_id) {
                 return actor.get_call_name().to_string();
@@ -356,7 +356,7 @@ impl ScenarioController {
 
         let order_str = order.to_string();
         let actor_str = actor.unwrap_or_else(|| "user".to_string());
-        
+
         // Resolve actor ID to call name for better readability
         let actor_call_name = self.resolve_actor_call_name(&actor_str);
         let receiver_call_name = receiver.as_ref().map(|r| self.resolve_actor_call_name(r));

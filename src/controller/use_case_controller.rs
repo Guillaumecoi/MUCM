@@ -900,11 +900,7 @@ impl UseCaseController {
                             result.push_str("    Steps:\n");
                             for (i, step) in scenario.steps.iter().enumerate() {
                                 let desc = step.description.as_deref().unwrap_or(&step.action);
-                                result.push_str(&format!(
-                                    "      {}. {}\n",
-                                    i + 1,
-                                    desc
-                                ));
+                                result.push_str(&format!("      {}. {}\n", i + 1, desc));
                             }
                         }
                     }

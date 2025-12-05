@@ -3,8 +3,8 @@
 //! Tests scenario references functionality across both TOML and SQLite backends
 
 use mucm::core::{
-    ReferenceType, Scenario, ScenarioReference, ScenarioType, SqliteUseCaseRepository,
-    UseCase, UseCaseRepository,
+    ReferenceType, Scenario, ScenarioReference, ScenarioType, SqliteUseCaseRepository, UseCase,
+    UseCaseRepository,
 };
 use serial_test::serial;
 use std::env;

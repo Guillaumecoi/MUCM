@@ -54,21 +54,28 @@ pub fn select_actor(prompt: &str, include_defaults: bool) -> Result<Option<Strin
     let personas = actor_controller.list_personas()?;
     let system_actors = actor_controller.list_actors(Some(crate::core::ActorType::System))?;
     let database_actors = actor_controller.list_actors(Some(crate::core::ActorType::Database))?;
-    let external_actors = actor_controller.list_actors(Some(crate::core::ActorType::ExternalService))?;
+    let external_actors =
+        actor_controller.list_actors(Some(crate::core::ActorType::ExternalService))?;
 
     let mut display_to_id = std::collections::HashMap::new();
-    
+
     // Map personas: display format is "emoji name - function"
     for p in personas {
-        let emoji = p.extra.get("emoji")
+        let emoji = p
+            .extra
+            .get("emoji")
             .and_then(|v| v.as_str())
             .unwrap_or("👤");
         let display = format!("{} {} - {}", emoji, p.name, p.function);
         display_to_id.insert(display, p.id);
     }
-    
+
     // Map actors: display format is "emoji name - id"
-    for a in system_actors.iter().chain(database_actors.iter()).chain(external_actors.iter()) {
+    for a in system_actors
+        .iter()
+        .chain(database_actors.iter())
+        .chain(external_actors.iter())
+    {
         let display = format!("{} {} - {}", a.emoji, a.name, a.id);
         display_to_id.insert(display, a.id.clone());
     }

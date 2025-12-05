@@ -504,7 +504,7 @@ impl InteractiveRunner {
                     .extra
                     .get("emoji")
                     .and_then(|v| v.as_str())
-                    .unwrap_or("👤");  // Better default emoji for personas
+                    .unwrap_or("👤"); // Better default emoji for personas
                 format!("{} {} - {}", emoji, p.name, p.function)
             })
             .collect();
@@ -517,14 +517,16 @@ impl InteractiveRunner {
                 .map(|a| format!("{} {} - {}", a.emoji, a.name, a.id)),
         );
 
-        let database_actors = actor_controller.list_actors(Some(crate::core::ActorType::Database))?;
+        let database_actors =
+            actor_controller.list_actors(Some(crate::core::ActorType::Database))?;
         actors.extend(
             database_actors
                 .iter()
                 .map(|a| format!("{} {} - {}", a.emoji, a.name, a.id)),
         );
 
-        let external_actors = actor_controller.list_actors(Some(crate::core::ActorType::ExternalService))?;
+        let external_actors =
+            actor_controller.list_actors(Some(crate::core::ActorType::ExternalService))?;
         actors.extend(
             external_actors
                 .iter()
