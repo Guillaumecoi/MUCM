@@ -42,37 +42,65 @@ text = "Session created and stored in cache"
 [[postconditions]]
 text = "User can access basic platform features (but not checkout until verified)"
 
+[methodology_fields.developer]
+error_scenarios = [
+    "Email already in use: return 409 Conflict",
+    "Weak password: return 400 Bad Request with validation errors",
+    "Invalid email format: return 400 Bad Request",
+    "OAuth provider error: return 502 Bad Gateway",
+    "Database connection failure: return 503 Service Unavailable",
+]
+security_considerations = [
+    "HTTPS required for all registration requests",
+    "CSRF token validation on form submission",
+    "Rate limiting to prevent account creation spam",
+    "Password strength enforced on both client and server sides",
+    "Email verification required before checkout",
+    "Block disposable email domains",
+    "bcrypt password hashing with cost factor 12",
+    "Session tokens: 32-byte random, hex-encoded",
+]
+performance_requirements = ""
+api_endpoints = [
+    "`POST /api/v1/auth/register` - Email/password registration",
+    "`POST /api/v1/auth/register/oauth` - OAuth social registration",
+]
+database_tables = [
+    "users",
+    "sessions",
+    "email_verifications",
+]
+technical_dependencies = [
+    "PostgreSQL 14+: for user data storage",
+    "Redis 6+: for session management",
+    "SendGrid API: for email delivery",
+    "OAuth providers (Google, Facebook) for social registration",
+]
+
 [methodology_fields.tester]
-regression_suite = ""
-test_type = ""
-test_data_requirements = ""
-test_environment = ""
-test_priority = ""
-coverage_areas = []
+regression_suites = []
+coverage_areas = [
+    "Input validation (client-side and server-side)",
+    "Database record creation and integrity",
+    "Email delivery and content verification",
+    "Session creation and management",
+    "OAuth registration flows",
+    "Security measures (CSRF, rate limiting, password hashing)",
+    "Accessibility (WCAG 2.1 AA compliance)",
+]
+test_priority = "P0-Critical"
+test_environments = [
+    "Staging environment with email service integration",
+    "Database with clean state before each test run",
+    "Mock OAuth providers for social registration tests",
+    "Various browsers and devices for front-end validation tests",
+]
+test_data_requirements = "10 valid email addresses for testing (test+1@example.com through test+10@example.com), 5 known registered emails for duplicate testing, mock SendGrid API with configurable responses (success, failure, timeout), database with clean state before each test run."
 performance_baseline = ""
 automation_status = ""
-
-[methodology_fields.developer]
-performance_requirements = ""
-technical_dependencies = [
-    "PostgreSQL 14+",
-    "Redis 6+",
-    "SendGrid API",
-    "bcrypt library",
-]
-api_endpoint = "POST /api/v1/auth/register"
-security_considerations = ""
-error_handling = ""
-database_tables = [
-    "`users` (id",
-    "email",
-    "password_hash",
-    "first_name",
-    "last_name",
-    "verified",
-    "created_at)",
-    "`sessions` (id",
-    "user_id",
-    "token",
-    "expires_at)",
+test_type = [
+    "e2e",
+    "integration",
+    "security",
+    "accessibility",
 ]

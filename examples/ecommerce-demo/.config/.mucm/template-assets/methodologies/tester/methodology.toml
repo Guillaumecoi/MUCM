@@ -28,7 +28,7 @@ description = "Standard test documentation covering test types, priorities, and 
 inherits = []
 
 [levels.normal.custom_fields]
-test_type = { label = "Test Type", type = "string", required = true, description = "Type of test (unit, integration, e2e, performance, security)", example = "e2e" }
+test_type = { label = "Test Type", type = "array", required = false, description = "Types of tests (unit, integration, e2e, performance, security)", example = "e2e, integration" }
 test_priority = { label = "Test Priority", type = "string", required = false, description = "Priority level (P0-Critical, P1-High, P2-Medium, P3-Low)", example = "P0-Critical" }
 automation_status = { label = "Automation Status", type = "string", required = false, description = "Current state (manual, automated, in-progress, blocked)", example = "automated" }
 test_data_requirements = { label = "Test Data Requirements", type = "text", required = false, description = "Required test data, mock services, or environment configuration", example = "Test accounts with SMS, email, and authenticator app methods configured" }
