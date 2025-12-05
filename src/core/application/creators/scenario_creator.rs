@@ -1,4 +1,4 @@
-use crate::core::domain::{Actor, Scenario, ScenarioStep, ScenarioType, StepOrder, UseCase};
+use crate::core::domain::{Scenario, ScenarioStep, ScenarioType, StepOrder, UseCase};
 use anyhow::{Context, Result};
 
 /// Parameters for creating a scenario
@@ -6,13 +6,11 @@ pub struct ScenarioParams {
     pub title: String,
     pub scenario_type: ScenarioType,
     pub description: Option<String>,
-    pub primary_actor: Actor,
+    pub primary_actor: String,
     pub preconditions: Vec<String>,
     pub postconditions: Vec<String>,
-    /// Field for future use - will track all involved actors beyond primary_actor
-    /// Currently passed through but not yet used in scenario rendering
-    #[allow(dead_code)]
-    pub actors: Vec<String>,
+    /// Supporting actors involved in this scenario (actor IDs)
+    pub supporting_actors: Vec<String>,
 }
 
 /// Parameters for creating an extension scenario
@@ -21,7 +19,7 @@ pub struct ExtensionScenarioParams {
     pub extends_at_step: String,
     pub title: String,
     pub description: Option<String>,
-    pub primary_actor: Actor,
+    pub primary_actor: String,
 }
 
 /// Parameters for creating a scenario step
@@ -52,6 +50,9 @@ impl ScenarioCreator {
             params.scenario_type,
             params.primary_actor,
         );
+
+        // Add supporting actors
+        scenario.supporting_actors = params.supporting_actors;
 
         // Add preconditions and postconditions
         for precondition in params.preconditions {
@@ -247,21 +248,10 @@ impl ScenarioCreator {
 
     /// Create a scenario step with optional receiver
     pub fn create_scenario_step(&self, params: StepParams) -> ScenarioStep {
-        let actor_enum: Actor = params.actor.into(); // Convert String to Actor using From<String>
-        let receiver_enum: Option<Actor> = params.receiver.map(|r| r.into());
-
-        let description = params.expected_result.unwrap_or_else(|| {
-            if let Some(ref recv) = receiver_enum {
-                format!("{} {} to {}", actor_enum.name(), params.action, recv.name())
-            } else {
-                format!("{} {}", actor_enum.name(), params.action)
-            }
-        });
-
-        let mut step = ScenarioStep::new(params.order, actor_enum, params.action, description);
-        if let Some(recv) = receiver_enum {
-            step.set_receiver(recv);
+        if let Some(receiver) = params.receiver {
+            ScenarioStep::with_receiver(params.order, params.actor, receiver, params.action)
+        } else {
+            ScenarioStep::new(params.order, params.actor, params.action)
         }
-        step
     }
 }
