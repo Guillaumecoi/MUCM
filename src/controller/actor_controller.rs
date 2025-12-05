@@ -313,7 +313,9 @@ impl ActorController {
         // Save updated actor
         self.actor_repository.save_actor(&actor)?;
 
-        Ok(DisplayResult::success(DisplayMessage::updated("actor", &id)))
+        Ok(DisplayResult::success(DisplayMessage::updated(
+            "actor", &id,
+        )))
     }
 
     /// Update a persona's basic information.
@@ -345,7 +347,10 @@ impl ActorController {
         // Save updated persona
         self.persona_repository.save(&persona)?;
 
-        Ok(DisplayResult::success(DisplayMessage::updated("persona", &persona.id)))
+        Ok(DisplayResult::success(DisplayMessage::updated(
+            "persona",
+            &persona.id,
+        )))
     }
 
     /// Update persona custom fields.
@@ -429,7 +434,9 @@ impl ActorController {
         // Delete the actor
         self.actor_repository.delete_actor(&id)?;
 
-        Ok(DisplayResult::success(DisplayMessage::deleted("actor", &id)))
+        Ok(DisplayResult::success(DisplayMessage::deleted(
+            "actor", &id,
+        )))
     }
 
     /// Delete a persona (legacy method for backward compatibility).
@@ -454,7 +461,9 @@ impl ActorController {
         // Delete the persona
         self.persona_repository.delete(&id)?;
 
-        Ok(DisplayResult::success(DisplayMessage::deleted("persona", &id)))
+        Ok(DisplayResult::success(DisplayMessage::deleted(
+            "persona", &id,
+        )))
     }
 
     /// Get a single persona by ID.

@@ -993,12 +993,7 @@ impl UseCaseController {
         };
 
         self.app_service
-            .remove_scenario_reference(
-                &use_case_id,
-                &scenario_id,
-                &target_id,
-                &relationship,
-            )
+            .remove_scenario_reference(&use_case_id, &scenario_id, &target_id, &relationship)
             .to_display(format!(
                 "✅ Removed {} reference to '{}' from scenario '{}' in use case {}",
                 relationship, target_id, scenario_title, use_case_id

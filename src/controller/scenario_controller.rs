@@ -208,7 +208,10 @@ impl ScenarioController {
         // Regenerate markdown to reflect changes
         self.app_service.regenerate_markdown(&use_case_id)?;
 
-        Ok(DisplayResult::success(DisplayMessage::updated("scenario", &scenario_id)))
+        Ok(DisplayResult::success(DisplayMessage::updated(
+            "scenario",
+            &scenario_id,
+        )))
     }
 
     /// Delete a scenario from a use case
@@ -230,7 +233,10 @@ impl ScenarioController {
         // Regenerate markdown to reflect the deletion
         self.app_service.regenerate_markdown(&use_case_id)?;
 
-        Ok(DisplayResult::success(DisplayMessage::deleted("scenario", &scenario_id)))
+        Ok(DisplayResult::success(DisplayMessage::deleted(
+            "scenario",
+            &scenario_id,
+        )))
     }
 
     /// List all scenarios for a use case
