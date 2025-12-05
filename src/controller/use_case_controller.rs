@@ -692,13 +692,12 @@ impl UseCaseController {
         use_case_id: String,
         target_id: String,
     ) -> Result<DisplayResult> {
-        match self.app_service.remove_reference(&use_case_id, &target_id) {
-            Ok(_) => Ok(DisplayResult::success(format!(
-                "Removed reference to {} from use case: {}",
+        self.app_service
+            .remove_reference(&use_case_id, &target_id)
+            .to_display(format!(
+                "✅ Removed reference to {} from use case: {}",
                 target_id, use_case_id
-            ))),
-            Err(e) => Ok(DisplayResult::error(e.to_string())),
-        }
+            ))
     }
 
     /// Add a scenario to a use case.
@@ -739,13 +738,14 @@ impl UseCaseController {
             postconditions: vec![],
             actors: vec![],
         };
-        match self.app_service.add_scenario(&use_case_id, params) {
-            Ok(scenario_id) => Ok(DisplayResult::success(format!(
-                "Added scenario '{}' to use case: {}",
-                scenario_id, use_case_id
-            ))),
-            Err(e) => Ok(DisplayResult::error(e.to_string())),
-        }
+        self.app_service
+            .add_scenario(&use_case_id, params)
+            .to_display_with(|scenario_id| {
+                format!(
+                    "✅ Added scenario '{}' to use case: {}",
+                    scenario_id, use_case_id
+                )
+            })
     }
 
     /// Add a step to a scenario.
@@ -785,16 +785,12 @@ impl UseCaseController {
             action,
             expected_result,
         };
-        match self
-            .app_service
+        self.app_service
             .add_scenario_step(&use_case_id, &scenario_title, params)
-        {
-            Ok(_) => Ok(DisplayResult::success(format!(
-                "Added step to scenario '{}' in use case: {}",
+            .to_display(format!(
+                "✅ Added step to scenario '{}' in use case: {}",
                 scenario_title, use_case_id
-            ))),
-            Err(e) => Ok(DisplayResult::error(e.to_string())),
-        }
+            ))
     }
 
     /// Update scenario status.
@@ -822,16 +818,12 @@ impl UseCaseController {
             Err(e) => return Ok(DisplayResult::error(e)),
         };
 
-        match self
-            .app_service
+        self.app_service
             .update_scenario_status(&use_case_id, &scenario_title, status_enum)
-        {
-            Ok(_) => Ok(DisplayResult::success(format!(
-                "Updated status of scenario '{}' in use case: {}",
+            .to_display(format!(
+                "✅ Updated status of scenario '{}' in use case: {}",
                 scenario_title, use_case_id
-            ))),
-            Err(e) => Ok(DisplayResult::error(e.to_string())),
-        }
+            ))
     }
 
     /// List scenarios for a use case.
@@ -901,16 +893,12 @@ impl UseCaseController {
         order: u32,
     ) -> Result<DisplayResult> {
         let order_str = order.to_string();
-        match self
-            .app_service
+        self.app_service
             .remove_scenario_step(&use_case_id, &scenario_title, &order_str)
-        {
-            Ok(_) => Ok(DisplayResult::success(format!(
-                "Removed step {} from scenario '{}' in use case: {}",
+            .to_display(format!(
+                "✅ Removed step {} from scenario '{}' in use case: {}",
                 order, scenario_title, use_case_id
-            ))),
-            Err(e) => Ok(DisplayResult::error(e.to_string())),
-        }
+            ))
     }
 
     // ========== Scenario Reference Operations (PR #7) ==========
@@ -967,16 +955,12 @@ impl UseCaseController {
             reference = reference.with_description(desc);
         }
 
-        match self
-            .app_service
+        self.app_service
             .add_scenario_reference(&use_case_id, &scenario_id, reference)
-        {
-            Ok(_) => Ok(DisplayResult::success(format!(
-                "Added {} reference to '{}' in scenario '{}' of use case {}",
+            .to_display(format!(
+                "✅ Added {} reference to '{}' in scenario '{}' of use case {}",
                 relationship, target_id, scenario_title, use_case_id
-            ))),
-            Err(e) => Ok(DisplayResult::error(e.to_string())),
-        }
+            ))
     }
 
     /// Remove a reference from a scenario
@@ -1008,18 +992,17 @@ impl UseCaseController {
             Err(e) => return Ok(DisplayResult::error(e.to_string())),
         };
 
-        match self.app_service.remove_scenario_reference(
-            &use_case_id,
-            &scenario_id,
-            &target_id,
-            &relationship,
-        ) {
-            Ok(_) => Ok(DisplayResult::success(format!(
-                "Removed {} reference to '{}' from scenario '{}' in use case {}",
+        self.app_service
+            .remove_scenario_reference(
+                &use_case_id,
+                &scenario_id,
+                &target_id,
+                &relationship,
+            )
+            .to_display(format!(
+                "✅ Removed {} reference to '{}' from scenario '{}' in use case {}",
                 relationship, target_id, scenario_title, use_case_id
-            ))),
-            Err(e) => Ok(DisplayResult::error(e.to_string())),
-        }
+            ))
     }
 
     /// Get all references for a scenario
