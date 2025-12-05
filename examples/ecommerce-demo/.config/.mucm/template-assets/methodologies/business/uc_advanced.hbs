@@ -39,14 +39,14 @@
 {{#if preconditions}}
 ## Preconditions
 {{#each preconditions}}
-- {{this}}
+- {{this.text}}{{#if this.use_case_reference}} (see [{{this.use_case_reference}}](../{{this.use_case_reference}}.md)){{/if}}
 {{/each}}
 
 {{/if}}
 {{#if postconditions}}
 ## Postconditions
 {{#each postconditions}}
-- {{this}}
+- {{this.text}}{{#if this.use_case_reference}} (see [{{this.use_case_reference}}](../{{this.use_case_reference}}.md)){{/if}}
 {{/each}}
 
 {{/if}}
