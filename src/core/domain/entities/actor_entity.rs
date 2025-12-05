@@ -145,6 +145,18 @@ impl ActorEntity {
         self.call_name.as_deref().unwrap_or(&self.name)
     }
 
+    /// Get formatted display string: "emoji name (id)"
+    /// This is the canonical way to display actors in UIs
+    pub fn display(&self) -> String {
+        format!("{} {} ({})", self.emoji, self.name, self.id)
+    }
+
+    /// Get formatted display for selection prompts: "emoji call_name (id)"
+    /// Uses call_name if available, otherwise falls back to name
+    pub fn display_for_selection(&self) -> String {
+        format!("{} {} ({})", self.emoji, self.get_call_name(), self.id)
+    }
+
     /// Create a persona actor with default emoji
     pub fn persona(id: String, name: String) -> Self {
         Self::new(id, name, ActorType::Persona, "🙂".to_string())

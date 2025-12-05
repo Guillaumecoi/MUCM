@@ -489,49 +489,18 @@ impl InteractiveRunner {
     /// Get available actors for selection (personas + system actors)
     ///
     /// # Returns
-    /// Vector of actor display strings with emoji, name, and ID
+    /// Vector of actor display strings with emoji, call_name, and ID
     pub fn get_available_actors(&self) -> Result<Vec<String>> {
         use crate::controller::ActorController;
 
         let actor_controller = ActorController::new()?;
 
-        // Get personas - show function/role instead of ID
-        let personas = actor_controller.list_personas()?;
-        let mut actors: Vec<String> = personas
+        // Get all actors and use centralized display formatting
+        let all_actors = actor_controller.list_actors(None)?;
+        let actors: Vec<String> = all_actors
             .iter()
-            .map(|p| {
-                let emoji = p
-                    .extra
-                    .get("emoji")
-                    .and_then(|v| v.as_str())
-                    .unwrap_or("👤"); // Better default emoji for personas
-                format!("{} {} - {}", emoji, p.name, p.function)
-            })
+            .map(|a| a.display_for_selection())
             .collect();
-
-        // Get all system actors (System, Database, ExternalService)
-        let system_actors = actor_controller.list_actors(Some(crate::core::ActorType::System))?;
-        actors.extend(
-            system_actors
-                .iter()
-                .map(|a| format!("{} {} - {}", a.emoji, a.name, a.id)),
-        );
-
-        let database_actors =
-            actor_controller.list_actors(Some(crate::core::ActorType::Database))?;
-        actors.extend(
-            database_actors
-                .iter()
-                .map(|a| format!("{} {} - {}", a.emoji, a.name, a.id)),
-        );
-
-        let external_actors =
-            actor_controller.list_actors(Some(crate::core::ActorType::ExternalService))?;
-        actors.extend(
-            external_actors
-                .iter()
-                .map(|a| format!("{} {} - {}", a.emoji, a.name, a.id)),
-        );
 
         Ok(actors)
     }

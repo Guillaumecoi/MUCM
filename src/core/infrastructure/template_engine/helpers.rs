@@ -14,9 +14,10 @@ pub fn register_helpers(handlebars: &mut Handlebars) {
     handlebars.register_helper("actor_link", Box::new(actor_link_helper));
 }
 
-/// Helper to generate a markdown link to an actor's documentation
+/// Helper to display an actor name
 /// Usage: {{actor_link actor_name}}
-/// Returns: [emoji **actor_name**](../personas/actor-id.md)
+/// Returns: actor_name (emoji should be in the data passed to template)
+/// Note: Use actor_with_emoji helper if you need to add emoji programmatically
 fn actor_link_helper(
     h: &Helper,
     _: &Handlebars,
@@ -25,144 +26,22 @@ fn actor_link_helper(
     out: &mut dyn Output,
 ) -> HelperResult {
     let actor_name = h.param(0).and_then(|v| v.value().as_str()).unwrap_or("");
-
-    // Generate emoji
-    let actor_lower = actor_name.to_lowercase();
-    let emoji = if actor_lower.contains("user")
-        || actor_lower.contains("customer")
-        || actor_lower.contains("admin")
-    {
-        "👤"
-    } else if actor_lower.contains("system")
-        || actor_lower.contains("server")
-        || actor_lower.contains("application")
-    {
-        "⚙️"
-    } else if actor_lower.contains("database")
-        || actor_lower.contains("db")
-        || actor_lower.contains("storage")
-    {
-        "💾"
-    } else if actor_lower.contains("api")
-        || actor_lower.contains("service")
-        || actor_lower.contains("gateway")
-    {
-        "🔌"
-    } else if actor_lower.contains("email")
-        || actor_lower.contains("mail")
-        || actor_lower.contains("notification")
-    {
-        "📧"
-    } else if actor_lower.contains("payment")
-        || actor_lower.contains("transaction")
-        || actor_lower.contains("billing")
-    {
-        "💳"
-    } else if actor_lower.contains("auth")
-        || actor_lower.contains("security")
-        || actor_lower.contains("login")
-    {
-        "🔐"
-    } else if actor_lower.contains("cache")
-        || actor_lower.contains("redis")
-        || actor_lower.contains("memcache")
-    {
-        "🗃️"
-    } else if actor_lower.contains("queue")
-        || actor_lower.contains("message")
-        || actor_lower.contains("broker")
-    {
-        "📮"
-    } else if actor_lower.contains("file")
-        || actor_lower.contains("document")
-        || actor_lower.contains("upload")
-    {
-        "📄"
-    } else {
-        "🔷"
-    };
-
-    // Generate actor ID for the link (lowercase, replace spaces with hyphens)
-    let actor_id = actor_lower.replace(' ', "-");
-
-    // Generate markdown link
-    let link = format!(
-        "{} [**{}**](../personas/{}.md)",
-        emoji, actor_name, actor_id
-    );
-    out.write(&link)?;
-
+    out.write(actor_name)?;
     Ok(())
 }
 
-/// Helper to return an emoji for an actor name
+/// Helper to return an emoji for an actor
 /// Usage: {{actor_emoji actor_name}}
-/// Returns an emoji prefix for common actor types, or a generic emoji
+/// Note: Deprecated - emoji should come from ActorEntity data in the template context
+/// Returns empty string (emojis should be part of the data model)
 fn actor_emoji_helper(
-    h: &Helper,
+    _h: &Helper,
     _: &Handlebars,
     _: &Context,
     _rc: &mut RenderContext,
-    out: &mut dyn Output,
+    _out: &mut dyn Output,
 ) -> HelperResult {
-    let actor_name = h.param(0).and_then(|v| v.value().as_str()).unwrap_or("");
-
-    let actor_lower = actor_name.to_lowercase();
-    let emoji = if actor_lower.contains("user")
-        || actor_lower.contains("customer")
-        || actor_lower.contains("admin")
-    {
-        "👤"
-    } else if actor_lower.contains("system")
-        || actor_lower.contains("server")
-        || actor_lower.contains("application")
-    {
-        "⚙️"
-    } else if actor_lower.contains("database")
-        || actor_lower.contains("db")
-        || actor_lower.contains("storage")
-    {
-        "💾"
-    } else if actor_lower.contains("api")
-        || actor_lower.contains("service")
-        || actor_lower.contains("gateway")
-    {
-        "🔌"
-    } else if actor_lower.contains("email")
-        || actor_lower.contains("mail")
-        || actor_lower.contains("notification")
-    {
-        "📧"
-    } else if actor_lower.contains("payment")
-        || actor_lower.contains("transaction")
-        || actor_lower.contains("billing")
-    {
-        "💳"
-    } else if actor_lower.contains("auth")
-        || actor_lower.contains("security")
-        || actor_lower.contains("login")
-    {
-        "🔐"
-    } else if actor_lower.contains("cache")
-        || actor_lower.contains("redis")
-        || actor_lower.contains("memcache")
-    {
-        "🗃️"
-    } else if actor_lower.contains("queue")
-        || actor_lower.contains("message")
-        || actor_lower.contains("broker")
-    {
-        "📮"
-    } else if actor_lower.contains("file")
-        || actor_lower.contains("document")
-        || actor_lower.contains("upload")
-    {
-        "📄"
-    } else {
-        "🔷" // Generic component
-    };
-
-    out.write(emoji)?;
+    // No-op: emojis should be in the ActorEntity.emoji field
     Ok(())
 }
 

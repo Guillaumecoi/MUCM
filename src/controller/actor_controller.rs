@@ -235,7 +235,7 @@ impl ActorController {
 
         for actor in standard_actors {
             if self.actor_repository.actor_exists(&actor.id)? {
-                skipped.push(format!("{} {}", actor.emoji, actor.name));
+                skipped.push(actor.display());
             } else {
                 self.actor_repository.save_actor(&actor)?;
                 created_count += 1;

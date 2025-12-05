@@ -43,36 +43,65 @@ use crate::cli::interactive::runner::InteractiveRunner;
 /// ```ignore
 /// let actor = select_actor("Select actor for this step:", true)?;
 /// ```
-pub fn select_actor(prompt: &str, include_defaults: bool) -> Result<Option<String>> {
+pub fn select_actor(prompt: &str) -> Result<String> {
     let runner = InteractiveRunner::new();
     let available_actors_display = runner.get_available_actors()?;
 
-    let mut all_options = Vec::new();
-
-    if include_defaults {
-        all_options.push("User".to_string());
-        all_options.push("System".to_string());
-        all_options.push("Default (Actor)".to_string());
+    if available_actors_display.is_empty() {
+        // No actors exist, create one
+        println!("No actors found. Let's create one.");
+        return create_actor_inline();
     }
 
+    let mut all_options = Vec::new();
+    all_options.push("➕ Create New Actor".to_string());
     all_options.extend(available_actors_display);
 
     let choice = Select::new(prompt, all_options).prompt()?;
 
-    if choice == "Default (Actor)" {
-        Ok(None)
-    } else if choice == "User" || choice == "System" {
-        Ok(Some(choice.to_lowercase()))
+    if choice == "➕ Create New Actor" {
+        create_actor_inline()
     } else {
-        // Parse ID from display format: "emoji name - id"
-        // The ID is after the last " - "
-        if let Some(id) = choice.rsplit(" - ").next() {
-            Ok(Some(id.to_string()))
-        } else {
-            // Fallback: return the whole string
-            Ok(Some(choice))
+        // Parse ID from display format: "emoji name (id)"
+        if let Some(id_part) = choice.rsplit('(').nth(0) {
+            if let Some(id) = id_part.strip_suffix(')') {
+                return Ok(id.trim().to_string());
+            }
         }
+        // Fallback: try extracting text between last ( and )
+        if let Some(open_paren) = choice.rfind('(') {
+            if let Some(close_paren) = choice.rfind(')') {
+                if close_paren > open_paren {
+                    return Ok(choice[open_paren + 1..close_paren].trim().to_string());
+                }
+            }
+        }
+        // Last resort: return the whole string
+        Ok(choice)
     }
+}
+
+/// Create an actor inline and return its ID
+fn create_actor_inline() -> Result<String> {
+    use crate::core::utils::slugify_for_id;
+    use inquire::Text;
+
+    let name = Text::new("Actor name:")
+        .with_help_message("Display name (e.g., 'Admin User', 'Payment API')")
+        .prompt()?;
+
+    let function = Text::new("Function/Role:")
+        .with_help_message("Role or function (e.g., 'Administrator', 'Service')")
+        .prompt()?;
+
+    // Generate ID from name only (function is a separate field)
+    let id = slugify_for_id(&name);
+    println!("  Generated ID: {}", id);
+
+    let mut runner = InteractiveRunner::new();
+    runner.create_persona_interactive(id.clone(), name, function)?;
+
+    Ok(id)
 }
 
 /// Parse actor ID from formatted display string
