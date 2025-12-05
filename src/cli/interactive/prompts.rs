@@ -62,11 +62,12 @@ pub fn select_actor(prompt: &str, include_defaults: bool) -> Result<Option<Strin
     if choice == "Default (Actor)" {
         Ok(None)
     } else if choice == "User" || choice == "System" {
-        Ok(Some(choice))
+        Ok(Some(choice.to_lowercase()))
     } else {
         // Extract ID from "emoji name (id)" format
         if let Some(id) = parse_actor_id(&choice) {
-            Ok(Some(format!("ref:{}", id)))
+            // Return just the ID without "ref:" prefix for new string-based structure
+            Ok(Some(id))
         } else {
             Ok(Some(choice))
         }

@@ -295,6 +295,36 @@ impl ScenarioController {
             .ok_or_else(|| anyhow::anyhow!("Scenario {} not found", scenario_id))
     }
 
+    /// Resolve an actor ID to its call name or display name
+    /// 
+    /// # Arguments
+    /// * `actor_id` - The actor ID to resolve
+    /// 
+    /// # Returns
+    /// The actor's call_name, or name, or the ID itself if not found
+    fn resolve_actor_call_name(&self, actor_id: &str) -> String {
+        // Special cases for common actors
+        if actor_id == "user" || actor_id == "system" {
+            return actor_id.to_string();
+        }
+
+        // Try to load actor controller to look up the actor
+        if let Ok(actor_controller) = crate::controller::ActorController::new() {
+            // Try as persona first
+            if let Ok(persona) = actor_controller.get_persona(actor_id) {
+                return persona.get_call_name().to_string();
+            }
+            
+            // Try as system actor
+            if let Ok(actor) = actor_controller.get_actor(actor_id) {
+                return actor.get_call_name().to_string();
+            }
+        }
+
+        // Fallback to the ID itself
+        actor_id.to_string()
+    }
+
     /// Add a step to a scenario
     ///
     /// # Arguments
@@ -325,27 +355,31 @@ impl ScenarioController {
         });
 
         let order_str = order.to_string();
-        let actor_name = actor.unwrap_or_else(|| "Actor".to_string());
+        let actor_str = actor.unwrap_or_else(|| "user".to_string());
+        
+        // Resolve actor ID to call name for better readability
+        let actor_call_name = self.resolve_actor_call_name(&actor_str);
+        let receiver_call_name = receiver.as_ref().map(|r| self.resolve_actor_call_name(r));
 
         let params = crate::core::AddScenarioStepParams {
             order: order_str,
-            actor: actor_name.clone(),
-            receiver: receiver.clone(),
+            actor: actor_call_name.clone(),
+            receiver: receiver_call_name.clone(),
             action: step_description.clone(),
             expected_result: None,
         };
         self.app_service
             .add_scenario_step(&use_case_id, &scenario_id, params)?;
 
-        let message = if let Some(ref recv) = receiver {
+        let message = if let Some(ref recv) = receiver_call_name {
             format!(
                 "✅ Added step {} to scenario {} ({} → {})",
-                order, scenario_id, actor_name, recv
+                order, scenario_id, actor_call_name, recv
             )
         } else {
             format!(
                 "✅ Added step {} to scenario {} (actor: {})",
-                order, scenario_id, actor_name
+                order, scenario_id, actor_call_name
             )
         };
 
