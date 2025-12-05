@@ -1684,7 +1684,7 @@ mod tests {
             .unwrap();
 
         assert!(result.is_success());
-        assert!(result.message.contains("Assigned persona"));
+        assert!(result.message.contains("Added persona"));
 
         // Verify persona was assigned
         let scenario = controller.get_scenario(&use_case_id, &scenario_id).unwrap();

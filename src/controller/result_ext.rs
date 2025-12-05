@@ -116,8 +116,61 @@ mod tests {
             "✅ Created actor: id-1 - Test"
         );
         assert_eq!(
+            DisplayMessage::created_simple("use case", "UC-001"),
+            "✅ Created use case: UC-001"
+        );
+        assert_eq!(
+            DisplayMessage::updated("scenario", "S01"),
+            "✅ Updated scenario: S01"
+        );
+        assert_eq!(
             DisplayMessage::deleted("persona", "john-doe"),
             "🗑️  Deleted persona: john-doe"
+        );
+        assert_eq!(
+            DisplayMessage::added("step", "scenario S01"),
+            "✅ Added step to scenario S01"
+        );
+    }
+
+    #[test]
+    fn test_to_display_with_error() {
+        let result: Result<u32> = Err(anyhow::anyhow!("Database connection failed"));
+        let display = result
+            .to_display_with(|num| format!("Processed {} items", num))
+            .unwrap();
+        assert!(!display.is_success());
+        assert_eq!(display.message, "Database connection failed");
+    }
+
+    #[test]
+    fn test_to_display_chain() {
+        fn create_user(name: &str) -> Result<String> {
+            if name.is_empty() {
+                Err(anyhow::anyhow!("Name cannot be empty"))
+            } else {
+                Ok(format!("user-{}", name))
+            }
+        }
+
+        // Success case
+        let result = create_user("alice").to_display("User created");
+        assert!(result.unwrap().is_success());
+
+        // Error case
+        let result = create_user("").to_display("User created");
+        assert!(!result.unwrap().is_success());
+    }
+
+    #[test]
+    fn test_display_message_with_special_characters() {
+        assert_eq!(
+            DisplayMessage::created("actor", "test-id-123", "Name with spaces"),
+            "✅ Created actor: test-id-123 - Name with spaces"
+        );
+        assert_eq!(
+            DisplayMessage::added("reference (includes)", "use case UC-001"),
+            "✅ Added reference (includes) to use case UC-001"
         );
     }
 }
