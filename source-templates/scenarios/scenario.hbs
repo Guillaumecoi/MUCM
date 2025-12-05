@@ -44,7 +44,7 @@
 {{/if}}
 #### Business Flow
 {{#each steps}}
-{{order}}. {{actor_emoji actor}} **{{actor}}** {{action}}{{#if receiver}} to {{actor_emoji receiver}} **{{receiver}}**{{/if}}
+{{order}}. {{actor_emoji acting_actor}} **{{acting_actor}}** {{action}}{{#if receiving_actor}} to {{actor_emoji receiving_actor}} **{{receiving_actor}}**{{/if}}
 {{/each}}
 
 {{#if repeat_blocks}}

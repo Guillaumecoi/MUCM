@@ -5,17 +5,17 @@
 ```mermaid
 sequenceDiagram
 {{#each steps}}
-{{#if receiver}}
-{{actor}}->>{{receiver}}: {{order}}. {{action}}
+{{#if receiving_actor}}
+{{acting_actor}}->>{{receiving_actor}}: {{order}}. {{action}}
 {{else}}
-{{actor}}->>{{actor}}: {{order}}. {{action}}
+{{acting_actor}}->>{{acting_actor}}: {{order}}. {{action}}
 {{/if}}
 {{/each}}
 ```
 
 ### Steps
 {{#each steps}}
-{{order}}. **{{actor}}**{{#if receiver}} → **{{receiver}}**{{/if}}: {{action}}
+{{order}}. **{{acting_actor}}**{{#if receiving_actor}} → **{{receiving_actor}}**{{/if}}: {{action}}
 {{/each}}
 
 {{#if extends_scenario_id}}
