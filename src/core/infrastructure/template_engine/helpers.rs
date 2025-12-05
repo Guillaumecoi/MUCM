@@ -11,6 +11,85 @@ pub fn register_helpers(handlebars: &mut Handlebars) {
     handlebars.register_helper("has_personas", Box::new(has_personas_helper));
     handlebars.register_helper("unique_personas", Box::new(unique_personas_helper));
     handlebars.register_helper("actor_emoji", Box::new(actor_emoji_helper));
+    handlebars.register_helper("actor_link", Box::new(actor_link_helper));
+}
+
+/// Helper to generate a markdown link to an actor's documentation
+/// Usage: {{actor_link actor_name}}
+/// Returns: [emoji **actor_name**](../personas/actor-id.md)
+fn actor_link_helper(
+    h: &Helper,
+    _: &Handlebars,
+    _: &Context,
+    _rc: &mut RenderContext,
+    out: &mut dyn Output,
+) -> HelperResult {
+    let actor_name = h.param(0).and_then(|v| v.value().as_str()).unwrap_or("");
+
+    // Generate emoji
+    let actor_lower = actor_name.to_lowercase();
+    let emoji = if actor_lower.contains("user")
+        || actor_lower.contains("customer")
+        || actor_lower.contains("admin")
+    {
+        "👤"
+    } else if actor_lower.contains("system")
+        || actor_lower.contains("server")
+        || actor_lower.contains("application")
+    {
+        "⚙️"
+    } else if actor_lower.contains("database")
+        || actor_lower.contains("db")
+        || actor_lower.contains("storage")
+    {
+        "💾"
+    } else if actor_lower.contains("api")
+        || actor_lower.contains("service")
+        || actor_lower.contains("gateway")
+    {
+        "🔌"
+    } else if actor_lower.contains("email")
+        || actor_lower.contains("mail")
+        || actor_lower.contains("notification")
+    {
+        "📧"
+    } else if actor_lower.contains("payment")
+        || actor_lower.contains("transaction")
+        || actor_lower.contains("billing")
+    {
+        "💳"
+    } else if actor_lower.contains("auth")
+        || actor_lower.contains("security")
+        || actor_lower.contains("login")
+    {
+        "🔐"
+    } else if actor_lower.contains("cache")
+        || actor_lower.contains("redis")
+        || actor_lower.contains("memcache")
+    {
+        "🗃️"
+    } else if actor_lower.contains("queue")
+        || actor_lower.contains("message")
+        || actor_lower.contains("broker")
+    {
+        "📮"
+    } else if actor_lower.contains("file")
+        || actor_lower.contains("document")
+        || actor_lower.contains("upload")
+    {
+        "📄"
+    } else {
+        "🔷"
+    };
+
+    // Generate actor ID for the link (lowercase, replace spaces with hyphens)
+    let actor_id = actor_lower.replace(' ', "-");
+    
+    // Generate markdown link
+    let link = format!("{} [**{}**](../personas/{}.md)", emoji, actor_name, actor_id);
+    out.write(&link)?;
+
+    Ok(())
 }
 
 /// Helper to return an emoji for an actor name
@@ -111,25 +190,33 @@ fn unique_actors_helper(
 
     let mut actors = HashSet::new();
 
-    // Extract actors from each scenario's steps
+    // Extract actors from each scenario
     for scenario in scenarios_array {
+        // Add primary_actor
+        if let Some(Value::String(primary)) = scenario.get("primary_actor") {
+            actors.insert(primary.clone());
+        }
+        
+        // Add supporting_actors
+        if let Some(supporting) = scenario.get("supporting_actors").and_then(|v| v.as_array()) {
+            for actor in supporting {
+                if let Value::String(s) = actor {
+                    actors.insert(s.clone());
+                }
+            }
+        }
+        
+        // Extract actors from steps (acting_actor and receiving_actor)
         if let Some(steps) = scenario.get("steps").and_then(|v| v.as_array()) {
             for step in steps {
-                if let Some(actor) = step.get("actor") {
-                    // Actor can be a string (enum variant) or an object with a variant field
-                    let actor_str = match actor {
-                        Value::String(s) => s.clone(),
-                        Value::Object(map) => {
-                            // Handle Actor enum serialization - look for variant name
-                            if let Some(Value::String(s)) = map.values().next() {
-                                s.clone()
-                            } else {
-                                continue;
-                            }
-                        }
-                        _ => continue,
-                    };
-                    actors.insert(actor_str);
+                // Add acting_actor
+                if let Some(Value::String(acting)) = step.get("acting_actor") {
+                    actors.insert(acting.clone());
+                }
+                
+                // Add receiving_actor (optional)
+                if let Some(Value::String(receiving)) = step.get("receiving_actor") {
+                    actors.insert(receiving.clone());
                 }
             }
         }
@@ -256,23 +343,26 @@ mod tests {
         let data = json!({
             "scenarios": [
                 {
+                    "primary_actor": "User",
+                    "supporting_actors": ["Admin"],
                     "steps": [
-                        {"actor": "User", "action": "clicks"},
-                        {"actor": "System", "action": "validates"}
+                        {"acting_actor": "User", "action": "clicks"},
+                        {"acting_actor": "System", "receiving_actor": "Database", "action": "validates"}
                     ]
                 },
                 {
+                    "primary_actor": "Admin",
                     "steps": [
-                        {"actor": "User", "action": "enters"},
-                        {"actor": "Database", "action": "stores"}
+                        {"acting_actor": "User", "action": "enters"},
+                        {"acting_actor": "Database", "action": "stores"}
                     ]
                 }
             ]
         });
 
         let result = handlebars.render("test", &data).unwrap();
-        // The helper returns a JSON array
-        assert_eq!(result, r#"["Database","System","User"]"#);
+        // The helper returns a JSON array (sorted alphabetically)
+        assert_eq!(result, r#"["Admin","Database","System","User"]"#);
     }
 
     #[test]

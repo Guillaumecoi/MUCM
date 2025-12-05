@@ -161,6 +161,23 @@ impl Scenario {
 
     /// Add a step to the scenario
     pub fn add_step(&mut self, step: ScenarioStep) {
+        // Collect actors from this step into supporting_actors
+        let acting = step.acting_actor().to_string();
+        // Add acting_actor if it's not the primary actor
+        if acting != self.primary_actor 
+            && !self.supporting_actors.contains(&acting) {
+            self.supporting_actors.push(acting);
+        }
+        
+        // Add receiving_actor if present and not already tracked
+        if let Some(receiver) = step.receiving_actor() {
+            let recv_str = receiver.to_string();
+            if recv_str != self.primary_actor 
+                && !self.supporting_actors.contains(&recv_str) {
+                self.supporting_actors.push(recv_str);
+            }
+        }
+        
         self.steps.push(step);
         self.steps
             .sort_by(|a, b| StepOrder::compare(&a.order, &b.order));

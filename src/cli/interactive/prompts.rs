@@ -44,41 +44,8 @@ use crate::cli::interactive::runner::InteractiveRunner;
 /// let actor = select_actor("Select actor for this step:", true)?;
 /// ```
 pub fn select_actor(prompt: &str, include_defaults: bool) -> Result<Option<String>> {
-    use crate::controller::ActorController;
-
     let runner = InteractiveRunner::new();
     let available_actors_display = runner.get_available_actors()?;
-
-    // Build a mapping of display strings to IDs
-    let actor_controller = ActorController::new()?;
-    let personas = actor_controller.list_personas()?;
-    let system_actors = actor_controller.list_actors(Some(crate::core::ActorType::System))?;
-    let database_actors = actor_controller.list_actors(Some(crate::core::ActorType::Database))?;
-    let external_actors =
-        actor_controller.list_actors(Some(crate::core::ActorType::ExternalService))?;
-
-    let mut display_to_id = std::collections::HashMap::new();
-
-    // Map personas: display format is "emoji name - function"
-    for p in personas {
-        let emoji = p
-            .extra
-            .get("emoji")
-            .and_then(|v| v.as_str())
-            .unwrap_or("👤");
-        let display = format!("{} {} - {}", emoji, p.name, p.function);
-        display_to_id.insert(display, p.id);
-    }
-
-    // Map actors: display format is "emoji name - id"
-    for a in system_actors
-        .iter()
-        .chain(database_actors.iter())
-        .chain(external_actors.iter())
-    {
-        let display = format!("{} {} - {}", a.emoji, a.name, a.id);
-        display_to_id.insert(display, a.id.clone());
-    }
 
     let mut all_options = Vec::new();
 
@@ -97,11 +64,12 @@ pub fn select_actor(prompt: &str, include_defaults: bool) -> Result<Option<Strin
     } else if choice == "User" || choice == "System" {
         Ok(Some(choice.to_lowercase()))
     } else {
-        // Look up ID from display string
-        if let Some(id) = display_to_id.get(&choice) {
-            Ok(Some(id.clone()))
+        // Parse ID from display format: "emoji name - id"
+        // The ID is after the last " - "
+        if let Some(id) = choice.rsplit(" - ").next() {
+            Ok(Some(id.to_string()))
         } else {
-            // Fallback for any unmatched case
+            // Fallback: return the whole string
             Ok(Some(choice))
         }
     }
