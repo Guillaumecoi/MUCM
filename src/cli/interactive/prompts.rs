@@ -63,7 +63,7 @@ pub fn select_actor(prompt: &str) -> Result<String> {
         create_actor_inline()
     } else {
         // Parse ID from display format: "emoji name (id)"
-        if let Some(id_part) = choice.rsplit('(').nth(0) {
+        if let Some(id_part) = choice.rsplit('(').next() {
             if let Some(id) = id_part.strip_suffix(')') {
                 return Ok(id.trim().to_string());
             }
