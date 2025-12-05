@@ -3,13 +3,13 @@
 
 ### System Actors
 {{#each (unique_actors scenarios)}}
-- {{actor_link this}}
+- {{{actor_link this}}}
 {{/each}}
 
 {{#if (has_personas scenarios)}}
 ### Target Personas
 {{#each (unique_personas scenarios)}}
-- {{actor_link this}}
+- {{{actor_link this}}}
 {{/each}}
 {{/if}}
 
@@ -25,11 +25,11 @@
 {{/if}}
 
 {{#if primary_actor}}
-**Primary Actor:** {{actor_link primary_actor}}
+**Primary Actor:** {{{actor_link primary_actor}}}
 
 {{/if}}
 {{#if supporting_actors}}
-**Supporting Actors:** {{#each supporting_actors}}{{actor_link this}}{{#unless @last}}, {{/unless}}{{/each}}
+**Supporting Actors:** {{#each supporting_actors}}{{{actor_link this}}}{{#unless @last}}, {{/unless}}{{/each}}
 
 {{/if}}
 {{#if preconditions}}
@@ -48,7 +48,7 @@
 {{/if}}
 #### Business Flow
 {{#each steps}}
-{{order}}. {{actor_link acting_actor}} {{action}}{{#if receiving_actor}} to {{actor_link receiving_actor}}{{/if}}
+{{order}}. **{{acting_actor}}** {{action}}{{#if receiving_actor}} to **{{receiving_actor}}**{{/if}}
 {{/each}}
 
 {{#if repeat_blocks}}

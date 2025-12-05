@@ -144,6 +144,10 @@ impl ScenarioWorkflow {
             Some(postconditions)
         };
 
+        // Select primary actor
+        let primary_actor = prompts::select_actor("Select primary actor:", true)?;
+        let primary_actor = primary_actor.unwrap_or_else(|| "user".to_string());
+
         // Controller handles creating main scenarios - no type selection needed
         let mut controller = ScenarioController::new()?;
         let result = controller.create_main_scenario(
@@ -152,6 +156,7 @@ impl ScenarioWorkflow {
             description,
             preconditions,
             postconditions,
+            primary_actor,
         )?;
 
         // Update status if not default

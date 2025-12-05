@@ -84,9 +84,12 @@ fn actor_link_helper(
 
     // Generate actor ID for the link (lowercase, replace spaces with hyphens)
     let actor_id = actor_lower.replace(' ', "-");
-    
+
     // Generate markdown link
-    let link = format!("{} [**{}**](../personas/{}.md)", emoji, actor_name, actor_id);
+    let link = format!(
+        "{} [**{}**](../personas/{}.md)",
+        emoji, actor_name, actor_id
+    );
     out.write(&link)?;
 
     Ok(())
@@ -196,7 +199,7 @@ fn unique_actors_helper(
         if let Some(Value::String(primary)) = scenario.get("primary_actor") {
             actors.insert(primary.clone());
         }
-        
+
         // Add supporting_actors
         if let Some(supporting) = scenario.get("supporting_actors").and_then(|v| v.as_array()) {
             for actor in supporting {
@@ -205,7 +208,7 @@ fn unique_actors_helper(
                 }
             }
         }
-        
+
         // Extract actors from steps (acting_actor and receiving_actor)
         if let Some(steps) = scenario.get("steps").and_then(|v| v.as_array()) {
             for step in steps {
@@ -213,7 +216,7 @@ fn unique_actors_helper(
                 if let Some(Value::String(acting)) = step.get("acting_actor") {
                     actors.insert(acting.clone());
                 }
-                
+
                 // Add receiving_actor (optional)
                 if let Some(Value::String(receiving)) = step.get("receiving_actor") {
                     actors.insert(receiving.clone());

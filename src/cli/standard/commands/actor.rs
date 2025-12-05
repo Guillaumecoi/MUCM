@@ -151,9 +151,9 @@ fn list_use_cases_for_actor(id: &str) -> Result<()> {
         .filter(|uc| {
             // Check if actor is referenced in any scenario step (as actor or receiver)
             uc.scenarios.iter().any(|s| {
-                s.steps.iter().any(|step| {
-                    step.acting_actor() == id || (step.receiving_actor() == Some(id))
-                })
+                s.steps
+                    .iter()
+                    .any(|step| step.acting_actor() == id || (step.receiving_actor() == Some(id)))
             })
         })
         .collect();
@@ -175,9 +175,9 @@ fn list_use_cases_for_actor(id: &str) -> Result<()> {
             .scenarios
             .iter()
             .filter(|s| {
-                s.steps.iter().any(|step| {
-                    step.acting_actor() == id || (step.receiving_actor() == Some(id))
-                })
+                s.steps
+                    .iter()
+                    .any(|step| step.acting_actor() == id || (step.receiving_actor() == Some(id)))
             })
             .collect();
         for scenario in referencing_scenarios {

@@ -86,6 +86,7 @@ impl ScenarioController {
         description: Option<String>,
         preconditions: Option<Vec<String>>,
         postconditions: Option<Vec<String>>,
+        primary_actor: String,
     ) -> Result<DisplayResult> {
         // Always create as main scenario with HappyPath type
         let params = crate::core::AddScenarioParams {
@@ -94,7 +95,7 @@ impl ScenarioController {
             description,
             preconditions: preconditions.unwrap_or_default(),
             postconditions: postconditions.unwrap_or_default(),
-            actors: Vec::new(),
+            actors: vec![primary_actor],
         };
         let scenario_id = self.app_service.add_scenario(&use_case_id, params)?;
 
@@ -1352,8 +1353,11 @@ mod tests {
                 use_case_id.clone(),
                 "Test Scenario".to_string(),
                 None,
+                "user".to_string(),
                 None,
+                "user".to_string(),
                 None,
+                "user".to_string(),
             )
             .unwrap();
 
@@ -1391,8 +1395,11 @@ mod tests {
                 use_case_id.clone(),
                 "Test Scenario".to_string(),
                 None,
+                "user".to_string(),
                 None,
+                "user".to_string(),
                 None,
+                "user".to_string(),
             )
             .unwrap();
 
@@ -1470,8 +1477,11 @@ mod tests {
                 use_case_id.clone(),
                 "Test Scenario".to_string(),
                 None,
+                "user".to_string(),
                 None,
+                "user".to_string(),
                 None,
+                "user".to_string(),
             )
             .unwrap();
 
@@ -1515,8 +1525,10 @@ mod tests {
                 use_case_id.clone(),
                 "Test Scenario".to_string(),
                 None,
+                "user".to_string(),
                 Some(vec!["User must be logged in".to_string()]),
                 None,
+                "user".to_string(),
             )
             .unwrap();
 
@@ -1557,7 +1569,9 @@ mod tests {
                 use_case_id.clone(),
                 "Test Scenario".to_string(),
                 None,
+                "user".to_string(),
                 None,
+                "user".to_string(),
                 Some(vec!["Session is created".to_string()]),
             )
             .unwrap();
@@ -1600,7 +1614,9 @@ mod tests {
                 "Original Title".to_string(),
                 Some("Original description".to_string()),
                 None,
+                "user".to_string(),
                 None,
+                "user".to_string(),
             )
             .unwrap();
 
@@ -1641,8 +1657,11 @@ mod tests {
                 use_case_id.clone(),
                 "Test Scenario".to_string(),
                 None,
+                "user".to_string(),
                 None,
+                "user".to_string(),
                 None,
+                "user".to_string(),
             )
             .unwrap();
 
@@ -1676,8 +1695,11 @@ mod tests {
                 use_case_id.clone(),
                 "Test Scenario".to_string(),
                 None,
+                "user".to_string(),
                 None,
+                "user".to_string(),
                 None,
+                "user".to_string(),
             )
             .unwrap();
 
@@ -1714,8 +1736,11 @@ mod tests {
                 use_case_id.clone(),
                 "Test Scenario".to_string(),
                 None,
+                "user".to_string(),
                 None,
+                "user".to_string(),
                 None,
+                "user".to_string(),
             )
             .unwrap();
 
@@ -1761,8 +1786,11 @@ mod tests {
                 use_case_id.clone(),
                 "Test Scenario".to_string(),
                 None,
+                "user".to_string(),
                 None,
+                "user".to_string(),
                 None,
+                "user".to_string(),
             )
             .unwrap();
 
@@ -1802,8 +1830,11 @@ mod tests {
                 use_case_id.clone(),
                 "Test Scenario".to_string(),
                 None,
+                "user".to_string(),
                 None,
+                "user".to_string(),
                 None,
+                "user".to_string(),
             )
             .unwrap();
 
@@ -1856,8 +1887,11 @@ mod tests {
                 use_case_id.clone(),
                 "Test Scenario".to_string(),
                 None,
+                "user".to_string(),
                 None,
+                "user".to_string(),
                 None,
+                "user".to_string(),
             )
             .unwrap();
 
@@ -1909,8 +1943,11 @@ mod tests {
                 use_case_id.clone(),
                 "Test Scenario".to_string(),
                 None,
+                "user".to_string(),
                 None,
+                "user".to_string(),
                 None,
+                "user".to_string(),
             )
             .unwrap();
 
@@ -1981,8 +2018,11 @@ mod tests {
                 use_case_id.clone(),
                 "Main Scenario".to_string(),
                 None,
+                "user".to_string(),
                 None,
+                "user".to_string(),
                 None,
+                "user".to_string(),
             )
             .unwrap();
 
@@ -2053,8 +2093,11 @@ mod tests {
                 use_case_id.clone(),
                 "Test Scenario".to_string(),
                 None,
+                "user".to_string(),
                 None,
+                "user".to_string(),
                 None,
+                "user".to_string(),
             )
             .unwrap();
 
@@ -2118,8 +2161,11 @@ mod tests {
                 use_case_id.clone(),
                 "Test Scenario".to_string(),
                 None,
+                "user".to_string(),
                 None,
+                "user".to_string(),
                 None,
+                "user".to_string(),
             )
             .unwrap();
 
@@ -2194,8 +2240,11 @@ mod tests {
                 use_case_id.clone(),
                 "Test Scenario".to_string(),
                 None,
+                "user".to_string(),
                 None,
+                "user".to_string(),
                 None,
+                "user".to_string(),
             )
             .unwrap();
 
@@ -2257,8 +2306,11 @@ mod tests {
                 use_case_id.clone(),
                 "Test Scenario".to_string(),
                 None,
+                "user".to_string(),
                 None,
+                "user".to_string(),
                 None,
+                "user".to_string(),
             )
             .unwrap();
 
@@ -2326,8 +2378,11 @@ mod tests {
                 use_case_id.clone(),
                 "Test Scenario".to_string(),
                 None,
+                "user".to_string(),
                 None,
+                "user".to_string(),
                 None,
+                "user".to_string(),
             )
             .unwrap();
 
@@ -2401,8 +2456,11 @@ mod tests {
                 use_case_id.clone(),
                 "Valid Scenario".to_string(),
                 None,
+                "user".to_string(),
                 None,
+                "user".to_string(),
                 None,
+                "user".to_string(),
             )
             .unwrap();
 
