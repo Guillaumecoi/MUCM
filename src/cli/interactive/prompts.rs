@@ -35,7 +35,7 @@ use crate::cli::interactive::runner::InteractiveRunner;
 /// * `include_defaults` - Whether to include "User", "System", "Default (Actor)" options
 ///
 /// # Returns
-/// * `Ok(Some(String))` - Selected actor in format "User", "System", or "ref:ID"
+/// * `Ok(Some(String))` - Selected actor ID ("user", "system", or actor/persona ID)
 /// * `Ok(None)` - User selected "Default (Actor)" (no specific actor)
 /// * `Err` - User cancelled or error occurred
 ///
@@ -44,8 +44,34 @@ use crate::cli::interactive::runner::InteractiveRunner;
 /// let actor = select_actor("Select actor for this step:", true)?;
 /// ```
 pub fn select_actor(prompt: &str, include_defaults: bool) -> Result<Option<String>> {
+    use crate::controller::ActorController;
+
     let runner = InteractiveRunner::new();
-    let available_actors = runner.get_available_actors()?;
+    let available_actors_display = runner.get_available_actors()?;
+
+    // Build a mapping of display strings to IDs
+    let actor_controller = ActorController::new()?;
+    let personas = actor_controller.list_personas()?;
+    let system_actors = actor_controller.list_actors(Some(crate::core::ActorType::System))?;
+    let database_actors = actor_controller.list_actors(Some(crate::core::ActorType::Database))?;
+    let external_actors = actor_controller.list_actors(Some(crate::core::ActorType::ExternalService))?;
+
+    let mut display_to_id = std::collections::HashMap::new();
+    
+    // Map personas: display format is "emoji name - function"
+    for p in personas {
+        let emoji = p.extra.get("emoji")
+            .and_then(|v| v.as_str())
+            .unwrap_or("👤");
+        let display = format!("{} {} - {}", emoji, p.name, p.function);
+        display_to_id.insert(display, p.id);
+    }
+    
+    // Map actors: display format is "emoji name - id"
+    for a in system_actors.iter().chain(database_actors.iter()).chain(external_actors.iter()) {
+        let display = format!("{} {} - {}", a.emoji, a.name, a.id);
+        display_to_id.insert(display, a.id.clone());
+    }
 
     let mut all_options = Vec::new();
 
@@ -55,7 +81,7 @@ pub fn select_actor(prompt: &str, include_defaults: bool) -> Result<Option<Strin
         all_options.push("Default (Actor)".to_string());
     }
 
-    all_options.extend(available_actors);
+    all_options.extend(available_actors_display);
 
     let choice = Select::new(prompt, all_options).prompt()?;
 
@@ -64,11 +90,11 @@ pub fn select_actor(prompt: &str, include_defaults: bool) -> Result<Option<Strin
     } else if choice == "User" || choice == "System" {
         Ok(Some(choice.to_lowercase()))
     } else {
-        // Extract ID from "emoji name (id)" format
-        if let Some(id) = parse_actor_id(&choice) {
-            // Return just the ID without "ref:" prefix for new string-based structure
-            Ok(Some(id))
+        // Look up ID from display string
+        if let Some(id) = display_to_id.get(&choice) {
+            Ok(Some(id.clone()))
         } else {
+            // Fallback for any unmatched case
             Ok(Some(choice))
         }
     }
@@ -76,22 +102,6 @@ pub fn select_actor(prompt: &str, include_defaults: bool) -> Result<Option<Strin
 
 /// Parse actor ID from formatted display string
 ///
-/// Extracts the ID from a string in format "emoji name (id)"\
-///
-/// # Arguments
-/// * `formatted_string` - The formatted actor string
-///
-/// # Returns
-/// * `Some(String)` - Extracted actor ID
-/// * `None` - Parsing failed
-pub fn parse_actor_id(formatted_string: &str) -> Option<String> {
-    formatted_string
-        .split('(')
-        .nth(1)
-        .and_then(|s| s.strip_suffix(')'))
-        .map(|s| s.to_string())
-}
-
 /// Select methodology and level
 ///
 /// Two-step selection: first methodology (with description), then level (with description).
@@ -428,33 +438,11 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_parse_actor_id() {
-        assert_eq!(
-            parse_actor_id("👤 John Doe (user-123)"),
-            Some("user-123".to_string())
-        );
-        assert_eq!(
-            parse_actor_id("🤖 API Service (api-service)"),
-            Some("api-service".to_string())
-        );
-        assert_eq!(parse_actor_id("invalid"), None);
-        assert_eq!(parse_actor_id("no parentheses"), None);
-    }
-
-    #[test]
     fn test_capitalize_first() {
         assert_eq!(capitalize_first("hello"), "Hello");
         assert_eq!(capitalize_first("world"), "World");
         assert_eq!(capitalize_first("HELLO"), "HELLO");
         assert_eq!(capitalize_first("h"), "H");
         assert_eq!(capitalize_first(""), "");
-    }
-
-    #[test]
-    fn test_parse_actor_id_edge_cases() {
-        assert_eq!(parse_actor_id("(empty)"), Some("empty".to_string()));
-        assert_eq!(parse_actor_id("("), None);
-        assert_eq!(parse_actor_id(")"), None);
-        assert_eq!(parse_actor_id(""), None);
     }
 }

@@ -495,7 +495,7 @@ impl InteractiveRunner {
 
         let actor_controller = ActorController::new()?;
 
-        // Get personas
+        // Get personas - show function/role instead of ID
         let personas = actor_controller.list_personas()?;
         let mut actors: Vec<String> = personas
             .iter()
@@ -504,17 +504,31 @@ impl InteractiveRunner {
                     .extra
                     .get("emoji")
                     .and_then(|v| v.as_str())
-                    .unwrap_or("🙂");
-                format!("{} {} ({})", emoji, p.name, p.id)
+                    .unwrap_or("👤");  // Better default emoji for personas
+                format!("{} {} - {}", emoji, p.name, p.function)
             })
             .collect();
 
-        // Get system actors only (not personas)
+        // Get all system actors (System, Database, ExternalService)
         let system_actors = actor_controller.list_actors(Some(crate::core::ActorType::System))?;
         actors.extend(
             system_actors
                 .iter()
-                .map(|a| format!("{} {} ({})", a.emoji, a.name, a.id)),
+                .map(|a| format!("{} {} - {}", a.emoji, a.name, a.id)),
+        );
+
+        let database_actors = actor_controller.list_actors(Some(crate::core::ActorType::Database))?;
+        actors.extend(
+            database_actors
+                .iter()
+                .map(|a| format!("{} {} - {}", a.emoji, a.name, a.id)),
+        );
+
+        let external_actors = actor_controller.list_actors(Some(crate::core::ActorType::ExternalService))?;
+        actors.extend(
+            external_actors
+                .iter()
+                .map(|a| format!("{} {} - {}", a.emoji, a.name, a.id)),
         );
 
         Ok(actors)
