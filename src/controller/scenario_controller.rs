@@ -1353,9 +1353,7 @@ mod tests {
                 use_case_id.clone(),
                 "Test Scenario".to_string(),
                 None,
-                "user".to_string(),
                 None,
-                "user".to_string(),
                 None,
                 "user".to_string(),
             )
@@ -1395,9 +1393,7 @@ mod tests {
                 use_case_id.clone(),
                 "Test Scenario".to_string(),
                 None,
-                "user".to_string(),
                 None,
-                "user".to_string(),
                 None,
                 "user".to_string(),
             )
@@ -1477,9 +1473,7 @@ mod tests {
                 use_case_id.clone(),
                 "Test Scenario".to_string(),
                 None,
-                "user".to_string(),
                 None,
-                "user".to_string(),
                 None,
                 "user".to_string(),
             )
@@ -1525,7 +1519,6 @@ mod tests {
                 use_case_id.clone(),
                 "Test Scenario".to_string(),
                 None,
-                "user".to_string(),
                 Some(vec!["User must be logged in".to_string()]),
                 None,
                 "user".to_string(),
@@ -1569,10 +1562,9 @@ mod tests {
                 use_case_id.clone(),
                 "Test Scenario".to_string(),
                 None,
-                "user".to_string(),
                 None,
-                "user".to_string(),
                 Some(vec!["Session is created".to_string()]),
+                "user".to_string(),
             )
             .unwrap();
 
@@ -1614,7 +1606,6 @@ mod tests {
                 "Original Title".to_string(),
                 Some("Original description".to_string()),
                 None,
-                "user".to_string(),
                 None,
                 "user".to_string(),
             )
@@ -1657,9 +1648,7 @@ mod tests {
                 use_case_id.clone(),
                 "Test Scenario".to_string(),
                 None,
-                "user".to_string(),
                 None,
-                "user".to_string(),
                 None,
                 "user".to_string(),
             )
@@ -1695,9 +1684,7 @@ mod tests {
                 use_case_id.clone(),
                 "Test Scenario".to_string(),
                 None,
-                "user".to_string(),
                 None,
-                "user".to_string(),
                 None,
                 "user".to_string(),
             )
@@ -1736,9 +1723,7 @@ mod tests {
                 use_case_id.clone(),
                 "Test Scenario".to_string(),
                 None,
-                "user".to_string(),
                 None,
-                "user".to_string(),
                 None,
                 "user".to_string(),
             )
@@ -1786,9 +1771,7 @@ mod tests {
                 use_case_id.clone(),
                 "Test Scenario".to_string(),
                 None,
-                "user".to_string(),
                 None,
-                "user".to_string(),
                 None,
                 "user".to_string(),
             )
@@ -1830,9 +1813,7 @@ mod tests {
                 use_case_id.clone(),
                 "Test Scenario".to_string(),
                 None,
-                "user".to_string(),
                 None,
-                "user".to_string(),
                 None,
                 "user".to_string(),
             )
@@ -1887,9 +1868,7 @@ mod tests {
                 use_case_id.clone(),
                 "Test Scenario".to_string(),
                 None,
-                "user".to_string(),
                 None,
-                "user".to_string(),
                 None,
                 "user".to_string(),
             )
@@ -1943,9 +1922,7 @@ mod tests {
                 use_case_id.clone(),
                 "Test Scenario".to_string(),
                 None,
-                "user".to_string(),
                 None,
-                "user".to_string(),
                 None,
                 "user".to_string(),
             )
@@ -2018,9 +1995,7 @@ mod tests {
                 use_case_id.clone(),
                 "Main Scenario".to_string(),
                 None,
-                "user".to_string(),
                 None,
-                "user".to_string(),
                 None,
                 "user".to_string(),
             )
@@ -2093,9 +2068,7 @@ mod tests {
                 use_case_id.clone(),
                 "Test Scenario".to_string(),
                 None,
-                "user".to_string(),
                 None,
-                "user".to_string(),
                 None,
                 "user".to_string(),
             )
@@ -2161,9 +2134,7 @@ mod tests {
                 use_case_id.clone(),
                 "Test Scenario".to_string(),
                 None,
-                "user".to_string(),
                 None,
-                "user".to_string(),
                 None,
                 "user".to_string(),
             )
@@ -2240,9 +2211,7 @@ mod tests {
                 use_case_id.clone(),
                 "Test Scenario".to_string(),
                 None,
-                "user".to_string(),
                 None,
-                "user".to_string(),
                 None,
                 "user".to_string(),
             )
@@ -2306,9 +2275,7 @@ mod tests {
                 use_case_id.clone(),
                 "Test Scenario".to_string(),
                 None,
-                "user".to_string(),
                 None,
-                "user".to_string(),
                 None,
                 "user".to_string(),
             )
@@ -2378,9 +2345,7 @@ mod tests {
                 use_case_id.clone(),
                 "Test Scenario".to_string(),
                 None,
-                "user".to_string(),
                 None,
-                "user".to_string(),
                 None,
                 "user".to_string(),
             )
@@ -2456,9 +2421,7 @@ mod tests {
                 use_case_id.clone(),
                 "Valid Scenario".to_string(),
                 None,
-                "user".to_string(),
                 None,
-                "user".to_string(),
                 None,
                 "user".to_string(),
             )
