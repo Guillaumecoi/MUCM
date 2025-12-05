@@ -603,11 +603,11 @@ impl UseCaseCoordinator {
             &self.scenario_creator,
         );
 
-        // Use first actor as primary actor, default to User if none provided
+        // Use first actor as primary actor, default to "user" if none provided
         let primary_actor = if let Some(first_actor) = params.actors.first() {
-            first_actor.clone().into()
+            first_actor.clone()
         } else {
-            crate::core::domain::Actor::User
+            "user".to_string()
         };
 
         let scenario_params = ScenarioParams {
