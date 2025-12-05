@@ -3,7 +3,7 @@
 //! Manages scenario operations within use cases including CRUD operations,
 //! step management, references, and persona assignments.
 
-use crate::controller::DisplayResult;
+use crate::controller::{DisplayMessage, DisplayResult};
 use crate::core::{ScenarioType, Status, UseCaseCoordinator};
 use anyhow::Result;
 use std::collections::HashMap;
@@ -102,9 +102,10 @@ impl ScenarioController {
         // Regenerate markdown to reflect the new scenario
         self.app_service.regenerate_markdown(&use_case_id)?;
 
-        Ok(DisplayResult::success(format!(
-            "✅ Created main scenario: {} - {}",
-            scenario_id, title
+        Ok(DisplayResult::success(DisplayMessage::created(
+            "main scenario",
+            &scenario_id,
+            &title,
         )))
     }
 
@@ -153,9 +154,10 @@ impl ScenarioController {
         // Regenerate markdown to reflect the new scenario
         self.app_service.regenerate_markdown(&use_case_id)?;
 
-        Ok(DisplayResult::success(format!(
-            "✅ Created scenario: {} - {}",
-            scenario_id, title
+        Ok(DisplayResult::success(DisplayMessage::created(
+            "scenario",
+            &scenario_id,
+            &title,
         )))
     }
 
@@ -206,10 +208,7 @@ impl ScenarioController {
         // Regenerate markdown to reflect changes
         self.app_service.regenerate_markdown(&use_case_id)?;
 
-        Ok(DisplayResult::success(format!(
-            "✅ Updated scenario: {}",
-            scenario_id
-        )))
+        Ok(DisplayResult::success(DisplayMessage::updated("scenario", &scenario_id)))
     }
 
     /// Delete a scenario from a use case
@@ -231,10 +230,7 @@ impl ScenarioController {
         // Regenerate markdown to reflect the deletion
         self.app_service.regenerate_markdown(&use_case_id)?;
 
-        Ok(DisplayResult::success(format!(
-            "✅ Deleted scenario: {}",
-            scenario_id
-        )))
+        Ok(DisplayResult::success(DisplayMessage::deleted("scenario", &scenario_id)))
     }
 
     /// List all scenarios for a use case
@@ -501,9 +497,9 @@ impl ScenarioController {
         // Regenerate markdown to reflect persona assignment
         self.app_service.regenerate_markdown(&use_case_id)?;
 
-        Ok(DisplayResult::success(format!(
-            "✅ Assigned persona {} to scenario {}",
-            persona_id, scenario_id
+        Ok(DisplayResult::success(DisplayMessage::added(
+            &format!("persona {}", persona_id),
+            &format!("scenario {}", scenario_id),
         )))
     }
 
@@ -553,9 +549,9 @@ impl ScenarioController {
         // Regenerate markdown to reflect new reference
         self.app_service.regenerate_markdown(&use_case_id)?;
 
-        Ok(DisplayResult::success(format!(
-            "✅ Added reference to scenario {}",
-            scenario_id
+        Ok(DisplayResult::success(DisplayMessage::added(
+            "reference",
+            &format!("scenario {}", scenario_id),
         )))
     }
 
@@ -639,9 +635,9 @@ impl ScenarioController {
         self.app_service.save_use_case(&use_case)?;
         self.app_service.regenerate_markdown(&use_case_id)?;
 
-        Ok(DisplayResult::success(format!(
-            "✅ Added precondition to scenario {}",
-            scenario_id
+        Ok(DisplayResult::success(DisplayMessage::added(
+            "precondition",
+            &format!("scenario {}", scenario_id),
         )))
     }
 
@@ -763,9 +759,9 @@ impl ScenarioController {
         self.app_service.save_use_case(&use_case)?;
         self.app_service.regenerate_markdown(&use_case_id)?;
 
-        Ok(DisplayResult::success(format!(
-            "✅ Added postcondition to scenario {}",
-            scenario_id
+        Ok(DisplayResult::success(DisplayMessage::added(
+            "postcondition",
+            &format!("scenario {}", scenario_id),
         )))
     }
 

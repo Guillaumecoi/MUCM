@@ -22,6 +22,7 @@
 
 use crate::config::Config;
 use crate::controller::dto::{DisplayResult, SelectionOptions};
+use crate::controller::{DisplayMessage, ResultExt};
 use crate::core::{
     ReferenceType, ScenarioReference, ScenarioType, Status, UseCase, UseCaseCoordinator,
 };
@@ -309,16 +310,12 @@ impl UseCaseController {
         use_case_id: String,
         precondition: String,
     ) -> Result<DisplayResult> {
-        match self
-            .app_service
+        self.app_service
             .add_precondition(&use_case_id, precondition)
-        {
-            Ok(_) => Ok(DisplayResult::success(format!(
-                "Added precondition to use case: {}",
-                use_case_id
-            ))),
-            Err(e) => Ok(DisplayResult::error(e.to_string())),
-        }
+            .to_display(DisplayMessage::added(
+                "precondition",
+                &format!("use case {}", use_case_id),
+            ))
     }
 
     /// List preconditions for a use case.
@@ -368,13 +365,12 @@ impl UseCaseController {
         use_case_id: String,
         index: usize,
     ) -> Result<DisplayResult> {
-        match self.app_service.remove_precondition(&use_case_id, index) {
-            Ok(_) => Ok(DisplayResult::success(format!(
-                "Removed precondition {} from use case: {}",
+        self.app_service
+            .remove_precondition(&use_case_id, index)
+            .to_display(format!(
+                "✅ Removed precondition {} from use case: {}",
                 index, use_case_id
-            ))),
-            Err(e) => Ok(DisplayResult::error(e.to_string())),
-        }
+            ))
     }
 
     /// Edit a precondition in a use case.
@@ -397,16 +393,12 @@ impl UseCaseController {
         index: usize,
         new_text: String,
     ) -> Result<DisplayResult> {
-        match self
-            .app_service
+        self.app_service
             .edit_precondition(&use_case_id, index, new_text)
-        {
-            Ok(_) => Ok(DisplayResult::success(format!(
-                "Updated precondition {} in use case: {}",
+            .to_display(format!(
+                "✅ Updated precondition {} in use case: {}",
                 index, use_case_id
-            ))),
-            Err(e) => Ok(DisplayResult::error(e.to_string())),
-        }
+            ))
     }
 
     /// Reorder preconditions in a use case.
@@ -429,16 +421,12 @@ impl UseCaseController {
         from_index: usize,
         to_index: usize,
     ) -> Result<DisplayResult> {
-        match self
-            .app_service
+        self.app_service
             .reorder_preconditions(&use_case_id, from_index, to_index)
-        {
-            Ok(_) => Ok(DisplayResult::success(format!(
-                "Reordered preconditions in use case: {}",
+            .to_display(format!(
+                "✅ Reordered preconditions in use case: {}",
                 use_case_id
-            ))),
-            Err(e) => Ok(DisplayResult::error(e.to_string())),
-        }
+            ))
     }
 
     /// Clear all preconditions from a use case.
@@ -454,13 +442,12 @@ impl UseCaseController {
     /// # Errors
     /// Returns error if use case not found
     pub fn clear_preconditions(&mut self, use_case_id: String) -> Result<DisplayResult> {
-        match self.app_service.clear_preconditions(&use_case_id) {
-            Ok(_) => Ok(DisplayResult::success(format!(
-                "Cleared all preconditions from use case: {}",
+        self.app_service
+            .clear_preconditions(&use_case_id)
+            .to_display(format!(
+                "✅ Cleared all preconditions from use case: {}",
                 use_case_id
-            ))),
-            Err(e) => Ok(DisplayResult::error(e.to_string())),
-        }
+            ))
     }
 
     /// Add a postcondition to a use case.
@@ -481,16 +468,12 @@ impl UseCaseController {
         use_case_id: String,
         postcondition: String,
     ) -> Result<DisplayResult> {
-        match self
-            .app_service
+        self.app_service
             .add_postcondition(&use_case_id, postcondition)
-        {
-            Ok(_) => Ok(DisplayResult::success(format!(
-                "Added postcondition to use case: {}",
-                use_case_id
-            ))),
-            Err(e) => Ok(DisplayResult::error(e.to_string())),
-        }
+            .to_display(DisplayMessage::added(
+                "postcondition",
+                &format!("use case {}", use_case_id),
+            ))
     }
 
     /// List postconditions for a use case.
@@ -540,13 +523,12 @@ impl UseCaseController {
         use_case_id: String,
         index: usize,
     ) -> Result<DisplayResult> {
-        match self.app_service.remove_postcondition(&use_case_id, index) {
-            Ok(_) => Ok(DisplayResult::success(format!(
-                "Removed postcondition {} from use case: {}",
+        self.app_service
+            .remove_postcondition(&use_case_id, index)
+            .to_display(format!(
+                "✅ Removed postcondition {} from use case: {}",
                 index, use_case_id
-            ))),
-            Err(e) => Ok(DisplayResult::error(e.to_string())),
-        }
+            ))
     }
 
     /// Edit a postcondition in a use case.
@@ -569,16 +551,12 @@ impl UseCaseController {
         index: usize,
         new_text: String,
     ) -> Result<DisplayResult> {
-        match self
-            .app_service
+        self.app_service
             .edit_postcondition(&use_case_id, index, new_text)
-        {
-            Ok(_) => Ok(DisplayResult::success(format!(
-                "Updated postcondition {} in use case: {}",
+            .to_display(format!(
+                "✅ Updated postcondition {} in use case: {}",
                 index, use_case_id
-            ))),
-            Err(e) => Ok(DisplayResult::error(e.to_string())),
-        }
+            ))
     }
 
     /// Reorder postconditions in a use case.
@@ -601,16 +579,12 @@ impl UseCaseController {
         from_index: usize,
         to_index: usize,
     ) -> Result<DisplayResult> {
-        match self
-            .app_service
+        self.app_service
             .reorder_postconditions(&use_case_id, from_index, to_index)
-        {
-            Ok(_) => Ok(DisplayResult::success(format!(
-                "Reordered postconditions in use case: {}",
+            .to_display(format!(
+                "✅ Reordered postconditions in use case: {}",
                 use_case_id
-            ))),
-            Err(e) => Ok(DisplayResult::error(e.to_string())),
-        }
+            ))
     }
 
     /// Clear all postconditions from a use case.
@@ -626,13 +600,12 @@ impl UseCaseController {
     /// # Errors
     /// Returns error if use case not found
     pub fn clear_postconditions(&mut self, use_case_id: String) -> Result<DisplayResult> {
-        match self.app_service.clear_postconditions(&use_case_id) {
-            Ok(_) => Ok(DisplayResult::success(format!(
-                "Cleared all postconditions from use case: {}",
+        self.app_service
+            .clear_postconditions(&use_case_id)
+            .to_display(format!(
+                "✅ Cleared all postconditions from use case: {}",
                 use_case_id
-            ))),
-            Err(e) => Ok(DisplayResult::error(e.to_string())),
-        }
+            ))
     }
 
     /// Add a reference to a use case.
@@ -657,16 +630,12 @@ impl UseCaseController {
         relationship: String,
         description: Option<String>,
     ) -> Result<DisplayResult> {
-        match self
-            .app_service
+        self.app_service
             .add_reference(&use_case_id, target_id, relationship, description)
-        {
-            Ok(_) => Ok(DisplayResult::success(format!(
-                "Added reference to use case: {}",
-                use_case_id
-            ))),
-            Err(e) => Ok(DisplayResult::error(e.to_string())),
-        }
+            .to_display(DisplayMessage::added(
+                "reference",
+                &format!("use case {}", use_case_id),
+            ))
     }
 
     /// List references for a use case.

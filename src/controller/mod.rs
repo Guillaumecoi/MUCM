@@ -28,6 +28,7 @@ mod actor_controller;
 mod category_controller;
 pub mod dto;
 mod project_controller;
+mod result_ext;
 mod scenario_controller;
 mod use_case_controller;
 
@@ -38,6 +39,7 @@ mod tests;
 pub use actor_controller::{ActorController, PersonaController};
 pub use category_controller::CategoryController;
 pub use project_controller::{InitProjectParams, ProjectController};
+pub use result_ext::{DisplayMessage, ResultExt};
 pub use scenario_controller::{
     CreateExtensionParams, CreateScenarioParams, InsertStepParams, ScenarioController,
 };
