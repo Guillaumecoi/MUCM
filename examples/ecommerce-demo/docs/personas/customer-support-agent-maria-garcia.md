@@ -3,18 +3,22 @@
 **ID:** `customer-support-agent-maria-garcia`  
 **Type:** Persona
 
-## Persona Details
+## Background
+Customer support agent handling inquiries, order issues, and refunds. Works with ticketing system and has limited access to backend systems.
 
-**Background:** Customer support agent handling inquiries, order issues, and refunds. Works with ticketing system and has limited access to backend systems.
+## Job Role
+Customer Support Representative
 
-**Role:** Customer Support Representative
+## Education
+Associate&#x27;s Degree
 
-**Education:** Associate&#x27;s Degree
+## Technical Experience
+Low
 
-**Technical Experience:** Low
+## Motivation for Product
+Resolve customer issues quickly, access order information, process returns
 
-**Motivation:** Resolve customer issues quickly, access order information, process returns
 
 ---
-*Created: 2025-12-02T19:21:49.654345981+00:00*  
-*Last Updated: 2025-12-02T19:21:49.654345981+00:00*
+*Created: 02/12/2025*  
+*Last Updated: 02/12/2025*

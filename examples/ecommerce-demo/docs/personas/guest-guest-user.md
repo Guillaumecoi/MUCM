@@ -3,14 +3,22 @@
 **ID:** `guest-guest-user`  
 **Type:** Persona
 
-## Persona Details
+## Background
+*Not specified*
 
+## Job Role
+*Not specified*
 
+## Education
+*Not specified*
 
+## Technical Experience
+*Not specified*
 
+## Motivation for Product
+Look around without commitment
 
-**Motivation:** Look around without commitment
 
 ---
-*Created: 2025-12-01T19:31:47.965822441+00:00*  
-*Last Updated: 2025-12-01T19:31:47.965822441+00:00*
+*Created: 01/12/2025*  
+*Last Updated: 01/12/2025*

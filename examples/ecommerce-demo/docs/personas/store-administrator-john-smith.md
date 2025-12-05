@@ -3,18 +3,22 @@
 **ID:** `store-administrator-john-smith`  
 **Type:** Persona
 
-## Persona Details
+## Background
+Store manager with 5 years e-commerce experience. Manages product catalog, monitors orders, and handles business operations. Technical background in retail management.
 
-**Background:** Store manager with 5 years e-commerce experience. Manages product catalog, monitors orders, and handles business operations. Technical background in retail management.
+## Job Role
+Store Manager
 
-**Role:** Store Manager
+## Education
+Bachelor&#x27;s in Business Administration
 
-**Education:** Bachelor&#x27;s in Business Administration
+## Technical Experience
+High
 
-**Technical Experience:** High
+## Motivation for Product
+Manage inventory efficiently, monitor sales metrics, handle exceptional cases
 
-**Motivation:** Manage inventory efficiently, monitor sales metrics, handle exceptional cases
 
 ---
-*Created: 2025-12-02T19:21:23.617535387+00:00*  
-*Last Updated: 2025-12-02T19:21:23.617535387+00:00*
+*Created: 02/12/2025*  
+*Last Updated: 02/12/2025*

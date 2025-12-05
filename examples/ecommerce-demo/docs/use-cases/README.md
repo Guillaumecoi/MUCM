@@ -1,7 +1,7 @@
 # Use Cases Overview
 
 **Project:** My Project  
-**Generated:** 2025-12-03
+**Generated:** 2025-12-05
 
 ## Summary
 - **Total Use Cases:** 1
@@ -9,7 +9,7 @@
 
 
 ## Categories
-- [object]
+- Authentication
 
 ## Use Cases
 ### Authentication
