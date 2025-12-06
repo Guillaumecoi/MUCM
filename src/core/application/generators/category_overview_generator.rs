@@ -149,7 +149,7 @@ mod tests {
         let generator = CategoryOverviewGenerator::new(config);
 
         let category = Category::new("Authentication".to_string(), "AUT".to_string()).unwrap();
-        let use_cases = vec![
+        let use_cases = [
             create_test_use_case("AUT-001", "Authentication", "User Login"),
             create_test_use_case("AUT-002", "Authentication", "Password Reset"),
         ];
@@ -215,7 +215,7 @@ mod tests {
         let generator = CategoryOverviewGenerator::new(config);
 
         let category = Category::new("Authentication".to_string(), "AUT".to_string()).unwrap();
-        let use_cases = vec![create_test_use_case(
+        let use_cases = [create_test_use_case(
             "AUT-001",
             "Authentication",
             "User Login",
@@ -253,7 +253,7 @@ mod tests {
         let generator = CategoryOverviewGenerator::new(config);
 
         let category = Category::new("Payment".to_string(), "PAY".to_string()).unwrap();
-        let use_cases = vec![
+        let use_cases = [
             create_test_use_case("PAY-001", "Payment", "Process Payment"),
             create_test_use_case("PAY-002", "Payment", "Refund Payment"),
             create_test_use_case("PAY-003", "Payment", "Payment History"),
