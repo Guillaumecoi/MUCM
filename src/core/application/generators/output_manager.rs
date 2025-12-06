@@ -19,7 +19,7 @@ impl OutputManager {
     /// For multi-view use cases, each view gets a descriptive filename like `UC-001-methodology-level.md`.
     pub fn generate_all_filenames(use_case: &UseCase) -> Vec<(String, MethodologyView)> {
         let views: Vec<MethodologyView> = use_case.enabled_views().cloned().collect();
-        
+
         if views.len() == 1 {
             // Single view: use README.md as the canonical filename
             vec![("README.md".to_string(), views[0].clone())]
@@ -62,7 +62,10 @@ mod tests {
         let filenames = OutputManager::generate_all_filenames(&use_case);
 
         assert_eq!(filenames.len(), 1);
-        assert_eq!(filenames[0].0, "README.md", "Single view should use README.md");
+        assert_eq!(
+            filenames[0].0, "README.md",
+            "Single view should use README.md"
+        );
         assert_eq!(filenames[0].1.methodology, "business");
         assert_eq!(filenames[0].1.level, "normal");
     }
@@ -127,6 +130,9 @@ mod tests {
 
         // Should only include the enabled view, which should be README.md since there's only one
         assert_eq!(filenames.len(), 1);
-        assert_eq!(filenames[0].0, "README.md", "Single enabled view should use README.md");
+        assert_eq!(
+            filenames[0].0, "README.md",
+            "Single enabled view should use README.md"
+        );
     }
 }

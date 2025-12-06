@@ -519,7 +519,7 @@ Edit the TOML file with various field combinations to test:
 
 ```bash
 mucm regenerate UC-TEST-001
-cat docs/use-cases/test/UC-TEST-001.md
+cat docs/use-cases/test/UC-TEST-001/README.md
 ```
 
 ### 4. Iterate

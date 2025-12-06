@@ -187,7 +187,7 @@ Actor documentation is generated from `source-templates/actor.hbs`:
 - **Personas**: Shows Sommerville fields (background, education, motivation)
 - **System Actors**: Shows description, responsibilities, integration points
 
-Generated markdown files are stored in the `actor_dir` configured in `mucm.toml` (default: `docs/actors/`).
+Generated markdown files are stored in the `actor_dir` configured in `mucm.toml` (default: `docs/personas/`).
 
 ## Configuration
 

@@ -65,14 +65,16 @@ MUCM creates a nice, organized folder structure for you:
 your-project/
 ├── .config/.mucm/
 │   ├── mucm.toml                    # Your settings
-│   └── templates/                   # Templates you can customize
+│   └── template-assets/             # Templates you can customize
 ├── docs/use-cases/
 │   ├── README.md                    # Overview page (auto-generated)
 │   └── security/
-│       └── UC-SEC-001.md           # Your use cases go here
+│       ├── README.md                # Category overview (auto-generated)
+│       └── UC-SEC-001/              # Each use case has its own folder
+│           └── README.md            # Use case documentation
 └── tests/use-cases/
     └── security/
-        └── uc_sec_001.rs           # Test files (if you want them)
+        └── uc_sec_001.rs            # Test files (if you want them)
 ```
 
 ## Working with Actors and Personas

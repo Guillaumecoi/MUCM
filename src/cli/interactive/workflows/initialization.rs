@@ -153,7 +153,7 @@ impl Initialization {
         UI::show_step(
             4,
             "Directory Configuration",
-            "Configure where use cases, tests, personas, and data will be stored.\nPress Enter to use default values.",
+            "Configure where use cases, tests, actors, and data will be stored.\nPress Enter to use default values.",
         )?;
 
         let use_case_dir = inquire::Text::new("Use case directory:")
@@ -167,7 +167,7 @@ impl Initialization {
             .prompt()?;
 
         let persona_dir = inquire::Text::new("Persona directory:")
-            .with_default("docs/personas")
+            .with_default("docs/actors")
             .with_help_message("Where persona markdown files will be stored")
             .prompt()?;
 

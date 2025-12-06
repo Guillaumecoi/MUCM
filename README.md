@@ -157,9 +157,12 @@ docs/
 ├── use-cases/
 │   ├── README.md                             # Auto-generated overview
 │   └── security/
-|       ├── UC-SEC-001-feature-normal.md      # Clean markdown documentation
-│       └── UC-SEC-001-developer-normal.md    # Support multiple methodologies outputs per use case
-├── actors/
+│       ├── README.md                         # Category overview (auto-generated)
+│       └── UC-SEC-001/                       # Each use case has its own folder
+│           ├── README.md                     # Main documentation (single view)
+│           ├── UC-SEC-001-feature-normal.md  # Or multiple methodology views
+│           └── UC-SEC-001-developer-normal.md
+├── personas/
 │   ├── admin-user.md                         # Persona documentation
 │   └── auth-service.md                       # System actor documentation
 

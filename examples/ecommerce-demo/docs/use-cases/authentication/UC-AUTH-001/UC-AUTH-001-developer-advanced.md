@@ -55,9 +55,9 @@ Allow new users to create an account on the e-commerce platform by providing ema
 
 ## UC-AUTH-001-S01 - Successful User Registration
 
-**Primary Actor:** [Guest User](../../../personas/guest-guest-user.md)
+**Primary Actor:** [Guest User](../../../actors/guest-guest-user.md)
 
-**Supporting Actors:** [Database](../../../personas/database.md), [E-commerce Platform](../../../personas/e-commerce-platform.md), [Cache](../../../personas/cache.md), [Email Service](../../../personas/email-service.md)
+**Supporting Actors:** [Database](../../../actors/database.md), [E-commerce Platform](../../../actors/e-commerce-platform.md), [Cache](../../../actors/cache.md), [Email Service](../../../actors/email-service.md)
 
 ```mermaid
 sequenceDiagram

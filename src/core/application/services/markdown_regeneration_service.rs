@@ -60,9 +60,9 @@ impl<'a> MarkdownRegenerationService<'a> {
         // Regenerate markdown for all enabled views using OutputManager for consistent naming
         let filenames = OutputManager::generate_all_filenames(&use_case);
         for (filename, view) in filenames {
-            let markdown_content = self
-                .markdown_generator
-                .generate(&use_case, None, Some(&view))?;
+            let markdown_content =
+                self.markdown_generator
+                    .generate(&use_case, None, Some(&view))?;
             self.repository
                 .save_markdown_with_filename(&use_case, &filename, &markdown_content)?;
         }
@@ -87,9 +87,9 @@ impl<'a> MarkdownRegenerationService<'a> {
         // Generate markdown for each enabled view using OutputManager for consistent naming
         let filenames = OutputManager::generate_all_filenames(&use_case);
         for (filename, view) in filenames {
-            let markdown_content = self
-                .markdown_generator
-                .generate(&use_case, None, Some(&view))?;
+            let markdown_content =
+                self.markdown_generator
+                    .generate(&use_case, None, Some(&view))?;
             self.repository
                 .save_markdown_with_filename(&use_case, &filename, &markdown_content)?;
         }
