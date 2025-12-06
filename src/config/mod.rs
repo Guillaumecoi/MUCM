@@ -1133,13 +1133,13 @@ mod tests {
         )?;
 
         let filename = format!(
-            "docs/custom-use-cases/integration/UC-INT-001-{}-normal.md",
+            "docs/custom-use-cases/integration/UC-INT-001/UC-INT-001-{}-normal.md",
             default_methodology
         );
         let custom_use_case_file = Path::new(&filename);
         assert!(
             custom_use_case_file.exists(),
-            "Use case should be created in custom directory"
+            "Use case should be created in custom directory with new folder structure"
         );
 
         let final_config = Config::load()?;

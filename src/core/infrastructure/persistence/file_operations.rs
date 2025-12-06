@@ -40,9 +40,21 @@ impl FileOperations {
 
     /// Save overview file
     pub fn save_overview(&self, content: &str) -> Result<()> {
-        let overview_path = Path::new(&self.config.directories.use_case_dir).join("README.md");
+        let use_case_dir = Path::new(&self.config.directories.use_case_dir);
+        fs::create_dir_all(use_case_dir)?;
+        let overview_path = use_case_dir.join("README.md");
         fs::write(&overview_path, content)?;
         println!("Generated overview at: {}", overview_path.display());
+        Ok(())
+    }
+
+    /// Save category overview file
+    pub fn save_category_overview(&self, category_path: &str, content: &str) -> Result<()> {
+        let category_dir = Path::new(&self.config.directories.use_case_dir).join(category_path);
+        fs::create_dir_all(&category_dir)?;
+        let readme_path = category_dir.join("README.md");
+        fs::write(&readme_path, content)?;
+        println!("Generated category overview at: {}", readme_path.display());
         Ok(())
     }
 

@@ -112,6 +112,38 @@ Total Use Cases: {{total_use_cases}}
             handlebars.register_template_string("overview", default_overview_template)?;
         }
 
+        // Register category overview template
+        let category_overview_path = if user_templates_path.parent().is_some()
+            && user_templates_path.parent().unwrap().exists()
+        {
+            user_templates_path
+                .parent()
+                .unwrap()
+                .join("category_overview.hbs")
+        } else {
+            Path::new("source-templates/category_overview.hbs").to_path_buf()
+        };
+        if category_overview_path.exists() {
+            let template = fs::read_to_string(category_overview_path)?;
+            handlebars.register_template_string("category_overview", template)?;
+        }
+
+        // Register use case overview template (multi-view README)
+        let use_case_overview_path = if user_templates_path.parent().is_some()
+            && user_templates_path.parent().unwrap().exists()
+        {
+            user_templates_path
+                .parent()
+                .unwrap()
+                .join("use_case_overview.hbs")
+        } else {
+            Path::new("source-templates/use_case_overview.hbs").to_path_buf()
+        };
+        if use_case_overview_path.exists() {
+            let template = fs::read_to_string(use_case_overview_path)?;
+            handlebars.register_template_string("use_case_overview", template)?;
+        }
+
         // Register language test templates using LanguageRegistry
         let mut test_templates = HashMap::new();
 
@@ -231,6 +263,20 @@ Generated at: {{generated_at}}
             .borrow()
             .render("overview", data)
             .context("Failed to render overview template")
+    }
+
+    pub fn render_category_overview(&self, data: &HashMap<String, Value>) -> Result<String> {
+        self.handlebars
+            .borrow()
+            .render("category_overview", data)
+            .context("Failed to render category overview template")
+    }
+
+    pub fn render_use_case_overview(&self, data: &HashMap<String, Value>) -> Result<String> {
+        self.handlebars
+            .borrow()
+            .render("use_case_overview", data)
+            .context("Failed to render use case overview template")
     }
 
     /// Render use case with specific template

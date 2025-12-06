@@ -85,7 +85,7 @@ fn read_toml_file(temp_dir: &TempDir, use_case_id: &str, category: &str) -> Stri
 }
 
 /// Test helper: Read markdown file content
-/// Files are named UC-XXX-nnn-methodology-level.md (e.g., UC-TES-001-business-normal.md)
+/// New folder structure: {category}/{use-case-id}/{use-case-id}-{methodology}-{level}.md
 fn read_markdown_file(
     temp_dir: &TempDir,
     use_case_id: &str,
@@ -97,6 +97,7 @@ fn read_markdown_file(
         .path()
         .join("docs/use-cases")
         .join(category)
+        .join(use_case_id)
         .join(format!("{}-{}-{}.md", use_case_id, methodology, level));
     fs::read_to_string(md_path).expect("Failed to read markdown file")
 }

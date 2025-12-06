@@ -1805,9 +1805,10 @@ mod tests {
         // so we just verify the TOML file was created successfully
         let _toml_content = fs::read_to_string(&toml_path)?;
 
-        // Verify markdown was generated
+        // Verify markdown was generated (new folder structure)
         let md_path = Path::new(&coordinator.config.directories.use_case_dir)
             .join("testing")
+            .join("UC-TES-001")
             .join("UC-TES-001-feature-normal.md");
         assert!(
             md_path.exists(),
