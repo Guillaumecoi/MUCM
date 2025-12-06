@@ -1840,10 +1840,11 @@ mod tests {
         let _toml_content = fs::read_to_string(&toml_path)?;
 
         // Verify markdown was generated (new folder structure)
+        // Single view should use README.md
         let md_path = Path::new(&coordinator.config.directories.use_case_dir)
             .join("testing")
             .join("UC-TES-001")
-            .join("UC-TES-001-feature-normal.md");
+            .join("README.md");
         assert!(
             md_path.exists(),
             "Markdown file should exist at {:?}",

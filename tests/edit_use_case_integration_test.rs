@@ -90,15 +90,16 @@ fn read_markdown_file(
     temp_dir: &TempDir,
     use_case_id: &str,
     category: &str,
-    methodology: &str,
-    level: &str,
+    _methodology: &str,
+    _level: &str,
 ) -> String {
+    // Single view use cases now use README.md
     let md_path = temp_dir
         .path()
         .join("docs/use-cases")
         .join(category)
         .join(use_case_id)
-        .join(format!("{}-{}-{}.md", use_case_id, methodology, level));
+        .join("README.md");
     fs::read_to_string(md_path).expect("Failed to read markdown file")
 }
 
@@ -489,7 +490,7 @@ fn test_edit_workflow_with_regeneration() {
     let use_case_id = extract_use_case_id(&create_result.message);
 
     // Markdown should be automatically generated on creation
-    // Get initial markdown content - file is UC-TES-001-business-normal.md
+    // Get initial markdown content - file is README.md (single view)
     let initial_md = read_markdown_file(&temp_dir, &use_case_id, "test", "business", "normal");
     assert!(initial_md.contains("Regeneration Test"));
     // Description may be in different sections depending on the template
