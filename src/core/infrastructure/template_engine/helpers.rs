@@ -52,10 +52,30 @@ fn actor_link_helper(
 /// # Returns
 /// Relative path string (e.g., "../../../docs/personas")
 fn calculate_actor_relative_path(use_case_dir: &str, actor_dir: &str) -> String {
-    // Calculate depth: count slashes in use_case_dir, +1 for the dir itself, +1 for category folder, +1 for use case ID folder
-    let use_case_depth = use_case_dir.matches('/').count() + 1 + 1 + 1;
-    let return_path = "../".repeat(use_case_depth);
-    format!("{}{}", return_path, actor_dir)
+    // File is at: {use_case_dir}/{category}/{use-case-id}/file.md
+    // actor_dir is relative from the project root (e.g., "docs/personas")
+    // We need to calculate the relative path from file to actor_dir
+
+    let use_case_parts: Vec<&str> = use_case_dir.split('/').collect();
+    let actor_parts: Vec<&str> = actor_dir.split('/').collect();
+
+    // Find common prefix length
+    let common_len = use_case_parts
+        .iter()
+        .zip(actor_parts.iter())
+        .take_while(|(a, b)| a == b)
+        .count();
+
+    // Go up from use case location to common ancestor
+    // use_case_parts.len() = depth of use_case_dir
+    // +2 for category and use-case-id folders
+    let ups = use_case_parts.len() + 2 - common_len;
+    let up_path = "../".repeat(ups);
+
+    // Go down to actor dir from common ancestor
+    let down_path = actor_parts[common_len..].join("/");
+
+    format!("{}{}", up_path, down_path)
 }
 
 /// Resolve actor ID to markdown link
@@ -763,11 +783,13 @@ mod tests {
         let use_case_dir = "docs/use-cases";
         let actor_dir = "docs/personas";
         let relative_path = calculate_actor_relative_path(use_case_dir, actor_dir);
-        // From docs/use-cases/category/use-case-id/ -> ../../../../ (to root) -> docs/personas
-        // Added extra level for use case ID folder
+        // From docs/use-cases/category/use-case-id/ to docs/personas/
+        // Common prefix: "docs/" (1 part)
+        // Up from use-cases/category/use-case-id: 2 + 2 - 1 = 3 levels
+        // Down to personas: 1 part
         assert_eq!(
-            relative_path, "../../../../docs/personas",
-            "Should go up 4 levels then into docs/personas"
+            relative_path, "../../../personas",
+            "Should go up 3 levels from category/id to common ancestor, then into personas"
         );
     }
 
@@ -791,11 +813,13 @@ mod tests {
         let use_case_dir = "project/docs/use-cases";
         let actor_dir = "project/docs/personas";
         let relative_path = calculate_actor_relative_path(use_case_dir, actor_dir);
-        // From project/docs/use-cases/category/use-case-id/ -> ../../../../../ (to root) -> project/docs/personas
-        // Added extra level for use case ID folder
+        // From project/docs/use-cases/category/use-case-id/ to project/docs/personas/
+        // Common prefix: "project/docs/" (2 parts)
+        // Up from use-cases/category/use-case-id: 3 + 2 - 2 = 3 levels
+        // Down to personas: 1 part
         assert_eq!(
-            relative_path, "../../../../../project/docs/personas",
-            "Should go up 5 levels then into project/docs/personas"
+            relative_path, "../../../personas",
+            "Should go up 3 levels from category/id to common ancestor (project/docs/), then into personas"
         );
     }
 
