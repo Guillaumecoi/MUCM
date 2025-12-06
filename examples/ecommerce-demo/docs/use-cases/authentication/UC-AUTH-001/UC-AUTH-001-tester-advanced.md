@@ -95,3 +95,7 @@ E-commerce Platform->>Guest User: 13. displays 'Account created successfully' an
 ---
 
 **Last Updated:** 05/12/2025
+
+---
+
+**Navigation:** [← Back to Authentication](../README.md) | [← Back to All Use Cases](../../README.md)
