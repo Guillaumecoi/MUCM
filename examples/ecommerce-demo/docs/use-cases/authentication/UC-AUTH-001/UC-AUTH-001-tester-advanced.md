@@ -74,6 +74,42 @@ E-commerce Platform->>Guest User: 13. displays 'Account created successfully' an
 12. **Email Service** → **E-commerce Platform**: confirms email queued
 13. **E-commerce Platform** → **Guest User**: displays &quot;Account created successfully&quot; and redirects to dashboard
 
+## UC-AUTH-001-S02 - Registration with Social Login (Extension)
+
+**Primary Actor:** [Guest User](../../../actors/guest-guest-user.md)
+
+**Supporting Actors:** [E-commerce Platform](../../../actors/e-commerce-platform.md), [Database](../../../actors/database.md), [Cache](../../../actors/cache.md)
+
+**Preconditions:**
+- User must have a valid social account
+
+```mermaid
+sequenceDiagram
+participant Guest User
+Guest User->>E-commerce Platform: 1. selects 'Sign up with Google' (or other social profile)
+E-commerce Platform->>Guest User: 2. redirects to Google OAuth
+Guest User->>E-commerce Platform: 3. authenticates with Google
+E-commerce Platform->>Database: 4. checks email is not already registered
+Database->>E-commerce Platform: 5. returns 'email available'
+E-commerce Platform->>Database: 6. creates new user record marked as OAuth-verified
+Database->>E-commerce Platform: 7. confirms user created
+E-commerce Platform->>Cache: 8. creates session for new user
+Cache->>E-commerce Platform: 9. returns session token
+```
+
+### Steps
+1. **Guest User** → **E-commerce Platform**: selects &quot;Sign up with Google&quot; (or other social profile)
+2. **E-commerce Platform** → **Guest User**: redirects to Google OAuth
+3. **Guest User** → **E-commerce Platform**: authenticates with Google
+4. **E-commerce Platform** → **Database**: checks email is not already registered
+5. **Database** → **E-commerce Platform**: returns &quot;email available&quot;
+6. **E-commerce Platform** → **Database**: creates new user record marked as OAuth-verified
+7. **Database** → **E-commerce Platform**: confirms user created
+8. **E-commerce Platform** → **Cache**: creates session for new user
+9. **Cache** → **E-commerce Platform**: returns session token
+
+*Extends scenario UC-AUTH-001-S01 at step 3*, returns at step 13
+
 ## Test Data Requirements
 10 valid email addresses for testing (test+1@example.com through test+10@example.com), 5 known registered emails for duplicate testing, mock SendGrid API with configurable responses (success, failure, timeout), database with clean state before each test run.
 
@@ -94,7 +130,7 @@ E-commerce Platform->>Guest User: 13. displays 'Account created successfully' an
 
 ---
 
-**Last Updated:** 05/12/2025
+**Last Updated:** 06/12/2025
 
 ---
 

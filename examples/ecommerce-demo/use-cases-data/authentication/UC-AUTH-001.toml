@@ -8,7 +8,7 @@ use_case_references = []
 
 [metadata]
 created_at = "2025-12-03T03:15:46.408167072Z"
-updated_at = "2025-12-05T23:49:57.527037100Z"
+updated_at = "2025-12-06T21:46:10.262670786Z"
 
 [[views]]
 methodology = "developer"
@@ -137,35 +137,91 @@ acting_actor = "e-commerce-platform"
 receiving_actor = "guest-guest-user"
 action = 'displays "Account created successfully" and redirects to dashboard'
 
-[methodology_fields.tester]
-test_data_requirements = "10 valid email addresses for testing (test+1@example.com through test+10@example.com), 5 known registered emails for duplicate testing, mock SendGrid API with configurable responses (success, failure, timeout), database with clean state before each test run."
-automation_status = ""
-performance_baseline = ""
-coverage_areas = [
-    "Input validation (client-side and server-side)",
-    "Database record creation and integrity",
-    "Email delivery and content verification",
-    "Session creation and management",
-    "OAuth registration flows",
-    "Security measures (CSRF, rate limiting, password hashing)",
-    "Accessibility (WCAG 2.1 AA compliance)",
+[[scenarios]]
+id = "UC-AUTH-001-S02"
+title = "Registration with Social Login"
+description = ""
+scenario_type = "alternative_flow"
+status = "planned"
+is_main = false
+primary_actor = "guest-guest-user"
+supporting_actors = [
+    "e-commerce-platform",
+    "database",
+    "cache",
 ]
-regression_suites = []
-test_priority = "P0-Critical"
-test_environments = [
-    "Staging environment with email service integration",
-    "Database with clean state before each test run",
-    "Mock OAuth providers for social registration tests",
-    "Various browsers and devices for front-end validation tests",
-]
-test_type = [
-    "e2e",
-    "integration",
-    "security",
-    "accessibility",
-]
+extends_scenario_id = "UC-AUTH-001-S01"
+extends_at_step = "3"
+returns_at_step = "13"
+repeat_blocks = []
+postconditions = []
+references = []
+
+[[scenarios.steps]]
+order = "1"
+acting_actor = "guest-guest-user"
+receiving_actor = "e-commerce-platform"
+action = 'selects "Sign up with Google" (or other social profile)'
+
+[[scenarios.steps]]
+order = "2"
+acting_actor = "e-commerce-platform"
+receiving_actor = "guest-guest-user"
+action = "redirects to Google OAuth"
+
+[[scenarios.steps]]
+order = "3"
+acting_actor = "guest-guest-user"
+receiving_actor = "e-commerce-platform"
+action = "authenticates with Google"
+
+[[scenarios.steps]]
+order = "4"
+acting_actor = "e-commerce-platform"
+receiving_actor = "database"
+action = "checks email is not already registered"
+
+[[scenarios.steps]]
+order = "5"
+acting_actor = "database"
+receiving_actor = "e-commerce-platform"
+action = 'returns "email available"'
+
+[[scenarios.steps]]
+order = "6"
+acting_actor = "e-commerce-platform"
+receiving_actor = "database"
+action = "creates new user record marked as OAuth-verified"
+
+[[scenarios.steps]]
+order = "7"
+acting_actor = "database"
+receiving_actor = "e-commerce-platform"
+action = "confirms user created"
+
+[[scenarios.steps]]
+order = "8"
+acting_actor = "e-commerce-platform"
+receiving_actor = "cache"
+action = "creates session for new user"
+
+[[scenarios.steps]]
+order = "9"
+acting_actor = "cache"
+receiving_actor = "e-commerce-platform"
+action = "returns session token"
+
+[[scenarios.preconditions]]
+text = "User must have a valid social account"
 
 [methodology_fields.developer]
+error_scenarios = [
+    "Email already in use: return 409 Conflict",
+    "Weak password: return 400 Bad Request with validation errors",
+    "Invalid email format: return 400 Bad Request",
+    "OAuth provider error: return 502 Bad Gateway",
+    "Database connection failure: return 503 Service Unavailable",
+]
 security_considerations = [
     "HTTPS required for all registration requests",
     "CSRF token validation on form submission",
@@ -176,17 +232,15 @@ security_considerations = [
     "bcrypt password hashing with cost factor 12",
     "Session tokens: 32-byte random, hex-encoded",
 ]
-error_scenarios = [
-    "Email already in use: return 409 Conflict",
-    "Weak password: return 400 Bad Request with validation errors",
-    "Invalid email format: return 400 Bad Request",
-    "OAuth provider error: return 502 Bad Gateway",
-    "Database connection failure: return 503 Service Unavailable",
-]
-performance_requirements = ""
 api_endpoints = [
     "`POST /api/v1/auth/register` - Email/password registration",
     "`POST /api/v1/auth/register/oauth` - OAuth social registration",
+]
+performance_requirements = ""
+database_tables = [
+    "users",
+    "sessions",
+    "email_verifications",
 ]
 technical_dependencies = [
     "PostgreSQL 14+: for user data storage",
@@ -194,8 +248,31 @@ technical_dependencies = [
     "SendGrid API: for email delivery",
     "OAuth providers (Google, Facebook) for social registration",
 ]
-database_tables = [
-    "users",
-    "sessions",
-    "email_verifications",
+
+[methodology_fields.tester]
+regression_suites = []
+test_type = [
+    "e2e",
+    "integration",
+    "security",
+    "accessibility",
+]
+test_data_requirements = "10 valid email addresses for testing (test+1@example.com through test+10@example.com), 5 known registered emails for duplicate testing, mock SendGrid API with configurable responses (success, failure, timeout), database with clean state before each test run."
+test_priority = "P0-Critical"
+performance_baseline = ""
+automation_status = ""
+coverage_areas = [
+    "Input validation (client-side and server-side)",
+    "Database record creation and integrity",
+    "Email delivery and content verification",
+    "Session creation and management",
+    "OAuth registration flows",
+    "Security measures (CSRF, rate limiting, password hashing)",
+    "Accessibility (WCAG 2.1 AA compliance)",
+]
+test_environments = [
+    "Staging environment with email service integration",
+    "Database with clean state before each test run",
+    "Mock OAuth providers for social registration tests",
+    "Various browsers and devices for front-end validation tests",
 ]
