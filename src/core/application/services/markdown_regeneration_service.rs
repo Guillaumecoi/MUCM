@@ -124,7 +124,7 @@ mod tests {
         let multi_view_count = 2;
 
         assert!(
-            !(single_view_count > 1),
+            single_view_count <= 1,
             "Single view (1 view) should not trigger README generation"
         );
         assert!(
@@ -155,10 +155,7 @@ mod tests {
     fn test_step_modifications_trigger_markdown_regeneration_contract() {
         // This is a contract/documentation test
         // Verified by code review of scenario_controller.rs
-        assert!(
-            true,
-            "Contract: All step operations (add, edit, insert, delete) must call regenerate_markdown()"
-        );
+        // Contract: All step operations (add, edit, insert, delete) must call regenerate_markdown()
     }
 
     /// Document the parameterization of extension scenario types
@@ -177,9 +174,6 @@ mod tests {
         //
         // This parameterization allows the workflow layer to capture user intent
         // about the nature of the scenario branch being created.
-        assert!(
-            true,
-            "Contract: scenario_type parameter enables semantic differentiation of scenario branches"
-        );
+        // Contract: scenario_type parameter enables semantic differentiation of scenario branches
     }
 }
