@@ -1,0 +1,201 @@
+id = "UC-AUTH-001"
+title = "User Registration"
+category = "Authentication"
+category_abbreviation = "AUTH"
+description = "Allow new users to create an account on the e-commerce platform by providing email, password, and basic profile information. The system validates input, checks for existing accounts, creates the user record, and sends a verification email."
+priority = "High"
+use_case_references = []
+
+[metadata]
+created_at = "2025-12-03T03:15:46.408167072Z"
+updated_at = "2025-12-05T23:49:57.527037100Z"
+
+[[views]]
+methodology = "developer"
+level = "advanced"
+enabled = true
+
+[[views]]
+methodology = "tester"
+level = "advanced"
+enabled = true
+
+[[preconditions]]
+text = "User must have a valid email address"
+
+[[preconditions]]
+text = "User does not already have an account"
+
+[[postconditions]]
+text = "User account created in database"
+
+[[postconditions]]
+text = "Verification email sent to user's email address"
+
+[[postconditions]]
+text = "User logged in with unverified status"
+
+[[postconditions]]
+text = "Session created and stored in cache"
+
+[[postconditions]]
+text = "User can access basic platform features (but not checkout until verified)"
+
+[[scenarios]]
+id = "UC-AUTH-001-S01"
+title = "Successful User Registration"
+description = ""
+scenario_type = "happy_path"
+status = "deployed"
+is_main = true
+primary_actor = "guest-guest-user"
+supporting_actors = [
+    "database",
+    "e-commerce-platform",
+    "cache",
+    "email-service",
+]
+repeat_blocks = []
+preconditions = []
+postconditions = []
+references = []
+
+[[scenarios.steps]]
+order = "1"
+acting_actor = "guest-guest-user"
+receiving_actor = "e-commerce-platform"
+action = "navigates to registration page"
+
+[[scenarios.steps]]
+order = "2"
+acting_actor = "e-commerce-platform"
+receiving_actor = "guest-guest-user"
+action = "displays registration form"
+
+[[scenarios.steps]]
+order = "3"
+acting_actor = "guest-guest-user"
+receiving_actor = "e-commerce-platform"
+action = "ubmits registration form (email, password, name, ...)"
+
+[[scenarios.steps]]
+order = "4"
+acting_actor = "e-commerce-platform"
+action = "validates email format and password requirements"
+
+[[scenarios.steps]]
+order = "5"
+acting_actor = "e-commerce-platform"
+receiving_actor = "database"
+action = "checks email is not already registered"
+
+[[scenarios.steps]]
+order = "6"
+acting_actor = "database"
+receiving_actor = "e-commerce-platform"
+action = 'returns "email available"'
+
+[[scenarios.steps]]
+order = "7"
+acting_actor = "e-commerce-platform"
+receiving_actor = "database"
+action = "creates new user record with hashed password"
+
+[[scenarios.steps]]
+order = "8"
+acting_actor = "database"
+receiving_actor = "e-commerce-platform"
+action = "confirms user created"
+
+[[scenarios.steps]]
+order = "9"
+acting_actor = "e-commerce-platform"
+receiving_actor = "cache"
+action = "creates session for new user"
+
+[[scenarios.steps]]
+order = "10"
+acting_actor = "cache"
+receiving_actor = "e-commerce-platform"
+action = "returns session token"
+
+[[scenarios.steps]]
+order = "11"
+acting_actor = "e-commerce-platform"
+receiving_actor = "email-service"
+action = "sends verification email request"
+
+[[scenarios.steps]]
+order = "12"
+acting_actor = "email-service"
+receiving_actor = "e-commerce-platform"
+action = "confirms email queued"
+
+[[scenarios.steps]]
+order = "13"
+acting_actor = "e-commerce-platform"
+receiving_actor = "guest-guest-user"
+action = 'displays "Account created successfully" and redirects to dashboard'
+
+[methodology_fields.tester]
+test_data_requirements = "10 valid email addresses for testing (test+1@example.com through test+10@example.com), 5 known registered emails for duplicate testing, mock SendGrid API with configurable responses (success, failure, timeout), database with clean state before each test run."
+automation_status = ""
+performance_baseline = ""
+coverage_areas = [
+    "Input validation (client-side and server-side)",
+    "Database record creation and integrity",
+    "Email delivery and content verification",
+    "Session creation and management",
+    "OAuth registration flows",
+    "Security measures (CSRF, rate limiting, password hashing)",
+    "Accessibility (WCAG 2.1 AA compliance)",
+]
+regression_suites = []
+test_priority = "P0-Critical"
+test_environments = [
+    "Staging environment with email service integration",
+    "Database with clean state before each test run",
+    "Mock OAuth providers for social registration tests",
+    "Various browsers and devices for front-end validation tests",
+]
+test_type = [
+    "e2e",
+    "integration",
+    "security",
+    "accessibility",
+]
+
+[methodology_fields.developer]
+security_considerations = [
+    "HTTPS required for all registration requests",
+    "CSRF token validation on form submission",
+    "Rate limiting to prevent account creation spam",
+    "Password strength enforced on both client and server sides",
+    "Email verification required before checkout",
+    "Block disposable email domains",
+    "bcrypt password hashing with cost factor 12",
+    "Session tokens: 32-byte random, hex-encoded",
+]
+error_scenarios = [
+    "Email already in use: return 409 Conflict",
+    "Weak password: return 400 Bad Request with validation errors",
+    "Invalid email format: return 400 Bad Request",
+    "OAuth provider error: return 502 Bad Gateway",
+    "Database connection failure: return 503 Service Unavailable",
+]
+performance_requirements = ""
+api_endpoints = [
+    "`POST /api/v1/auth/register` - Email/password registration",
+    "`POST /api/v1/auth/register/oauth` - OAuth social registration",
+]
+technical_dependencies = [
+    "PostgreSQL 14+: for user data storage",
+    "Redis 6+: for session management",
+    "SendGrid API: for email delivery",
+    "OAuth providers (Google, Facebook) for social registration",
+]
+database_tables = [
+    "users",
+    "sessions",
+    "email_verifications",
+]

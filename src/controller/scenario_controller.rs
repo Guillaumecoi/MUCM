@@ -300,34 +300,6 @@ impl ScenarioController {
 
     /// Resolve an actor ID to its call name or display name
     ///
-    /// # Arguments
-    /// * `actor_id` - The actor ID to resolve
-    ///
-    /// # Returns
-    /// The actor's call_name, or name, or the ID itself if not found
-    fn resolve_actor_call_name(&self, actor_id: &str) -> String {
-        // Special cases for common actors
-        if actor_id == "user" || actor_id == "system" {
-            return actor_id.to_string();
-        }
-
-        // Try to load actor controller to look up the actor
-        if let Ok(actor_controller) = crate::controller::ActorController::new() {
-            // Try as persona first
-            if let Ok(persona) = actor_controller.get_persona(actor_id) {
-                return persona.get_call_name().to_string();
-            }
-
-            // Try as system actor
-            if let Ok(actor) = actor_controller.get_actor(actor_id) {
-                return actor.get_call_name().to_string();
-            }
-        }
-
-        // Fallback to the ID itself
-        actor_id.to_string()
-    }
-
     /// Add a step to a scenario
     ///
     /// # Arguments
@@ -360,29 +332,30 @@ impl ScenarioController {
         let order_str = order.to_string();
         let actor_str = actor.unwrap_or_else(|| "user".to_string());
 
-        // Resolve actor ID to call name for better readability
-        let actor_call_name = self.resolve_actor_call_name(&actor_str);
-        let receiver_call_name = receiver.as_ref().map(|r| self.resolve_actor_call_name(r));
+        // Keep actor IDs instead of resolving to display names
+        // The actor_link helper will resolve IDs to names during template rendering
+        let actor_id = actor_str.clone();
+        let receiver_id = receiver.clone();
 
         let params = crate::core::AddScenarioStepParams {
             order: order_str,
-            actor: actor_call_name.clone(),
-            receiver: receiver_call_name.clone(),
+            actor: actor_id.clone(),
+            receiver: receiver_id.clone(),
             action: step_description.clone(),
             expected_result: None,
         };
         self.app_service
             .add_scenario_step(&use_case_id, &scenario_id, params)?;
 
-        let message = if let Some(ref recv) = receiver_call_name {
+        let message = if let Some(ref recv) = receiver_id {
             format!(
                 "✅ Added step {} to scenario {} ({} → {})",
-                order, scenario_id, actor_call_name, recv
+                order, scenario_id, actor_id, recv
             )
         } else {
             format!(
                 "✅ Added step {} to scenario {} (actor: {})",
-                order, scenario_id, actor_call_name
+                order, scenario_id, actor_id
             )
         };
 
@@ -1283,6 +1256,69 @@ mod tests {
 
         assert!(result.is_success());
         assert!(result.message.contains("Added step"));
+    }
+
+    #[test]
+    #[serial]
+    fn test_add_step_stores_actor_ids() {
+        let (_temp_dir, mut controller) = setup_test_env();
+        let use_case_id = create_test_use_case(&mut controller);
+
+        // Reload the controller to pick up the newly created use case
+        let mut controller = ScenarioController::new().unwrap();
+
+        // Create scenario
+        let params = CreateScenarioParams {
+            use_case_id: use_case_id.clone(),
+            title: "Test Scenario".to_string(),
+            scenario_type: "main".to_string(),
+            description: None,
+            persona_id: None,
+            preconditions: None,
+            postconditions: None,
+        };
+        controller.create_scenario(params).unwrap();
+
+        let scenarios = controller.app_service.get_scenarios(&use_case_id).unwrap();
+        let scenario_id = scenarios[0].id.clone();
+
+        // Add step with actor IDs (kebab-case format)
+        let actor_id = "test-actor-one";
+        let receiver_id = "test-actor-two";
+
+        let result = controller
+            .add_step(
+                use_case_id.clone(),
+                scenario_id.clone(),
+                "sends request".to_string(),
+                None,
+                Some(actor_id.to_string()),
+                Some(receiver_id.to_string()),
+            )
+            .unwrap();
+
+        assert!(result.is_success());
+
+        // Verify the actor IDs are stored as-is (not converted to display names)
+        let scenarios = controller.app_service.get_scenarios(&use_case_id).unwrap();
+        let scenario = scenarios
+            .iter()
+            .find(|s| s.id == scenario_id)
+            .expect("Scenario should exist");
+
+        assert_eq!(scenario.steps.len(), 1, "Should have 1 step");
+        let step = &scenario.steps[0];
+
+        // The actor IDs should be stored exactly as provided (for ID-based resolution)
+        assert_eq!(
+            step.acting_actor, actor_id,
+            "Acting actor should be stored as ID"
+        );
+        assert_eq!(
+            step.receiving_actor.as_deref(),
+            Some(receiver_id),
+            "Receiving actor should be stored as ID"
+        );
     }
 
     #[test]

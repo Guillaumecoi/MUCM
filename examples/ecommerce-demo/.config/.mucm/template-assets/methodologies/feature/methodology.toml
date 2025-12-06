@@ -1,0 +1,76 @@
+# Feature Methodology
+# Product management and agile development practices
+
+[methodology]
+name = "feature"
+abbreviation = "feat"
+description = """
+The Feature methodology focuses on product management and agile development practices. 
+It documents features from a product perspective, emphasizing user value and agile workflow integration.
+"""
+
+[template]
+preferred_style = "Normal"
+
+[generation]
+auto_generate_tests = false
+overwrite_test_documentation = false
+
+# Two-level system: Normal for everyday use, Advanced for comprehensive documentation
+# Note: Use core fields 'description' for user stories and 'postconditions' for acceptance criteria
+
+[levels.normal]
+name = "Normal"
+abbreviation = "n"
+filename = "uc_normal.hbs"
+# Uncomment to override the global default_scenario_template from mucm.toml
+# scenario_template = "scenarios/scenario.hbs"
+description = "Standard feature documentation with sprint planning and agile workflow"
+inherits = []
+
+[levels.normal.custom_fields]
+user_segment = { label = "Target User Segment", type = "string", required = false, description = "Primary user group or persona this feature serves", example = "Power users and content creators who manage large content libraries" }
+success_metrics = { label = "Success Metrics", type = "array", required = false, description = "Measurable outcomes that define feature success", example = "50% reduction in time to find content, 60% increase in search usage" }
+hypothesis = { label = "Product Hypothesis", type = "text", required = false, description = "Assumption about user needs this feature validates", example = "Users struggle to find relevant content because basic search lacks filtering options" }
+
+[levels.advanced]
+name = "Advanced"
+abbreviation = "a"
+filename = "uc_advanced.hbs"
+# Uncomment to override the global default_scenario_template from mucm.toml
+# scenario_template = "scenarios/scenario.hbs"
+description = "Comprehensive feature documentation with dependencies, mockups, and detailed planning"
+inherits = ["Normal"]
+
+[levels.advanced.custom_fields]
+# Inherits: user_segment, success_metrics, hypothesis (from normal)
+feature_dependencies = { label = "Feature Dependencies", type = "array", required = false, description = "Other features or capabilities this requires", example = "Content indexing system, User authentication" }
+design_assets = { label = "Design Assets", type = "array", required = false, description = "Links to mockups, prototypes, or design specs", example = "https://figma.com/design/search-ui-v2" }
+
+[usage]
+when_to_use = [
+    "When documenting product features and user stories",
+    "When working in agile development environments",
+    "When product managers and designers need to specify requirements",
+    "For sprint planning and feature backlog management"
+]
+
+key_features = [
+    "Product-centric: Focuses on user value and product requirements",
+    "Agile integration: Sprint tracking and story point estimation",
+    "Workflow-aware: Supports agile ceremonies and development processes",
+    "Design-linked: Connect features to mockups and design artifacts"
+]
+
+best_practices = [
+    "Write descriptions from the user's perspective",
+    "Use postconditions to define clear acceptance criteria",
+    "Keep features small and focused on single user goals",
+    "Use story points consistently within your team",
+    "Include mockups or designs when available for detailed specs"
+]
+
+[related_methodologies]
+business = "For business case and stakeholder documentation"
+developer = "For technical implementation details"
+tester = "For QA and acceptance testing requirements"

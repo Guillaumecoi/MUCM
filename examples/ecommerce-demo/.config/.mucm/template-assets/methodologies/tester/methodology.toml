@@ -1,0 +1,81 @@
+# Tester Methodology
+# Quality assurance and testing documentation
+
+[methodology]
+name = "tester"
+abbreviation = "test"
+description = """
+The Tester methodology focuses on quality assurance and testing requirements.
+Emphasizes test planning, automation, quality metrics, and comprehensive test coverage.
+"""
+
+[template]
+preferred_style = "Normal"
+
+[generation]
+auto_generate_tests = true
+overwrite_test_documentation = true
+
+# Two-level system: Normal for everyday use, Advanced for comprehensive documentation
+
+[levels.normal]
+name = "Normal"
+abbreviation = "n"
+filename = "uc_normal.hbs"
+# Uncomment to override the global default_scenario_template from mucm.toml
+# scenario_template = "scenarios/scenario.hbs"
+description = "Standard test documentation covering test types, priorities, and expected results"
+inherits = []
+
+[levels.normal.custom_fields]
+test_type = { label = "Test Type", type = "array", required = false, description = "Types of tests (unit, integration, e2e, performance, security)", example = "e2e, integration" }
+test_priority = { label = "Test Priority", type = "string", required = false, description = "Priority level (P0-Critical, P1-High, P2-Medium, P3-Low)", example = "P0-Critical" }
+automation_status = { label = "Automation Status", type = "string", required = false, description = "Current state (manual, automated, in-progress, blocked)", example = "automated" }
+test_data_requirements = { label = "Test Data Requirements", type = "text", required = false, description = "Required test data, mock services, or environment configuration", example = "Test accounts with SMS, email, and authenticator app methods configured" }
+
+[levels.advanced]
+name = "Advanced"
+abbreviation = "a"
+filename = "uc_advanced.hbs"
+# Uncomment to override the global default_scenario_template from mucm.toml
+# scenario_template = "scenarios/scenario.hbs"
+description = "Comprehensive test specification with environment setup, regression suites, and coverage metrics"
+inherits = ["Normal"]
+
+[levels.advanced.custom_fields]
+# Inherits: test_type, test_priority, automation_status, test_data_requirements (from normal)
+test_environments = { label = "Test Environments", type = "array", required = false, description = "Required environments (browsers, OS, devices, or test infrastructure)", example = "Chrome on Windows, Safari on macOS, iOS native app" }
+regression_suites = { label = "Regression Suites", type = "array", required = false, description = "Names of regression suites including this test", example = "Authentication & Security Suite, Smoke Test Suite" }
+performance_baseline = { label = "Performance Baseline", type = "string", required = false, description = "Acceptable performance thresholds (response time, throughput, etc.)", example = "MFA code delivery <5s, verification <30s" }
+coverage_areas = { label = "Coverage Areas", type = "array", required = false, description = "Functional areas or code paths covered by this test", example = "SMS authentication, Email authentication, Authenticator app" }
+
+[usage]
+when_to_use = [
+    "When documenting use cases for QA teams and testing professionals",
+    "When test planning and quality assurance are primary concerns",
+    "When creating comprehensive test suites and test automation",
+    "For quality gate definitions and acceptance testing"
+]
+
+key_features = [
+    "Test-focused: Documents test cases, scenarios, and quality requirements",
+    "Automation-aware: Tracks automation status and test execution details",
+    "Quality-centric: Emphasizes defect prevention and quality metrics",
+    "Coverage-oriented: Includes test coverage and regression testing requirements"
+]
+
+best_practices = [
+    "Define clear test types and priorities for proper test planning",
+    "Include both positive and negative test scenarios",
+    "Specify exact expected results for unambiguous pass/fail criteria",
+    "Document test data requirements and environment dependencies",
+    "Track automation status to identify manual testing bottlenecks",
+    "Include performance baselines for non-functional requirements",
+    "Link to regression suites for comprehensive testing coverage",
+    "Set realistic defect detection targets based on historical data"
+]
+
+[related_methodologies]
+business = "For business acceptance criteria"
+developer = "For unit and integration test specifications"
+feature = "For user story acceptance testing"

@@ -1,0 +1,51 @@
+# Test Specification: {{title}}
+
+**Use Case ID:** {{id}} | **Test Status:** {{status}} | **Priority:** {{priority}} | **Created:** {{created}}
+
+{{#if description}}
+## Test Overview
+{{description}}
+
+{{/if}}
+{{#if test_type}}
+**Test Type:** {{test_type}}  
+{{/if}}
+{{#if test_priority}}
+**Priority:** {{test_priority}}  
+{{/if}}
+{{#if automation_status}}
+**Automation Status:** {{automation_status}}
+
+{{/if}}
+{{#if test_strategy}}
+### Test Strategy
+{{test_strategy}}
+
+{{/if}}
+{{#if preconditions}}
+## Preconditions
+{{#each preconditions}}
+- {{this.text}}{{#if this.use_case_reference}} (see [{{this.use_case_reference}}](../{{this.use_case_reference}}.md)){{/if}}
+{{/each}}
+
+{{/if}}
+{{#if postconditions}}
+## Postconditions
+{{#each postconditions}}
+- {{this.text}}{{#if this.use_case_reference}} (see [{{this.use_case_reference}}](../{{this.use_case_reference}}.md)){{/if}}
+{{/each}}
+
+{{/if}}
+{{> scenario}}
+{{#if test_data_requirements}}
+## Test Data Requirements
+{{test_data_requirements}}
+
+{{/if}}
+{{#if use_case_references}}
+## Related Use Cases
+{{#each use_case_references}}
+- **{{relationship}}:** {{target_id}}{{#if description}} - {{description}}{{/if}}
+{{/each}}
+
+{{/if}}

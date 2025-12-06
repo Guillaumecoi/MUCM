@@ -1,0 +1,8 @@
+id = "database"
+name = "Database"
+actor_type = "database"
+emoji = "💾"
+
+[metadata]
+created_at = "2025-12-02T19:14:09.727378240Z"
+updated_at = "2025-12-02T19:14:09.727378240Z"

@@ -32,6 +32,8 @@ Keep your use case documentation **in your repository**, not scattered across ex
 
 Perfect for teams that value documentation as code and want their requirements to travel with the codebase.
 
+**[→ See a Complete Example: E-Commerce Demo](examples/ecommerce-demo/)** - Explore a real-world project with personas, use cases, and multiple methodologies in action.
+
 ## Features
 
 ### 🧩 Extensible

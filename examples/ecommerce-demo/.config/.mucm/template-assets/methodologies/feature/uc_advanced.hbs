@@ -1,0 +1,73 @@
+# Feature Proposal: {{title}}
+
+**ID:** {{id}}  
+**Status:** {{status}}  
+**Priority:** {{priority}}  
+**Created:** {{created_date}}
+
+---
+
+{{#if description}}
+## Overview
+{{description}}
+
+{{/if}}
+{{#if user_segment}}
+## Target User Segment
+{{user_segment}}
+
+{{/if}}
+{{#if hypothesis}}
+## Product Hypothesis
+{{hypothesis}}
+
+{{/if}}
+{{#if success_metrics}}
+## Success Metrics
+{{#each success_metrics}}
+- {{this}}
+{{/each}}
+
+{{/if}}
+{{#if design_assets}}
+## Design Assets
+{{#each design_assets}}
+- {{this}}
+{{/each}}
+
+{{/if}}
+{{#if feature_dependencies}}
+## Feature Dependencies
+{{#each feature_dependencies}}
+- {{this}}
+{{/each}}
+
+{{/if}}
+{{#if preconditions}}
+## Preconditions
+{{#each preconditions}}
+- {{this.text}}{{#if this.use_case_reference}} (see [{{this.use_case_reference}}](../{{this.use_case_reference}}.md)){{/if}}
+{{/each}}
+
+{{/if}}
+{{#if postconditions}}
+## Postconditions
+{{#each postconditions}}
+- {{this.text}}{{#if this.use_case_reference}} (see [{{this.use_case_reference}}](../{{this.use_case_reference}}.md)){{/if}}
+{{/each}}
+
+{{/if}}
+{{> scenario}}
+
+{{#if use_case_references}}
+## Related Use Cases
+{{#each use_case_references}}
+- **{{relationship}}:** {{target_id}}{{#if description}} - {{description}}{{/if}}
+{{/each}}
+
+{{/if}}
+{{#if last_updated}}
+---
+
+**Last Updated:** {{last_updated}}
+{{/if}}
