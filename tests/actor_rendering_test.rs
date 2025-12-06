@@ -311,9 +311,10 @@ fn test_real_uc_auth_001_actor_names() {
         first_step.get("acting_actor").is_some(),
         "JSON missing acting_actor field"
     );
+    // After refactoring, acting_actor now stores the actor ID, not the display name
     assert_eq!(
         first_step.get("acting_actor").unwrap().as_str().unwrap(),
-        "Guest User",
-        "JSON acting_actor should be 'Guest User'"
+        "guest-guest-user",
+        "JSON acting_actor should be 'guest-guest-user' (actor ID)"
     );
 }
