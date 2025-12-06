@@ -6,16 +6,16 @@
 sequenceDiagram
 {{#each steps}}
 {{#if receiving_actor}}
-{{acting_actor}}->>{{receiving_actor}}: {{order}}. {{action}}
+{{{actor_link acting_actor}}}>>{{{actor_link receiving_actor}}}: {{order}}. {{mermaid_safe action}}
 {{else}}
-{{acting_actor}}->>{{acting_actor}}: {{order}}. {{action}}
+{{{actor_link acting_actor}}}>>{{{actor_link acting_actor}}}: {{order}}. {{mermaid_safe action}}
 {{/if}}
 {{/each}}
 ```
 
 ### Steps
 {{#each steps}}
-{{order}}. **{{acting_actor}}**{{#if receiving_actor}} → **{{receiving_actor}}**{{/if}}: {{action}}
+{{order}}. **{{{actor_link acting_actor}}}**{{#if receiving_actor}} → **{{{actor_link receiving_actor}}}**{{/if}}: {{action}}
 {{/each}}
 
 {{#if extends_scenario_id}}

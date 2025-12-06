@@ -12,6 +12,7 @@ pub fn register_helpers(handlebars: &mut Handlebars) {
     handlebars.register_helper("unique_personas", Box::new(unique_personas_helper));
     handlebars.register_helper("actor_emoji", Box::new(actor_emoji_helper));
     handlebars.register_helper("actor_link", Box::new(actor_link_helper));
+    handlebars.register_helper("mermaid_safe", Box::new(mermaid_safe_helper));
 }
 
 /// Helper to display an actor name
@@ -27,6 +28,23 @@ fn actor_link_helper(
 ) -> HelperResult {
     let actor_name = h.param(0).and_then(|v| v.value().as_str()).unwrap_or("");
     out.write(actor_name)?;
+    Ok(())
+}
+
+/// Helper to make text safe for mermaid diagrams
+/// Usage: {{mermaid_safe text}}
+/// Returns: text with quotes replaced by single quotes to avoid HTML entity issues
+fn mermaid_safe_helper(
+    h: &Helper,
+    _: &Handlebars,
+    _: &Context,
+    _rc: &mut RenderContext,
+    out: &mut dyn Output,
+) -> HelperResult {
+    let text = h.param(0).and_then(|v| v.value().as_str()).unwrap_or("");
+    // Replace double quotes with single quotes to avoid HTML entity conversion issues in mermaid
+    let safe_text = text.replace('"', "'");
+    out.write(&safe_text)?;
     Ok(())
 }
 
