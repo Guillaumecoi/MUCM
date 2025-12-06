@@ -271,19 +271,21 @@ jobs:
         run: |
           mucm create "Multi-View Feature" --category Testing --description "Feature with multiple views" --views "developer:advanced,tester:normal"
           OUTPUT=$(mucm list)
-          if ! echo "$OUTPUT" | grep -q "UC-TST-001"; then
+          if ! echo "$OUTPUT" | grep -q "UC-TES-001"; then
             echo "ERROR: Multi-view use case not created"
             exit 1
           fi
+          # Regenerate to trigger README.md generation for multi-view use cases
+          mucm regenerate
           echo "✓ Multi-view use case created"
 
       - name: Test 4 - Verify README.md generated
         working-directory: test-multiview
         run: |
-          if [ ! -f "docs/use-cases/testing/UC-TST-001/README.md" ]; then
+          if [ ! -f "docs/use-cases/testing/UC-TES-001/README.md" ]; then
             echo "ERROR: Use case README.md not generated"
             ls -la docs/use-cases/testing/ || echo "Category dir not found"
-            ls -la docs/use-cases/testing/UC-TST-001/ || echo "Use case dir not found"
+            ls -la docs/use-cases/testing/UC-TES-001/ || echo "Use case dir not found"
             exit 1
           fi
           echo "✓ Use case README.md generated"
@@ -291,10 +293,10 @@ jobs:
       - name: Test 5 - Verify README.md content
         working-directory: test-multiview
         run: |
-          README_CONTENT=$(cat docs/use-cases/testing/UC-TST-001/README.md)
+          README_CONTENT=$(cat docs/use-cases/testing/UC-TES-001/README.md)
           if ! echo "$README_CONTENT" | grep -q "Available Views"; then
             echo "ERROR: README.md missing Available Views section"
-            cat docs/use-cases/testing/UC-TST-001/README.md
+            cat docs/use-cases/testing/UC-TES-001/README.md
             exit 1
           fi
           if ! echo "$README_CONTENT" | grep -q "developer" || ! echo "$README_CONTENT" | grep -q "tester"; then
@@ -306,12 +308,12 @@ jobs:
       - name: Test 6 - Verify methodology view files exist
         working-directory: test-multiview
         run: |
-          if [ ! -f "docs/use-cases/testing/UC-TST-001/UC-TST-001-developer-advanced.md" ]; then
+          if [ ! -f "docs/use-cases/testing/UC-TES-001/UC-TES-001-developer-advanced.md" ]; then
             echo "ERROR: Developer view file not generated"
-            ls -la docs/use-cases/testing/UC-TST-001/ || echo "Use case dir not found"
+            ls -la docs/use-cases/testing/UC-TES-001/ || echo "Use case dir not found"
             exit 1
           fi
-          if [ ! -f "docs/use-cases/testing/UC-TST-001/UC-TST-001-tester-normal.md" ]; then
+          if [ ! -f "docs/use-cases/testing/UC-TES-001/UC-TES-001-tester-normal.md" ]; then
             echo "ERROR: Tester view file not generated"
             exit 1
           fi
@@ -326,7 +328,7 @@ jobs:
             exit 1
           fi
           CATEGORY_CONTENT=$(cat docs/use-cases/testing/README.md)
-          if ! echo "$CATEGORY_CONTENT" | grep -q "UC-TST-001"; then
+          if ! echo "$CATEGORY_CONTENT" | grep -q "UC-TES-001"; then
             echo "ERROR: Category README not listing use case"
             exit 1
           fi
