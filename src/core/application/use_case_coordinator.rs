@@ -47,6 +47,7 @@ pub struct CreateExtensionScenarioParams {
     pub title: String,
     pub description: String,
     pub primary_actor: crate::core::Actor,
+    pub scenario_type: crate::core::domain::ScenarioType,
 }
 
 /// Parameters for inserting a step with extension update
@@ -872,6 +873,7 @@ impl UseCaseCoordinator {
             title: params.title,
             description: Some(params.description),
             primary_actor: params.primary_actor.to_string(),
+            scenario_type: params.scenario_type,
         };
         scenario_service.create_extension_scenario(use_case_id, ext_params, params.returns_at_step)
     }
