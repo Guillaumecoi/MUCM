@@ -12,6 +12,3 @@
 
 ## Use Cases
 ### Authentication
-- **UC-AUTH-001**: User Registration
-  - Status: DEPLOYED
-  - Priority: HIGH

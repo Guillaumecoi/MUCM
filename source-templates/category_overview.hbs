@@ -1,0 +1,30 @@
+# {{category_name}} Use Cases
+
+**Navigation:** [← Back to All Use Cases](../README.md)
+
+---
+
+## Summary
+
+This category contains **{{total_use_cases}}** use case{{#if (gt total_use_cases 1)}}s{{/if}}.
+
+## Use Cases
+
+{{#each use_cases}}
+### [{{id}}: {{title}}](./{{id}}/README.md)
+
+**Status:** {{aggregated_status}} | **Priority:** {{priority}}
+
+{{#if description}}{{description}}{{/if}}
+
+{{#if views}}
+**Available Views:** {{#each views}}{{methodology}}-{{level}}{{#unless @last}}, {{/unless}}{{/each}}
+{{/if}}
+
+---
+
+{{/each}}
+
+{{#unless use_cases}}
+*No use cases in this category yet.*
+{{/unless}}

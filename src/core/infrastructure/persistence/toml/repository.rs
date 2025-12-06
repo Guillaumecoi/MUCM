@@ -37,9 +37,12 @@ impl UseCaseRepository for TomlUseCaseRepository {
         content: &str,
     ) -> Result<()> {
         let category_snake = to_snake_case(&use_case.category);
-        let md_dir = Path::new(&self.config.directories.use_case_dir).join(&category_snake);
-        fs::create_dir_all(&md_dir)?;
-        let md_path = md_dir.join(filename);
+        // New folder structure: {category}/{use-case-id}/
+        let use_case_dir = Path::new(&self.config.directories.use_case_dir)
+            .join(&category_snake)
+            .join(&use_case.id);
+        fs::create_dir_all(&use_case_dir)?;
+        let md_path = use_case_dir.join(filename);
         fs::write(&md_path, content)?;
         Ok(())
     }
@@ -123,12 +126,15 @@ impl TomlUseCaseRepository {
 
         let category_snake = to_snake_case(&use_case.category);
 
-        // Create markdown directory structure (generated docs)
-        let md_dir = Path::new(&self.config.directories.use_case_dir).join(&category_snake);
-        fs::create_dir_all(&md_dir)?;
+        // Create markdown directory structure (generated docs) with new nested folder structure
+        // New structure: {category}/{use-case-id}/README.md
+        let use_case_dir = Path::new(&self.config.directories.use_case_dir)
+            .join(&category_snake)
+            .join(&use_case.id);
+        fs::create_dir_all(&use_case_dir)?;
 
-        // Save markdown file (generated output)
-        let md_path = md_dir.join(format!("{}.md", use_case.id));
+        // Save markdown file as README.md in use case folder
+        let md_path = use_case_dir.join("README.md");
         fs::write(&md_path, markdown_content)?;
 
         Ok(())

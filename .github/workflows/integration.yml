@@ -103,9 +103,10 @@ jobs:
       - name: Test 6 - Verify file generation
         working-directory: test-standard
         run: |
-          if [ ! -f "docs/use-cases/authentication/UC-AUT-001-developer-normal.md" ]; then
+          if [ ! -f "docs/use-cases/authentication/UC-AUT-001/README.md" ]; then
             echo "ERROR: Markdown not generated"
             ls -la docs/use-cases/authentication/ || echo "Directory not found"
+            ls -la docs/use-cases/authentication/UC-AUT-001/ || echo "Use case directory not found"
             exit 1
           fi
           echo "✓ Files generated"

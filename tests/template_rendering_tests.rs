@@ -531,23 +531,25 @@ fn test_overview_template() {
     let _temp_dir = setup_test_env();
     let engine = TemplateEngine::new().unwrap();
 
+    // Updated data structure for new category-focused overview
     let data: HashMap<String, Value> = [
         ("project_name".to_string(), json!("Test Project")),
         ("generated_date".to_string(), json!("2025-11-25")),
         ("total_use_cases".to_string(), json!(5)),
+        ("total_categories".to_string(), json!(2)),
         (
             "categories".to_string(),
             json!([
                 {
                     "category_name": "Authentication",
-                    "use_cases": [
-                        {
-                            "id": "UC-AUT-001",
-                            "title": "User Login",
-                            "priority": "high",
-                            "aggregated_status": "implemented"
-                        }
-                    ]
+                    "category_path": "authentication",
+                    "use_case_count": 3,
+                    "description": "User authentication and authorization"
+                },
+                {
+                    "category_name": "Payment",
+                    "category_path": "payment",
+                    "use_case_count": 2
                 }
             ]),
         ),
@@ -564,8 +566,17 @@ fn test_overview_template() {
         result.err()
     );
     let rendered = result.unwrap();
+
+    // Verify the new category-focused overview format
     assert!(rendered.contains("Test Project"));
-    assert!(rendered.contains("UC-AUT-001"));
+    assert!(rendered.contains("**Total Use Cases:** 5"));
+    assert!(rendered.contains("**Total Categories:** 2"));
+    assert!(rendered.contains("## Categories"));
+    assert!(rendered.contains("### [Authentication](./authentication/README.md)"));
+    assert!(rendered.contains("**Use Cases:** 3"));
+    assert!(rendered.contains("User authentication and authorization"));
+    assert!(rendered.contains("### [Payment](./payment/README.md)"));
+    assert!(rendered.contains("**Use Cases:** 2"));
 }
 
 #[test]

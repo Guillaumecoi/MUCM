@@ -1,0 +1,49 @@
+# Use Case: {{title}}
+
+**Use Case ID:** {{id}}  
+**Status:** {{aggregated_status}}  
+**Priority:** {{priority}}  
+{{#if last_updated}}**Last Updated:** {{last_updated}}{{/if}}
+
+**Navigation:** [← Back to {{category}}](../README.md) | [← Back to All Use Cases](../../README.md)
+
+---
+
+## Description
+
+{{description}}
+
+## Available Views
+
+This use case is available in the following methodology perspectives:
+
+{{#each views}}
+- **[{{methodology}} ({{level}})](./{{../id}}-{{methodology}}-{{level}}.md)** - {{#if (eq methodology "developer")}}Technical implementation details, API endpoints, database schema{{else if (eq methodology "tester")}}Test scenarios, coverage areas, quality assurance{{else if (eq methodology "business")}}Business value, stakeholder requirements, ROI analysis{{else if (eq methodology "feature")}}User stories, acceptance criteria, agile workflows{{else}}{{methodology}} perspective{{/if}}
+{{/each}}
+
+## Quick Reference
+
+{{#if preconditions}}
+### Preconditions
+{{#each preconditions}}
+- {{this}}
+{{/each}}
+{{/if}}
+
+{{#if postconditions}}
+### Postconditions
+{{#each postconditions}}
+- {{this}}
+{{/each}}
+{{/if}}
+
+{{#if scenarios}}
+### Scenarios
+{{#each scenarios}}
+- **{{id}}** - {{title}}
+{{/each}}
+{{/if}}
+
+---
+
+*This overview provides a high-level summary. Select a specific methodology view above for detailed documentation.*

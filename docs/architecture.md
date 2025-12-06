@@ -197,9 +197,10 @@ pub trait UseCaseRepository {
 
 **How it Works:**
 1. Each use case stored as individual `.toml` file
-2. File path: `use_case_dir/{category}/{id}.toml`
-3. Serialization via `serde` and `toml` crate
-4. Direct file I/O for read/write
+2. File path: `use-cases-data/{category}/{id}.toml`
+3. Markdown files generated in folder structure: `docs/use-cases/{category}/{id}/`
+4. Serialization via `serde` and `toml` crate
+5. Direct file I/O for read/write
 
 **Advantages:**
 - Human-readable source of truth

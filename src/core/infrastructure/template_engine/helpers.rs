@@ -19,6 +19,7 @@ pub fn register_helpers(handlebars: &mut Handlebars) {
         "unique_supporting_actors",
         Box::new(unique_supporting_actors_helper),
     );
+    handlebars.register_helper("use_case_link", Box::new(use_case_link_helper));
 }
 
 /// Helper to create a markdown link to actor documentation
@@ -51,10 +52,30 @@ fn actor_link_helper(
 /// # Returns
 /// Relative path string (e.g., "../../../docs/personas")
 fn calculate_actor_relative_path(use_case_dir: &str, actor_dir: &str) -> String {
-    // Calculate depth: count slashes in use_case_dir, +1 for the dir itself, +1 for category folder
-    let use_case_depth = use_case_dir.matches('/').count() + 1 + 1;
-    let return_path = "../".repeat(use_case_depth);
-    format!("{}{}", return_path, actor_dir)
+    // File is at: {use_case_dir}/{category}/{use-case-id}/file.md
+    // actor_dir is relative from the project root (e.g., "docs/personas")
+    // We need to calculate the relative path from file to actor_dir
+
+    let use_case_parts: Vec<&str> = use_case_dir.split('/').collect();
+    let actor_parts: Vec<&str> = actor_dir.split('/').collect();
+
+    // Find common prefix length
+    let common_len = use_case_parts
+        .iter()
+        .zip(actor_parts.iter())
+        .take_while(|(a, b)| a == b)
+        .count();
+
+    // Go up from use case location to common ancestor
+    // use_case_parts.len() = depth of use_case_dir
+    // +2 for category and use-case-id folders
+    let ups = use_case_parts.len() + 2 - common_len;
+    let up_path = "../".repeat(ups);
+
+    // Go down to actor dir from common ancestor
+    let down_path = actor_parts[common_len..].join("/");
+
+    format!("{}{}", up_path, down_path)
 }
 
 /// Resolve actor ID to markdown link
@@ -172,6 +193,54 @@ fn mermaid_safe_helper(
     let safe_text = text.replace('"', "'");
     out.write(&safe_text)?;
     Ok(())
+}
+
+/// Helper to create a markdown link to another use case
+/// Usage: {{use_case_link target_use_case_id}}
+/// Returns: ../../category/UC-XXX-001/README.md
+/// Resolves the category from the use case repository to build correct cross-category links
+fn use_case_link_helper(
+    h: &Helper,
+    _: &Handlebars,
+    _: &Context,
+    _rc: &mut RenderContext,
+    out: &mut dyn Output,
+) -> HelperResult {
+    let target_id = h.param(0).and_then(|v| v.value().as_str()).unwrap_or("");
+
+    if target_id.is_empty() {
+        return Ok(());
+    }
+
+    let link_path = resolve_use_case_link(target_id);
+    out.write(&link_path)?;
+    Ok(())
+}
+
+/// Resolve use case ID to relative link path
+/// Returns: ../../category/UC-XXX-001/README.md
+fn resolve_use_case_link(target_id: &str) -> String {
+    use crate::config::Config;
+    use crate::core::to_snake_case;
+
+    // Try to load use case coordinator to find the category
+    if let Ok(_config) = Config::load() {
+        // Try to load all use cases to find the target
+        if let Ok(coordinator) = crate::core::UseCaseCoordinator::load() {
+            if let Some(target_uc) = coordinator
+                .get_all_use_cases()
+                .iter()
+                .find(|uc| uc.id == target_id)
+            {
+                let category_snake = to_snake_case(&target_uc.category);
+                // Path from current use case folder: ../../category/use-case-id/README.md
+                return format!("../../{}/{}/README.md", category_snake, target_id);
+            }
+        }
+    }
+
+    // Fallback: assume same category if we can't resolve
+    format!("../{}/README.md", target_id)
 }
 
 /// Helper to get unique supporting actors excluding the primary actor
@@ -714,10 +783,13 @@ mod tests {
         let use_case_dir = "docs/use-cases";
         let actor_dir = "docs/personas";
         let relative_path = calculate_actor_relative_path(use_case_dir, actor_dir);
-        // From docs/use-cases/category/ -> ../../../ (to root) -> docs/personas
+        // From docs/use-cases/category/use-case-id/ to docs/personas/
+        // Common prefix: "docs/" (1 part)
+        // Up from use-cases/category/use-case-id: 2 + 2 - 1 = 3 levels
+        // Down to personas: 1 part
         assert_eq!(
-            relative_path, "../../../docs/personas",
-            "Should go up 3 levels then into docs/personas"
+            relative_path, "../../../personas",
+            "Should go up 3 levels from category/id to common ancestor, then into personas"
         );
     }
 
@@ -727,10 +799,11 @@ mod tests {
         let use_case_dir = "use-cases";
         let actor_dir = "personas";
         let relative_path = calculate_actor_relative_path(use_case_dir, actor_dir);
-        // From use-cases/category/ -> ../../ (to root) -> personas
+        // From use-cases/category/use-case-id/ -> ../../../ (to root) -> personas
+        // Added extra level for use case ID folder
         assert_eq!(
-            relative_path, "../../personas",
-            "Should go up 2 levels then into personas"
+            relative_path, "../../../personas",
+            "Should go up 3 levels then into personas"
         );
     }
 
@@ -740,10 +813,13 @@ mod tests {
         let use_case_dir = "project/docs/use-cases";
         let actor_dir = "project/docs/personas";
         let relative_path = calculate_actor_relative_path(use_case_dir, actor_dir);
-        // From project/docs/use-cases/category/ -> ../../../../ (to root) -> project/docs/personas
+        // From project/docs/use-cases/category/use-case-id/ to project/docs/personas/
+        // Common prefix: "project/docs/" (2 parts)
+        // Up from use-cases/category/use-case-id: 3 + 2 - 2 = 3 levels
+        // Down to personas: 1 part
         assert_eq!(
-            relative_path, "../../../../project/docs/personas",
-            "Should go up 4 levels then into project/docs/personas"
+            relative_path, "../../../personas",
+            "Should go up 3 levels from category/id to common ancestor (project/docs/), then into personas"
         );
     }
 
@@ -753,10 +829,181 @@ mod tests {
         let use_case_dir = "documentation/use-cases";
         let actor_dir = "team/actors";
         let relative_path = calculate_actor_relative_path(use_case_dir, actor_dir);
-        // From documentation/use-cases/category/ -> ../../../ (to root) -> team/actors
+        // From documentation/use-cases/category/use-case-id/ -> ../../../../ (to root) -> team/actors
+        // Added extra level for use case ID folder
         assert_eq!(
-            relative_path, "../../../team/actors",
+            relative_path, "../../../../team/actors",
             "Should work with completely different directory trees"
+        );
+    }
+
+    #[test]
+    fn test_use_case_link_helper_registered() {
+        let mut handlebars = Handlebars::new();
+        register_helpers(&mut handlebars);
+
+        // Verify the helper is registered and can be used in templates
+        let template = "{{use_case_link target_id}}";
+        handlebars
+            .register_template_string("test", template)
+            .unwrap();
+
+        let data = json!({
+            "target_id": "UC-TEST-001"
+        });
+
+        // Should not panic - helper is registered and callable
+        let result = handlebars.render("test", &data);
+        assert!(result.is_ok(), "use_case_link helper should be registered");
+    }
+
+    #[test]
+    fn test_use_case_link_helper_with_empty_string() {
+        let mut handlebars = Handlebars::new();
+        register_helpers(&mut handlebars);
+
+        let template = "Link: {{use_case_link target_id}}";
+        handlebars
+            .register_template_string("test", template)
+            .unwrap();
+
+        let data = json!({
+            "target_id": ""
+        });
+
+        let result = handlebars.render("test", &data).unwrap();
+        // Empty string should return empty string
+        assert_eq!(result, "Link: ");
+    }
+
+    #[test]
+    fn test_use_case_link_helper_with_unknown_id() {
+        let mut handlebars = Handlebars::new();
+        register_helpers(&mut handlebars);
+
+        let template = "See: {{use_case_link target_id}}";
+        handlebars
+            .register_template_string("test", template)
+            .unwrap();
+
+        let data = json!({
+            "target_id": "UC-UNKNOWN-999"
+        });
+
+        let result = handlebars.render("test", &data).unwrap();
+        // Unknown IDs should fall back to same-category assumption
+        assert_eq!(
+            result, "See: ../UC-UNKNOWN-999/README.md",
+            "Should assume same category for unknown use cases"
+        );
+    }
+
+    #[test]
+    fn test_use_case_link_helper_in_precondition_template() {
+        let mut handlebars = Handlebars::new();
+        register_helpers(&mut handlebars);
+
+        // Simulate a precondition template pattern
+        let template = "- {{text}} (see [{{target_id}}]({{use_case_link target_id}}))";
+        handlebars
+            .register_template_string("test", template)
+            .unwrap();
+
+        let data = json!({
+            "text": "User must be authenticated",
+            "target_id": "UC-AUTH-001"
+        });
+
+        let result = handlebars.render("test", &data).unwrap();
+        // Should format properly with use case link
+        // Will fall back to same-category if use case not found in repository
+        assert_eq!(
+            result,
+            "- User must be authenticated (see [UC-AUTH-001](../UC-AUTH-001/README.md))"
+        );
+    }
+
+    #[test]
+    fn test_use_case_link_helper_with_null_value() {
+        let mut handlebars = Handlebars::new();
+        register_helpers(&mut handlebars);
+
+        let template = "Link: {{use_case_link target_id}}";
+        handlebars
+            .register_template_string("test", template)
+            .unwrap();
+
+        let data = json!({
+            "target_id": null
+        });
+
+        let result = handlebars.render("test", &data).unwrap();
+        // Null should be treated as empty string
+        assert_eq!(result, "Link: ");
+    }
+
+    #[test]
+    fn test_use_case_link_fallback_behavior() {
+        // Test the fallback behavior when coordinator can't be loaded
+        let link = resolve_use_case_link("UC-FALLBACK-001");
+        // Should fall back to same-category assumption
+        assert_eq!(
+            link, "../UC-FALLBACK-001/README.md",
+            "Should provide fallback link when coordinator unavailable"
+        );
+    }
+
+    #[test]
+    fn test_use_case_link_in_postcondition_array() {
+        let mut handlebars = Handlebars::new();
+        register_helpers(&mut handlebars);
+
+        // Simulate iterating over postconditions
+        let template = "{{#each postconditions}}- {{text}}{{#if target_id}} (see [{{target_id}}]({{use_case_link target_id}})){{/if}}\n{{/each}}";
+        handlebars
+            .register_template_string("test", template)
+            .unwrap();
+
+        let data = json!({
+            "postconditions": [
+                {
+                    "text": "User is logged in",
+                    "target_id": "UC-AUTH-001"
+                },
+                {
+                    "text": "Session is created",
+                    "target_id": null
+                },
+                {
+                    "text": "Account is activated",
+                    "target_id": "UC-AUTH-003"
+                }
+            ]
+        });
+
+        let result = handlebars.render("test", &data).unwrap();
+        // Should only add links for non-null target_ids
+        assert!(result.contains("User is logged in (see [UC-AUTH-001](../UC-AUTH-001/README.md))"));
+        assert!(result.contains("Session is created\n"));
+        assert!(!result.contains("Session is created (see"));
+        assert!(
+            result.contains("Account is activated (see [UC-AUTH-003](../UC-AUTH-003/README.md))")
+        );
+    }
+
+    #[test]
+    fn test_use_case_link_path_format() {
+        // Test that the link format is correct for folder structure
+        let link = resolve_use_case_link("UC-TEST-001");
+
+        // Should be relative to current use case folder
+        assert!(
+            link.starts_with("../") || link.starts_with("../../"),
+            "Link should be relative path starting with ../"
+        );
+        assert!(
+            link.ends_with("/README.md"),
+            "Link should point to README.md in use case folder"
         );
     }
 }

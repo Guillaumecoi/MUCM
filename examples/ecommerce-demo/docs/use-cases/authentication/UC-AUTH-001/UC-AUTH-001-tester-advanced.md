@@ -1,46 +1,28 @@
-# Technical Specification: User Registration
+# Test Specification: User Registration
 
 **Use Case ID:** UC-AUTH-001  
-**Implementation Status:**   
-**Development Priority:** High  
-**Specification Date:** 03/12/2025
+**Test Status:**   
+**Test Priority:** High  
+**Test Plan Date:** 03/12/2025
 
 ---
 
-## Technical Overview
-Allow new users to create an account on the e-commerce platform by providing email, password, and basic profile information. The system validates input, checks for existing accounts, creates the user record, and sends a verification email.
+**Test Type:** [e2e, integration, security, accessibility]  
+**Priority:** P0-Critical  
+**Test Environments:**
+- Staging environment with email service integration
+- Database with clean state before each test run
+- Mock OAuth providers for social registration tests
+- Various browsers and devices for front-end validation tests
 
-### API Endpoints
-- &#x60;POST /api/v1/auth/register&#x60; - Email/password registration
-- &#x60;POST /api/v1/auth/register/oauth&#x60; - OAuth social registration
-
-### Database Tables
-- users
-- sessions
-- email_verifications
-
-## Security Considerations
-- HTTPS required for all registration requests
-- CSRF token validation on form submission
-- Rate limiting to prevent account creation spam
-- Password strength enforced on both client and server sides
-- Email verification required before checkout
-- Block disposable email domains
-- bcrypt password hashing with cost factor 12
-- Session tokens: 32-byte random, hex-encoded
-
-## Technical Dependencies
-- PostgreSQL 14+: for user data storage
-- Redis 6+: for session management
-- SendGrid API: for email delivery
-- OAuth providers (Google, Facebook) for social registration
-
-## Error Scenarios
-- Email already in use: return 409 Conflict
-- Weak password: return 400 Bad Request with validation errors
-- Invalid email format: return 400 Bad Request
-- OAuth provider error: return 502 Bad Gateway
-- Database connection failure: return 503 Service Unavailable
+### Coverage Areas
+- Input validation (client-side and server-side)
+- Database record creation and integrity
+- Email delivery and content verification
+- Session creation and management
+- OAuth registration flows
+- Security measures (CSRF, rate limiting, password hashing)
+- Accessibility (WCAG 2.1 AA compliance)
 
 ## Preconditions
 - User must have a valid email address
@@ -55,9 +37,9 @@ Allow new users to create an account on the e-commerce platform by providing ema
 
 ## UC-AUTH-001-S01 - Successful User Registration
 
-**Primary Actor:** [Guest User](../../../docs/personas/guest-guest-user.md)
+**Primary Actor:** [Guest User](../../../actors/guest-guest-user.md)
 
-**Supporting Actors:** [Database](../../../docs/personas/database.md), [E-commerce Platform](../../../docs/personas/e-commerce-platform.md), [Cache](../../../docs/personas/cache.md), [Email Service](../../../docs/personas/email-service.md)
+**Supporting Actors:** [Database](../../../actors/database.md), [E-commerce Platform](../../../actors/e-commerce-platform.md), [Cache](../../../actors/cache.md), [Email Service](../../../actors/email-service.md)
 
 ```mermaid
 sequenceDiagram
@@ -92,6 +74,28 @@ E-commerce Platform->>Guest User: 13. displays 'Account created successfully' an
 12. **Email Service** → **E-commerce Platform**: confirms email queued
 13. **E-commerce Platform** → **Guest User**: displays &quot;Account created successfully&quot; and redirects to dashboard
 
+## Test Data Requirements
+10 valid email addresses for testing (test+1@example.com through test+10@example.com), 5 known registered emails for duplicate testing, mock SendGrid API with configurable responses (success, failure, timeout), database with clean state before each test run.
+
+## Test Environments
+- Staging environment with email service integration
+- Database with clean state before each test run
+- Mock OAuth providers for social registration tests
+- Various browsers and devices for front-end validation tests
+
+## Coverage Areas
+- Input validation (client-side and server-side)
+- Database record creation and integrity
+- Email delivery and content verification
+- Session creation and management
+- OAuth registration flows
+- Security measures (CSRF, rate limiting, password hashing)
+- Accessibility (WCAG 2.1 AA compliance)
+
 ---
 
 **Last Updated:** 05/12/2025
+
+---
+
+**Navigation:** [← Back to Authentication](../README.md) | [← Back to All Use Cases](../../README.md)

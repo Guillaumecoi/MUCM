@@ -91,25 +91,76 @@ impl TemplateEngine {
             let template = fs::read_to_string(overview_path)?;
             handlebars.register_template_string("overview", template)?;
         } else {
-            // If no overview template found, register a default one
-            let default_overview_template = r#"# {{project_name}} - Use Cases Overview
+            // If no overview template found, register a default one matching the new category structure
+            let default_overview_template = r#"# Use Cases Overview
 
-Generated on {{generated_date}}
+**Project:** {{project_name}}  
+**Generated:** {{generated_date}}
 
-Total Use Cases: {{total_use_cases}}
+## Summary
+- **Total Use Cases:** {{total_use_cases}}
+- **Total Categories:** {{total_categories}}
 
-## Use Cases by Category
+## Categories
 
 {{#each categories}}
-### {{category_name}}
+### [{{category_name}}](./{{category_path}}/README.md)
 
-{{#each use_cases}}
-- **[{{id}}]** {{title}} - Priority: {{priority}}, Status: {{aggregated_status}}
-{{/each}}
+{{#if use_case_count}}**Use Cases:** {{use_case_count}}{{/if}}
+
+---
 
 {{/each}}
 "#;
             handlebars.register_template_string("overview", default_overview_template)?;
+        }
+
+        // Register category overview template
+        let category_overview_path = if user_templates_path.parent().is_some()
+            && user_templates_path.parent().unwrap().exists()
+        {
+            user_templates_path
+                .parent()
+                .unwrap()
+                .join("category_overview.hbs")
+        } else {
+            Path::new("source-templates/category_overview.hbs").to_path_buf()
+        };
+        if category_overview_path.exists() {
+            let template = fs::read_to_string(category_overview_path)?;
+            handlebars.register_template_string("category_overview", template)?;
+        } else {
+            // If no category overview template found, register a default one
+            let default_category_overview_template = r#"# {{category_name}} Use Cases
+
+## Use Cases
+
+{{#each use_cases}}
+- [{{id}}]({{id}}/README.md) - {{title}}
+  - Status: {{aggregated_status}}
+  - Priority: {{priority}}
+{{/each}}
+"#;
+            handlebars.register_template_string(
+                "category_overview",
+                default_category_overview_template,
+            )?;
+        }
+
+        // Register use case overview template (multi-view README)
+        let use_case_overview_path = if user_templates_path.parent().is_some()
+            && user_templates_path.parent().unwrap().exists()
+        {
+            user_templates_path
+                .parent()
+                .unwrap()
+                .join("use_case_overview.hbs")
+        } else {
+            Path::new("source-templates/use_case_overview.hbs").to_path_buf()
+        };
+        if use_case_overview_path.exists() {
+            let template = fs::read_to_string(use_case_overview_path)?;
+            handlebars.register_template_string("use_case_overview", template)?;
         }
 
         // Register language test templates using LanguageRegistry
@@ -231,6 +282,20 @@ Generated at: {{generated_at}}
             .borrow()
             .render("overview", data)
             .context("Failed to render overview template")
+    }
+
+    pub fn render_category_overview(&self, data: &HashMap<String, Value>) -> Result<String> {
+        self.handlebars
+            .borrow()
+            .render("category_overview", data)
+            .context("Failed to render category overview template")
+    }
+
+    pub fn render_use_case_overview(&self, data: &HashMap<String, Value>) -> Result<String> {
+        self.handlebars
+            .borrow()
+            .render("use_case_overview", data)
+            .context("Failed to render use case overview template")
     }
 
     /// Render use case with specific template

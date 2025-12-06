@@ -6,7 +6,7 @@ use crate::core::application::creators::{
     ScenarioCreator, ScenarioParams, StepParams, UseCaseCreator,
 };
 use crate::core::application::generators::{
-    MarkdownGenerator, OutputManager, OverviewGenerator, TestGenerator,
+    CategoryOverviewGenerator, MarkdownGenerator, OutputManager, OverviewGenerator, TestGenerator,
 };
 use crate::core::application::methodology_field_collector::MethodologyFieldCollector;
 use crate::core::application::services;
@@ -88,6 +88,7 @@ pub struct UseCaseCoordinator {
     markdown_generator: MarkdownGenerator,
     test_generator: TestGenerator,
     overview_generator: OverviewGenerator,
+    category_overview_generator: CategoryOverviewGenerator,
 }
 
 impl UseCaseCoordinator {
@@ -103,6 +104,7 @@ impl UseCaseCoordinator {
         let markdown_generator = MarkdownGenerator::new(config.clone());
         let test_generator = TestGenerator::new(config.clone());
         let overview_generator = OverviewGenerator::new(config.clone());
+        let category_overview_generator = CategoryOverviewGenerator::new(config.clone());
 
         let use_cases = repository.load_all()?;
 
@@ -116,6 +118,7 @@ impl UseCaseCoordinator {
             markdown_generator,
             test_generator,
             overview_generator,
+            category_overview_generator,
         })
     }
 
@@ -1125,9 +1128,43 @@ impl UseCaseCoordinator {
         self.test_generator.generate(use_case)
     }
 
-    /// Generate overview file
+    /// Generate overview file and category overviews
     fn generate_overview(&self) -> Result<()> {
-        self.overview_generator.generate(&self.use_cases)
+        // Generate main overview
+        self.overview_generator.generate(&self.use_cases)?;
+
+        // Generate category overviews
+        // Extract unique categories from use cases
+        use crate::core::domain::Category;
+
+        let mut category_map: HashMap<String, Vec<String>> = HashMap::new();
+        for uc in &self.use_cases {
+            category_map
+                .entry(uc.category.clone())
+                .or_default()
+                .push(uc.id.clone());
+        }
+
+        // Create category entities and generate overviews
+        let mut categories = Vec::new();
+        for (category_name, _) in category_map.iter() {
+            // For now, use first 3 letters as abbreviation (will be improved with CategoryRepository)
+            let abbrev = category_name
+                .chars()
+                .filter(|c| c.is_alphabetic())
+                .take(3)
+                .collect::<String>()
+                .to_uppercase();
+
+            if let Ok(category) = Category::new(category_name.clone(), abbrev) {
+                categories.push(category);
+            }
+        }
+
+        self.category_overview_generator
+            .generate_all(&self.use_cases, &categories)?;
+
+        Ok(())
     }
 
     // ========== Cleanup Operations ==========
@@ -1135,7 +1172,8 @@ impl UseCaseCoordinator {
     /// Delete use case files from a specific category directory
     ///
     /// Helper method to remove TOML and markdown files when moving a use case
-    /// to a different category.
+    /// to a different category. With the new folder structure, this removes the
+    /// entire use case folder which contains README.md and all methodology variants.
     ///
     /// # Arguments
     /// * `use_case_id` - The ID of the use case
@@ -1157,18 +1195,14 @@ impl UseCaseCoordinator {
             fs::remove_file(&toml_path)?;
         }
 
-        // Delete all markdown files for this use case (could be multiple with multi-view)
-        let md_dir = Path::new(&self.config.directories.use_case_dir).join(&category_snake);
-        if md_dir.exists() {
-            for entry in fs::read_dir(&md_dir)? {
-                let entry = entry?;
-                let filename = entry.file_name();
-                let filename_str = filename.to_string_lossy();
-                // Match files like UC-XXX-001.md or UC-XXX-001-feat-s.md
-                if filename_str.starts_with(use_case_id) && filename_str.ends_with(".md") {
-                    fs::remove_file(entry.path())?;
-                }
-            }
+        // Delete entire use case folder (new folder structure)
+        // Path: {use_case_dir}/{category}/{use_case_id}/
+        let use_case_folder = Path::new(&self.config.directories.use_case_dir)
+            .join(&category_snake)
+            .join(use_case_id);
+
+        if use_case_folder.exists() {
+            fs::remove_dir_all(&use_case_folder)?;
         }
 
         Ok(())
@@ -1805,10 +1839,12 @@ mod tests {
         // so we just verify the TOML file was created successfully
         let _toml_content = fs::read_to_string(&toml_path)?;
 
-        // Verify markdown was generated
+        // Verify markdown was generated (new folder structure)
+        // Single view should use README.md
         let md_path = Path::new(&coordinator.config.directories.use_case_dir)
             .join("testing")
-            .join("UC-TES-001-feature-normal.md");
+            .join("UC-TES-001")
+            .join("README.md");
         assert!(
             md_path.exists(),
             "Markdown file should exist at {:?}",
