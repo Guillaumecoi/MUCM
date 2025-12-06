@@ -94,6 +94,13 @@ impl<'a> MarkdownRegenerationService<'a> {
                 .save_markdown_with_filename(&use_case, &filename, &markdown_content)?;
         }
 
+        // For multi-view use cases, also generate README.md
+        if use_case.views.len() > 1 {
+            let readme_content = self.markdown_generator.generate_use_case_readme(&use_case)?;
+            self.repository
+                .save_markdown_with_filename(&use_case, "README.md", &readme_content)?;
+        }
+
         Ok(())
     }
 }
