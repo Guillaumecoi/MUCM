@@ -382,6 +382,18 @@ impl ScenarioWorkflow {
             scenario_type
         ))?;
 
+        // Prompt for status
+        let statuses = vec!["Planned", "InProgress", "Implemented", "Tested", "Deployed"];
+        let status = Select::new("Status:", statuses)
+            .with_help_message("Select the current status of this scenario")
+            .prompt()?;
+
+        // Collect preconditions
+        let preconditions = prompts::collect_conditions("preconditions", false, vec![])?;
+
+        // Collect postconditions
+        let postconditions = prompts::collect_conditions("postconditions", false, vec![])?;
+
         // Create the extension scenario
         let scenario_type_enum = match scenario_type.to_lowercase().as_str() {
             "alternative" => crate::core::ScenarioType::AlternativeFlow,
@@ -394,7 +406,7 @@ impl ScenarioWorkflow {
             parent_scenario_id: parent_id.to_string(),
             extends_at_step,
             returns_at_step,
-            title,
+            title: title.clone(),
             description: description.unwrap_or_default(),
             primary_actor,
             scenario_type: scenario_type_enum,
@@ -403,10 +415,99 @@ impl ScenarioWorkflow {
         let result = controller.create_extension_scenario(params)?;
 
         UI::show_success(&result.message)?;
-        println!(
-            "\n  💡 Tip: Use 'Edit scenario' to add steps to your new {} scenario.\n",
-            scenario_type
-        );
+
+        // Extract scenario_id from success message
+        let scenario_id = result
+            .message
+            .split(':')
+            .nth(1)
+            .and_then(|part| part.trim().split(" - ").next())
+            .map(|id| id.trim())
+            .unwrap_or("");
+
+        // Update status if not default
+        if !scenario_id.is_empty() && status != "Planned" {
+            controller.edit_scenario(
+                use_case_id.to_string(),
+                scenario_id.to_string(),
+                None,
+                None,
+                None,
+                Some(status.to_string()),
+            )?;
+        }
+
+        // Add preconditions
+        if !scenario_id.is_empty() {
+            for condition in preconditions {
+                controller.add_precondition(
+                    use_case_id.to_string(),
+                    scenario_id.to_string(),
+                    condition,
+                )?;
+            }
+        }
+
+        // Add postconditions
+        if !scenario_id.is_empty() {
+            for condition in postconditions {
+                controller.add_postcondition(
+                    use_case_id.to_string(),
+                    scenario_id.to_string(),
+                    condition,
+                )?;
+            }
+        }
+
+        // Prompt to add steps immediately after creation
+        let add_steps = Confirm::new("Add steps to this scenario now?")
+            .with_default(true)
+            .with_help_message("You can also add steps later via Edit Scenario")
+            .prompt()?;
+
+        if add_steps && !scenario_id.is_empty() {
+            println!("\n  📝 Adding steps to: {}\n", title);
+            loop {
+                let actor = prompts::select_actor("Select actor for this step:")?;
+
+                let add_receiver = Confirm::new("Add a receiving actor?")
+                    .with_default(false)
+                    .with_help_message("Does this action have a target/receiver?")
+                    .prompt()?;
+
+                let receiver = if add_receiver {
+                    Some(prompts::select_actor("Select receiving actor:")?)
+                } else {
+                    None
+                };
+
+                let description = Text::new("Step description:")
+                    .with_help_message(
+                        "Describe the action (e.g., 'enters credentials', 'validates input')",
+                    )
+                    .prompt()?;
+
+                let step_result = controller.add_step(
+                    use_case_id.to_string(),
+                    scenario_id.to_string(),
+                    description,
+                    None,
+                    Some(actor),
+                    receiver,
+                )?;
+
+                UI::show_success(&step_result.message)?;
+
+                let add_more = Confirm::new("Add another step?")
+                    .with_default(true)
+                    .prompt()?;
+
+                if !add_more {
+                    break;
+                }
+            }
+        }
+
         UI::pause_for_input()?;
 
         Ok(())
