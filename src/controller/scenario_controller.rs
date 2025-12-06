@@ -29,6 +29,7 @@ pub struct CreateExtensionParams {
     pub title: String,
     pub description: String,
     pub primary_actor: String,
+    pub scenario_type: ScenarioType,
 }
 
 /// Parameters for inserting a step
@@ -893,6 +894,7 @@ impl ScenarioController {
             title: title.clone(),
             description,
             primary_actor: actor,
+            scenario_type: params.scenario_type,
         };
         let scenario_id = self
             .app_service
@@ -2058,6 +2060,7 @@ mod tests {
             title: "Extension Scenario".to_string(),
             description: "Extension description".to_string(),
             primary_actor: "User".to_string(),
+            scenario_type: ScenarioType::Extension,
         };
         let result = controller.create_extension_scenario(params).unwrap();
 

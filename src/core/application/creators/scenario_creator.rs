@@ -20,6 +20,7 @@ pub struct ExtensionScenarioParams {
     pub title: String,
     pub description: Option<String>,
     pub primary_actor: String,
+    pub scenario_type: ScenarioType,
 }
 
 /// Parameters for creating a scenario step
@@ -130,7 +131,7 @@ impl ScenarioCreator {
             scenario_id,
             params.title,
             params.description.unwrap_or_default(),
-            ScenarioType::Extension,
+            params.scenario_type,
             params.primary_actor,
         );
 
