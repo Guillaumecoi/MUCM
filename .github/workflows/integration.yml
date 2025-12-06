@@ -221,3 +221,137 @@ jobs:
           name: test-sqlite-artifacts
           path: test-sqlite/
           retention-days: 7
+
+  multi-view-template-test:
+    name: Multi-View Template Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache dependencies
+        uses: Swatinem/rust-cache@v2
+
+      - name: Build release binary
+        run: cargo build --release
+
+      - name: Add binary to PATH
+        run: echo "${{ github.workspace }}/target/release" >> $GITHUB_PATH
+
+      - name: Test 1 - Initialize with multiple methodologies
+        run: |
+          mkdir test-multiview
+          cd test-multiview
+          mucm init --storage toml --methodology developer,tester
+          if [ ! -f ".config/.mucm/mucm.toml" ]; then
+            echo "ERROR: Multi-view project not initialized"
+            exit 1
+          fi
+          echo "✓ Multi-view project initialized"
+
+      - name: Test 2 - Verify template files copied
+        working-directory: test-multiview
+        run: |
+          if [ ! -f ".config/.mucm/template-assets/use_case_overview.hbs" ]; then
+            echo "ERROR: use_case_overview.hbs not copied"
+            ls -la .config/.mucm/template-assets/ || echo "Template dir not found"
+            exit 1
+          fi
+          if [ ! -f ".config/.mucm/template-assets/category_overview.hbs" ]; then
+            echo "ERROR: category_overview.hbs not copied"
+            exit 1
+          fi
+          echo "✓ Template files copied"
+
+      - name: Test 3 - Create multi-view use case
+        working-directory: test-multiview
+        run: |
+          mucm create "Multi-View Feature" --category Testing --description "Feature with multiple views" --views "developer:advanced,tester:normal"
+          OUTPUT=$(mucm list)
+          if ! echo "$OUTPUT" | grep -q "UC-TST-001"; then
+            echo "ERROR: Multi-view use case not created"
+            exit 1
+          fi
+          echo "✓ Multi-view use case created"
+
+      - name: Test 4 - Verify README.md generated
+        working-directory: test-multiview
+        run: |
+          if [ ! -f "docs/use-cases/testing/UC-TST-001/README.md" ]; then
+            echo "ERROR: Use case README.md not generated"
+            ls -la docs/use-cases/testing/ || echo "Category dir not found"
+            ls -la docs/use-cases/testing/UC-TST-001/ || echo "Use case dir not found"
+            exit 1
+          fi
+          echo "✓ Use case README.md generated"
+
+      - name: Test 5 - Verify README.md content
+        working-directory: test-multiview
+        run: |
+          README_CONTENT=$(cat docs/use-cases/testing/UC-TST-001/README.md)
+          if ! echo "$README_CONTENT" | grep -q "Available Views"; then
+            echo "ERROR: README.md missing Available Views section"
+            cat docs/use-cases/testing/UC-TST-001/README.md
+            exit 1
+          fi
+          if ! echo "$README_CONTENT" | grep -q "developer" || ! echo "$README_CONTENT" | grep -q "tester"; then
+            echo "ERROR: README.md not listing both methodologies"
+            exit 1
+          fi
+          echo "✓ README.md contains correct content"
+
+      - name: Test 6 - Verify methodology view files exist
+        working-directory: test-multiview
+        run: |
+          if [ ! -f "docs/use-cases/testing/UC-TST-001/UC-TST-001-developer-advanced.md" ]; then
+            echo "ERROR: Developer view file not generated"
+            ls -la docs/use-cases/testing/UC-TST-001/ || echo "Use case dir not found"
+            exit 1
+          fi
+          if [ ! -f "docs/use-cases/testing/UC-TST-001/UC-TST-001-tester-normal.md" ]; then
+            echo "ERROR: Tester view file not generated"
+            exit 1
+          fi
+          echo "✓ Both methodology view files generated"
+
+      - name: Test 7 - Verify category overview
+        working-directory: test-multiview
+        run: |
+          if [ ! -f "docs/use-cases/testing/README.md" ]; then
+            echo "ERROR: Category README not generated"
+            ls -la docs/use-cases/ || echo "Use cases dir not found"
+            exit 1
+          fi
+          CATEGORY_CONTENT=$(cat docs/use-cases/testing/README.md)
+          if ! echo "$CATEGORY_CONTENT" | grep -q "UC-TST-001"; then
+            echo "ERROR: Category README not listing use case"
+            exit 1
+          fi
+          echo "✓ Category overview generated"
+
+      - name: Multi-View Template Summary
+        if: success()
+        run: |
+          echo "================================"
+          echo "✅ MULTI-VIEW TEMPLATE TESTS PASSED"
+          echo "================================"
+          echo "Tests: 7/7"
+          echo "Features tested:"
+          echo "  ✓ Multi-methodology initialization"
+          echo "  ✓ Template files copied (use_case_overview.hbs, category_overview.hbs)"
+          echo "  ✓ Multi-view use case creation"
+          echo "  ✓ Use case README.md generation"
+          echo "  ✓ README.md content verification"
+          echo "  ✓ Methodology view files"
+          echo "  ✓ Category overview"
+
+      - name: Upload artifacts on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-multiview-artifacts
+          path: test-multiview/
+          retention-days: 7

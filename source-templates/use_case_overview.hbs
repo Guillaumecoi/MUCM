@@ -1,49 +1,41 @@
-# Use Case: {{title}}
+# Use Case: {{id}}: {{title}}
 
-**Use Case ID:** {{id}}  
-**Status:** {{aggregated_status}}  
-**Priority:** {{priority}}  
-{{#if last_updated}}**Last Updated:** {{last_updated}}{{/if}}
+**Status:** {{aggregated_status}} | **Priority:** {{priority}}
 
-**Navigation:** [← Back to {{category}}](../README.md) | [← Back to All Use Cases](../../README.md)
-
----
+**Category:** {{category}}
 
 ## Description
 
 {{description}}
 
+{{#if preconditions}}
+## Preconditions
+
+{{#each preconditions}}
+- {{this.text}}{{#if this.target_id}} (see [{{this.target_id}}]({{use_case_link this.target_id}})){{/if}}
+{{/each}}
+
+{{/if}}
+{{#if postconditions}}
+## Postconditions
+
+{{#each postconditions}}
+- {{this.text}}{{#if this.target_id}} (see [{{this.target_id}}]({{use_case_link this.target_id}})){{/if}}
+{{/each}}
+
+{{/if}}
+
+
 ## Available Views
 
-This use case is available in the following methodology perspectives:
+This use case has multiple methodology views available:
 
 {{#each views}}
-- **[{{methodology}} ({{level}})](./{{../id}}-{{methodology}}-{{level}}.md)** - {{#if (eq methodology "developer")}}Technical implementation details, API endpoints, database schema{{else if (eq methodology "tester")}}Test scenarios, coverage areas, quality assurance{{else if (eq methodology "business")}}Business value, stakeholder requirements, ROI analysis{{else if (eq methodology "feature")}}User stories, acceptance criteria, agile workflows{{else}}{{methodology}} perspective{{/if}}
+- **[{{methodology}} ({{level}})](./{{../id}}-{{methodology}}-{{level}}.md)** - {{#if (eq methodology "developer")}}Detailed technical specifications for developers{{else if (eq methodology "tester")}}Comprehensive testing scenarios and acceptance criteria{{else if (eq methodology "business")}}Business value analysis and stakeholder requirements{{else if (eq methodology "feature")}}User stories and agile workflow details{{else}}{{methodology}} perspective{{/if}}
 {{/each}}
 
-## Quick Reference
-
-{{#if preconditions}}
-### Preconditions
-{{#each preconditions}}
-- {{this}}
-{{/each}}
-{{/if}}
-
-{{#if postconditions}}
-### Postconditions
-{{#each postconditions}}
-- {{this}}
-{{/each}}
-{{/if}}
-
-{{#if scenarios}}
-### Scenarios
-{{#each scenarios}}
-- **{{id}}** - {{title}}
-{{/each}}
-{{/if}}
+{{> scenario}}
 
 ---
 
-*This overview provides a high-level summary. Select a specific methodology view above for detailed documentation.*
+**Navigation:** [← Back to {{category}}](../README.md) | [← Back to All Use Cases](../../README.md)

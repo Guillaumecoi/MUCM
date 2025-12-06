@@ -8,7 +8,11 @@
 //!
 //! Templates are organized in a hierarchical structure:
 //! - `source-templates/` - Source template directory
-//!   - `overview.hbs` - Root template files
+//!   - `overview.hbs` - All use cases overview
+//!   - `use_case_overview.hbs` - Multi-view use case README
+//!   - `category_overview.hbs` - Category README
+//!   - `actor.hbs` - Actor/persona documentation
+//!   - `scenarios/` - Shared scenario templates
 //!   - `methodologies/` - Methodology-specific templates and configs
 //!     - `{methodology}/` - Individual methodology directory
 //!       - `config.toml` - Methodology configuration
@@ -22,9 +26,10 @@
 //! The template copying process involves:
 //! 1. Locating the source templates directory
 //! 2. Reading the project configuration
-//! 3. Copying root templates (overview.hbs)
-//! 4. Copying methodology-specific templates and configs
-//! 5. Copying language-specific templates
+//! 3. Copying root templates (overview.hbs, use_case_overview.hbs, category_overview.hbs, actor.hbs)
+//! 4. Copying scenario templates
+//! 5. Copying methodology-specific templates and configs
+//! 6. Copying language-specific templates
 //!
 //! ## Configuration Integration
 //!
@@ -418,7 +423,7 @@ impl TemplateManager {
     /// # Errors
     /// Returns an error if template files cannot be copied.
     fn copy_root_templates(source_templates_dir: &Path, config_templates_dir: &Path) -> Result<()> {
-        // Copy overview.hbs
+        // Copy overview.hbs (use cases overview)
         let overview_src = source_templates_dir.join("overview.hbs");
         if overview_src.exists() {
             let overview_dst = config_templates_dir.join("overview.hbs");
@@ -427,6 +432,30 @@ impl TemplateManager {
                 println!("✓ Copied overview template");
             } else {
                 println!("⊙ Skipped overview template (already exists)");
+            }
+        }
+
+        // Copy use_case_overview.hbs (multi-view use case README)
+        let uc_overview_src = source_templates_dir.join("use_case_overview.hbs");
+        if uc_overview_src.exists() {
+            let uc_overview_dst = config_templates_dir.join("use_case_overview.hbs");
+            if !uc_overview_dst.exists() {
+                fs::copy(&uc_overview_src, &uc_overview_dst)?;
+                println!("✓ Copied use case overview template");
+            } else {
+                println!("⊙ Skipped use case overview template (already exists)");
+            }
+        }
+
+        // Copy category_overview.hbs (category README)
+        let cat_overview_src = source_templates_dir.join("category_overview.hbs");
+        if cat_overview_src.exists() {
+            let cat_overview_dst = config_templates_dir.join("category_overview.hbs");
+            if !cat_overview_dst.exists() {
+                fs::copy(&cat_overview_src, &cat_overview_dst)?;
+                println!("✓ Copied category overview template");
+            } else {
+                println!("⊙ Skipped category overview template (already exists)");
             }
         }
 
@@ -840,16 +869,37 @@ mod tests {
         fs::create_dir(&source_dir)?;
         fs::create_dir(&dest_dir)?;
 
-        // Create overview.hbs file
-        fs::write(source_dir.join("overview.hbs"), "test content")?;
+        // Create all root template files
+        fs::write(source_dir.join("overview.hbs"), "use cases overview")?;
+        fs::write(source_dir.join("use_case_overview.hbs"), "use case readme")?;
+        fs::write(source_dir.join("category_overview.hbs"), "category readme")?;
+        fs::write(source_dir.join("actor.hbs"), "actor template")?;
 
         TemplateManager::copy_root_templates(&source_dir, &dest_dir)?;
 
-        // Verify file was copied
+        // Verify all files were copied
         assert!(dest_dir.join("overview.hbs").exists());
         assert_eq!(
             fs::read_to_string(dest_dir.join("overview.hbs"))?,
-            "test content"
+            "use cases overview"
+        );
+
+        assert!(dest_dir.join("use_case_overview.hbs").exists());
+        assert_eq!(
+            fs::read_to_string(dest_dir.join("use_case_overview.hbs"))?,
+            "use case readme"
+        );
+
+        assert!(dest_dir.join("category_overview.hbs").exists());
+        assert_eq!(
+            fs::read_to_string(dest_dir.join("category_overview.hbs"))?,
+            "category readme"
+        );
+
+        assert!(dest_dir.join("actor.hbs").exists());
+        assert_eq!(
+            fs::read_to_string(dest_dir.join("actor.hbs"))?,
+            "actor template"
         );
 
         Ok(())
@@ -865,11 +915,14 @@ mod tests {
         fs::create_dir(&source_dir)?;
         fs::create_dir(&dest_dir)?;
 
-        // No overview.hbs file
+        // No template files
         TemplateManager::copy_root_templates(&source_dir, &dest_dir)?;
 
         // Should complete successfully without copying anything
         assert!(!dest_dir.join("overview.hbs").exists());
+        assert!(!dest_dir.join("use_case_overview.hbs").exists());
+        assert!(!dest_dir.join("category_overview.hbs").exists());
+        assert!(!dest_dir.join("actor.hbs").exists());
 
         Ok(())
     }

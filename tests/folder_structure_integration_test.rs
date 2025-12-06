@@ -363,3 +363,92 @@ fn test_category_overview_updates_on_changes() {
 
 // Note: test_empty_category_overview removed because delete_use_case
 // is not available in the public API. Deletion is handled through CLI only.
+
+#[test]
+#[serial]
+fn test_multi_view_use_case_readme_generation() {
+    let temp_dir = TempDir::new().unwrap();
+    env::set_current_dir(&temp_dir).unwrap();
+
+    let _template_mgr = common::TestTemplateManager::new().unwrap();
+
+    // Create config with multiple methodologies
+    let mut config = Config::default();
+    config.templates.methodologies = vec!["developer".to_string(), "tester".to_string()];
+    ConfigFileManager::save_in_dir(&config, ".").unwrap();
+
+    // Copy templates to config directory
+    Config::copy_templates_to_config_with_language(None).unwrap();
+
+    let mut controller = UseCaseController::new().unwrap();
+
+    // Create use case with multiple views
+    let mut params = create_test_params(
+        "Multi-View Feature",
+        "Testing",
+        "TST",
+        Some("Feature with multiple methodology views".to_string()),
+    );
+
+    // Add multiple views in comma-separated format: methodology:level
+    params.views = Some("developer:advanced,tester:normal".to_string());
+
+    let result = controller.create_use_case(params).unwrap();
+    let use_case_id = extract_use_case_id(&result.message);
+
+    // Generate markdown
+    controller.regenerate_all_markdown().unwrap();
+
+    // Verify use case folder structure
+    let use_case_folder = temp_dir
+        .path()
+        .join("docs/use-cases")
+        .join("testing")
+        .join(&use_case_id);
+
+    assert!(
+        use_case_folder.exists(),
+        "Use case folder should exist for multi-view use case"
+    );
+
+    // Verify README.md exists (multi-view overview)
+    let readme_path = use_case_folder.join("README.md");
+    assert!(
+        readme_path.exists(),
+        "README.md should exist for multi-view use case: {:?}",
+        readme_path
+    );
+
+    let readme_content = fs::read_to_string(&readme_path).expect("Should read use case README");
+
+    // Verify README contains overview content
+    assert!(
+        readme_content.contains("Multi-View Feature"),
+        "README should contain use case title"
+    );
+
+    assert!(
+        readme_content.contains("Available Views"),
+        "README should contain Available Views section"
+    );
+
+    assert!(
+        readme_content.contains("developer") && readme_content.contains("tester"),
+        "README should list all available methodology views"
+    );
+
+    // Verify individual methodology view files exist
+    let dev_view = use_case_folder.join(format!("{}-developer-advanced.md", use_case_id));
+    assert!(
+        dev_view.exists(),
+        "Developer view file should exist: {:?}",
+        dev_view
+    );
+
+    let tester_view = use_case_folder.join(format!("{}-tester-normal.md", use_case_id));
+    assert!(
+        tester_view.exists(),
+        "Tester view file should exist: {:?}",
+        tester_view
+    );
+}

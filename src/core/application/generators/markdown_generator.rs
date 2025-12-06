@@ -95,6 +95,38 @@ impl MarkdownGenerator {
                 .render_use_case_with_methodology(&data, methodology_name)
         }
     }
+
+    /// Generates the README.md overview for a multi-view use case.
+    ///
+    /// Creates a summary document that lists all available methodology views
+    /// and provides quick reference information about the use case.
+    ///
+    /// # Arguments
+    /// * `use_case` - The use case to generate the README for
+    ///
+    /// # Returns
+    /// The generated README markdown content
+    pub fn generate_use_case_readme(&self, use_case: &UseCase) -> Result<String> {
+        // Convert UseCase to JSON for template rendering
+        let use_case_json = serde_json::to_value(use_case)?;
+        let mut data: HashMap<String, Value> = serde_json::from_value(use_case_json)?;
+
+        // Format dates according to config
+        crate::core::utils::format_dates_from_metadata(
+            &mut data,
+            &self.config.metadata.date_format,
+        );
+
+        // Merge extra fields into top-level HashMap
+        if let Some(Value::Object(extra_map)) = data.remove("extra") {
+            for (key, value) in extra_map {
+                data.insert(key, value);
+            }
+        }
+
+        // Render using the use_case_overview template
+        self.template_engine.render_use_case_overview(&data)
+    }
 }
 
 #[cfg(test)]
