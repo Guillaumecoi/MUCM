@@ -67,6 +67,8 @@ impl ScenarioWorkflow {
             // Show action menu
             let actions = vec![
                 "Create main scenario",
+                "Create alternative scenario",
+                "Create exception scenario",
                 "Edit scenario",
                 "Delete scenario",
                 "Validate scenarios",
@@ -78,6 +80,12 @@ impl ScenarioWorkflow {
             match choice {
                 "Create main scenario" => {
                     Self::create_scenario(use_case_id)?;
+                }
+                "Create alternative scenario" => {
+                    Self::create_alternative_scenario(use_case_id)?;
+                }
+                "Create exception scenario" => {
+                    Self::create_exception_scenario(use_case_id)?;
                 }
                 "Edit scenario" => {
                     Self::edit_scenario(use_case_id)?;
@@ -239,6 +247,159 @@ impl ScenarioWorkflow {
             }
         }
 
+        UI::pause_for_input()?;
+
+        Ok(())
+    }
+
+    /// Create an alternative scenario from the top-level menu
+    fn create_alternative_scenario(use_case_id: &str) -> Result<()> {
+        Self::create_extension_scenario_top_level(use_case_id, "alternative")
+    }
+
+    /// Create an exception scenario from the top-level menu
+    fn create_exception_scenario(use_case_id: &str) -> Result<()> {
+        Self::create_extension_scenario_top_level(use_case_id, "exception")
+    }
+
+    /// Helper function to create alternative or exception scenarios from top-level menu
+    fn create_extension_scenario_top_level(use_case_id: &str, scenario_type: &str) -> Result<()> {
+        UI::show_section_header(
+            &format!("Create {} Scenario", scenario_type.to_uppercase()),
+            "🔀",
+        )?;
+
+        let mut controller = ScenarioController::new()?;
+        let scenarios = controller.get_scenarios(use_case_id)?;
+
+        // Filter to main scenarios only
+        let main_scenarios: Vec<_> = scenarios.iter().filter(|s| s.is_main).collect();
+
+        if main_scenarios.is_empty() {
+            println!("\n  ❌ No main scenarios found.");
+            println!(
+                "  Create a main scenario first before adding {} scenarios.",
+                scenario_type
+            );
+            println!("  Go to: 'Create main scenario' in the menu above.\n");
+            UI::pause_for_input()?;
+            return Ok(());
+        }
+
+        // Filter to main scenarios with steps
+        let main_with_steps: Vec<_> = main_scenarios
+            .iter()
+            .filter(|s| !s.steps.is_empty())
+            .copied()
+            .collect();
+
+        if main_with_steps.is_empty() {
+            println!("\n  ⚠️  Main scenarios exist, but none have steps yet.");
+            println!(
+                "  Add at least one step to your main scenario before creating {} scenarios.",
+                scenario_type
+            );
+            println!("  Go to: Edit scenario → Manage steps → Add step\n");
+            UI::pause_for_input()?;
+            return Ok(());
+        }
+
+        // Select parent scenario
+        let scenario_options: Vec<String> = main_with_steps
+            .iter()
+            .map(|s| format!("{} - {} ({} steps)", s.id, s.title, s.steps.len()))
+            .collect();
+
+        let selected = Select::new(
+            &format!("Select main scenario to extend with {}:", scenario_type),
+            scenario_options,
+        )
+        .prompt()?;
+        let parent_id = selected.split(" - ").next().unwrap();
+
+        // Get the selected scenario
+        let parent_scenario = main_with_steps.iter().find(|s| s.id == parent_id).unwrap();
+
+        // Select the divergence step
+        let step_choices: Vec<String> = parent_scenario
+            .steps
+            .iter()
+            .map(|s| format!("Step {}: {}", s.order, s.action))
+            .collect();
+
+        let selected_step = Select::new(
+            &format!("At which step should the {} diverge?", scenario_type),
+            step_choices.clone(),
+        )
+        .prompt()?;
+
+        let extends_at_step = selected_step
+            .split(':')
+            .next()
+            .unwrap()
+            .replace("Step ", "")
+            .trim()
+            .to_string();
+
+        // Get title and description
+        let title = Text::new(&format!("{} scenario title:", scenario_type))
+            .with_help_message("E.g., 'Invalid password', 'Login with OAuth'")
+            .prompt()?;
+
+        let description = Text::new("Description (optional):")
+            .with_help_message("Describe what happens in this scenario")
+            .prompt()
+            .ok();
+
+        // Ask about return to main flow
+        let should_return = Confirm::new(&format!(
+            "Does this {} return to the main flow?",
+            scenario_type
+        ))
+        .with_default(scenario_type == "alternative")
+        .with_help_message("Alternatives typically return, exceptions typically don't")
+        .prompt()?;
+
+        let returns_at_step = if should_return {
+            let return_step =
+                Select::new("At which step does it return?", step_choices).prompt()?;
+            Some(
+                return_step
+                    .split(':')
+                    .next()
+                    .unwrap()
+                    .replace("Step ", "")
+                    .trim()
+                    .to_string(),
+            )
+        } else {
+            None
+        };
+
+        // Select primary actor
+        let primary_actor = prompts::select_actor(&format!(
+            "Select primary actor for this {} scenario:",
+            scenario_type
+        ))?;
+
+        // Create the extension scenario
+        let params = crate::controller::CreateExtensionParams {
+            use_case_id: use_case_id.to_string(),
+            parent_scenario_id: parent_id.to_string(),
+            extends_at_step,
+            returns_at_step,
+            title,
+            description: description.unwrap_or_default(),
+            primary_actor,
+        };
+
+        let result = controller.create_extension_scenario(params)?;
+
+        UI::show_success(&result.message)?;
+        println!(
+            "\n  💡 Tip: Use 'Edit scenario' to add steps to your new {} scenario.\n",
+            scenario_type
+        );
         UI::pause_for_input()?;
 
         Ok(())

@@ -364,5 +364,78 @@ sequenceDiagram
 "#,
     )?;
 
+    // Create use_case_overview template (for multi-view README.md)
+    fs::write(
+        templates_dir.join("use_case_overview.hbs"),
+        r#"# {{id}}: {{title}}
+
+**Status:** {{aggregated_status}} | **Priority:** {{priority}}
+
+**Category:** {{category}}
+
+## Description
+
+{{description}}
+
+{{#if preconditions}}
+## Preconditions
+
+{{#each preconditions}}
+- {{this.text}}
+{{/each}}
+
+{{/if}}
+{{#if postconditions}}
+## Postconditions
+
+{{#each postconditions}}
+- {{this.text}}
+{{/each}}
+
+{{/if}}
+{{> scenario}}
+
+## Available Views
+
+This use case has multiple methodology views available:
+
+{{#each views}}
+- **[{{methodology}} ({{level}})](./{{../id}}-{{methodology}}-{{level}}.md)**
+{{/each}}
+
+---
+
+**Navigation:** [← Back to {{category}}](../README.md) | [← Back to All Use Cases](../../README.md)
+"#,
+    )?;
+
+    // Create category_overview template
+    fs::write(
+        templates_dir.join("category_overview.hbs"),
+        r#"# {{category_name}} Use Cases
+
+**Navigation:** [← Back to All Use Cases](../README.md)
+
+---
+
+## Summary
+
+This category contains **{{total_use_cases}}** use case{{#if (gt total_use_cases 1)}}s{{/if}}.
+
+## Use Cases
+
+{{#each use_cases}}
+### [{{id}}: {{title}}](./{{id}}/README.md)
+
+**Status:** {{aggregated_status}} | **Priority:** {{priority}}
+
+{{#if description}}{{description}}{{/if}}
+
+---
+
+{{/each}}
+"#,
+    )?;
+
     Ok(())
 }

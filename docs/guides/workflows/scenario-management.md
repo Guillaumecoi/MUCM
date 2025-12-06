@@ -114,6 +114,97 @@ mucm usecase scenario edit UC-AUTH-001 UC-AUTH-001-S02 \
 mucm usecase scenario delete UC-AUTH-001 UC-AUTH-001-S05
 ```
 
+## Creating Alternative and Exception Scenarios
+
+Alternative and exception scenarios are created as extensions of a main scenario that diverge at a specific step.
+
+### Prerequisites
+- At least one **main scenario** must exist
+- The main scenario must have **at least one step**
+
+### Interactive Mode (Recommended)
+
+The easiest way to create alternative and exception scenarios is through interactive mode:
+
+1. Run `mucm` in the use case directory
+2. Navigate to **"Manage Use Cases"** → Select your use case → **"Manage Scenarios"**
+3. Select **"Create alternative scenario"** or **"Create exception scenario"**
+4. The system will:
+   - Validate that main scenarios exist with steps
+   - Show clear error messages if prerequisites aren't met
+   - Guide you through selecting the divergence point
+   - Prompt for scenario details (title, description, actor)
+   - Ask whether the scenario returns to the main flow
+
+**Menu Structure:**
+```
+Manage Scenarios
+├── Create main scenario
+├── Create alternative scenario    ← Direct access to alternatives
+├── Create exception scenario      ← Direct access to exceptions
+├── Edit scenario
+├── Delete scenario
+├── Validate scenarios
+└── Back to use case menu
+```
+
+### Via Step Management
+
+You can also create alternatives/exceptions while managing steps:
+
+1. Navigate to **"Edit scenario"** → Select main scenario → **"Manage steps"**
+2. Select **"Create extension from step"**
+3. Choose the step where the alternative diverges
+4. Select type (alternative or exception)
+5. Enter details and whether it returns to main flow
+
+### CLI Mode
+
+Alternative and exception scenarios must be created via interactive mode or through the step management workflow. Direct CLI commands for extension scenarios are not currently supported.
+
+### Tips
+
+- **Alternatives** typically return to the main flow (e.g., "Login with OAuth" returns to dashboard)
+- **Exceptions** typically don't return (e.g., "Invalid password" blocks login and ends)
+- Create your main scenario and add all steps before adding alternatives/exceptions
+- You can have multiple alternatives/exceptions diverging from the same step
+- The divergence point is where the alternative behavior begins
+
+### Example Workflow
+
+```
+1. Create main scenario "User Login"
+2. Add steps: Navigate → Enter credentials → Validate → Redirect
+3. Create alternative scenario:
+   - Type: alternative
+   - Diverges at: Step 2 (Enter credentials)
+   - Title: "Login with OAuth"
+   - Returns: Yes, at step 4 (Redirect)
+4. Create exception scenario:
+   - Type: exception
+   - Diverges at: Step 3 (Validate)
+   - Title: "Invalid Password"
+   - Returns: No (ends the flow)
+```
+
+### Validation and Errors
+
+The system provides helpful error messages:
+
+**No main scenarios:**
+```
+❌ No main scenarios found.
+Create a main scenario first before adding alternative scenarios.
+Go to: 'Create main scenario' in the menu above.
+```
+
+**Main scenario has no steps:**
+```
+⚠️  Main scenarios exist, but none have steps yet.
+Add at least one step to your main scenario before creating alternative scenarios.
+Go to: Edit scenario → Manage steps → Add step
+```
+
 ## Working with Steps
 
 Scenarios consist of ordered steps that describe the interaction flow.

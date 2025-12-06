@@ -94,11 +94,14 @@ impl CategoryOverviewGenerator {
                     "title": uc.title,
                     "aggregated_status": uc.status().display_name(),
                     "priority": uc.priority.to_string(),
+                    "description": uc.description,
+                    "views": uc.views,
                 })
             })
             .collect();
 
         data.insert("use_cases".to_string(), json!(use_cases_data));
+        data.insert("total_use_cases".to_string(), json!(use_cases.len()));
 
         // Render template
         let content = self.template_engine.render_category_overview(&data)?;
@@ -115,6 +118,7 @@ impl CategoryOverviewGenerator {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::core::domain::MethodologyView;
     use serial_test::serial;
     use tempfile::TempDir;
 
@@ -321,5 +325,154 @@ mod tests {
         assert!(auth_readme.exists(), "Authentication README should exist");
         assert!(payment_readme.exists(), "Payment README should exist");
         assert!(reporting_readme.exists(), "Reporting README should exist");
+    }
+
+    #[test]
+    #[serial]
+    fn test_category_overview_contains_total_use_cases() {
+        let temp_dir = TempDir::new().unwrap();
+        let config = create_test_config(&temp_dir);
+        let generator = CategoryOverviewGenerator::new(config);
+
+        let category = Category::new("Authentication".to_string(), "AUT".to_string()).unwrap();
+        let use_cases = [
+            create_test_use_case("AUT-001", "Authentication", "User Login"),
+            create_test_use_case("AUT-002", "Authentication", "Password Reset"),
+            create_test_use_case("AUT-003", "Authentication", "Two-Factor Auth"),
+        ];
+        let use_case_refs: Vec<&UseCase> = use_cases.iter().collect();
+
+        generator
+            .generate_for_category(&category, &use_case_refs)
+            .unwrap();
+
+        let readme_path = temp_dir
+            .path()
+            .join("use-cases")
+            .join("authentication")
+            .join("README.md");
+        let content = std::fs::read_to_string(&readme_path).unwrap();
+
+        // Verify total use cases count is correct
+        assert!(
+            content.contains("**3** use cases") || content.contains("**3** use case"),
+            "Should contain total use cases count of 3, content: {}",
+            content
+        );
+    }
+
+    #[test]
+    #[serial]
+    fn test_category_overview_single_use_case_count() {
+        let temp_dir = TempDir::new().unwrap();
+        let config = create_test_config(&temp_dir);
+        let generator = CategoryOverviewGenerator::new(config);
+
+        let category = Category::new("Payment".to_string(), "PAY".to_string()).unwrap();
+        let use_cases = [create_test_use_case(
+            "PAY-001",
+            "Payment",
+            "Process Payment",
+        )];
+        let use_case_refs: Vec<&UseCase> = use_cases.iter().collect();
+
+        generator
+            .generate_for_category(&category, &use_case_refs)
+            .unwrap();
+
+        let readme_path = temp_dir
+            .path()
+            .join("use-cases")
+            .join("payment")
+            .join("README.md");
+        let content = std::fs::read_to_string(&readme_path).unwrap();
+
+        // Verify singular form for 1 use case
+        assert!(
+            content.contains("**1** use case") && !content.contains("**1** use cases"),
+            "Should use singular 'use case' for count of 1, content: {}",
+            content
+        );
+    }
+
+    #[test]
+    #[serial]
+    fn test_category_overview_contains_use_case_details() {
+        let temp_dir = TempDir::new().unwrap();
+        let config = create_test_config(&temp_dir);
+        let generator = CategoryOverviewGenerator::new(config);
+
+        let category = Category::new("Authentication".to_string(), "AUT".to_string()).unwrap();
+
+        // Create use case with specific status and priority
+        let mut use_case = create_test_use_case("AUT-001", "Authentication", "User Login");
+        use_case.description = "Allows users to log in with credentials".to_string();
+
+        let use_case_refs = vec![&use_case];
+
+        generator
+            .generate_for_category(&category, &use_case_refs)
+            .unwrap();
+
+        let readme_path = temp_dir
+            .path()
+            .join("use-cases")
+            .join("authentication")
+            .join("README.md");
+        let content = std::fs::read_to_string(&readme_path).unwrap();
+
+        // Verify use case details are included
+        assert!(content.contains("AUT-001"), "Should contain use case ID");
+        assert!(
+            content.contains("User Login"),
+            "Should contain use case title"
+        );
+        assert!(
+            content.contains("MEDIUM") || content.contains("Medium"),
+            "Should contain priority"
+        );
+        assert!(
+            content.contains("Allows users to log in with credentials"),
+            "Should contain description"
+        );
+    }
+
+    #[test]
+    #[serial]
+    fn test_category_overview_with_multi_view_use_case() {
+        let temp_dir = TempDir::new().unwrap();
+        let config = create_test_config(&temp_dir);
+        let generator = CategoryOverviewGenerator::new(config);
+
+        let category = Category::new("Testing".to_string(), "TST".to_string()).unwrap();
+
+        // Create use case with multiple views
+        let mut use_case = create_test_use_case("TST-001", "Testing", "Multi-View Feature");
+        use_case.views = vec![
+            MethodologyView::new("developer".to_string(), "advanced".to_string()),
+            MethodologyView::new("tester".to_string(), "normal".to_string()),
+        ];
+
+        let use_case_refs = vec![&use_case];
+
+        generator
+            .generate_for_category(&category, &use_case_refs)
+            .unwrap();
+
+        let readme_path = temp_dir
+            .path()
+            .join("use-cases")
+            .join("testing")
+            .join("README.md");
+        let content = std::fs::read_to_string(&readme_path).unwrap();
+
+        // Verify views are listed
+        assert!(
+            content.contains("Available Views")
+                || content.contains("developer-advanced")
+                || content.contains("tester-normal"),
+            "Should list available views, content: {}",
+            content
+        );
     }
 }
