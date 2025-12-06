@@ -2459,4 +2459,202 @@ mod tests {
         assert!(result.is_success());
         assert!(result.message.contains("All scenarios") && result.message.contains("are valid"));
     }
+
+    /// Test that alternative flow scenarios are created with AlternativeFlow type
+    ///
+    /// Verifies that when creating an extension scenario with scenario_type set to
+    /// AlternativeFlow, the resulting scenario has the correct type enum value.
+    /// This ensures alternative flows are distinguishable from regular extensions.
+    #[test]
+    #[serial]
+    fn test_create_alternative_scenario_type() {
+        let (_temp_dir, mut controller) = setup_test_env();
+        let use_case_id = create_test_use_case(&mut controller);
+        let mut controller = ScenarioController::new().unwrap();
+
+        // Create main scenario with steps
+        controller
+            .create_main_scenario(
+                use_case_id.clone(),
+                "Main Scenario".to_string(),
+                None,
+                None,
+                None,
+                "user".to_string(),
+            )
+            .unwrap();
+
+        let scenarios = controller.app_service.get_scenarios(&use_case_id).unwrap();
+        let main_scenario_id = scenarios[0].id.clone();
+
+        // Add steps to main scenario
+        controller
+            .add_step(
+                use_case_id.clone(),
+                main_scenario_id.clone(),
+                "First action".to_string(),
+                Some(1),
+                Some("User".to_string()),
+                None,
+            )
+            .unwrap();
+
+        // Create alternative flow scenario
+        let params = CreateExtensionParams {
+            use_case_id: use_case_id.clone(),
+            parent_scenario_id: main_scenario_id.clone(),
+            extends_at_step: "1".to_string(),
+            returns_at_step: Some("1".to_string()),
+            title: "Alternative Flow".to_string(),
+            description: "Alternative description".to_string(),
+            primary_actor: "User".to_string(),
+            scenario_type: ScenarioType::AlternativeFlow,
+        };
+        let result = controller.create_extension_scenario(params).unwrap();
+
+        assert!(result.is_success());
+
+        // Verify alternative scenario has correct type
+        let scenarios = controller.app_service.get_scenarios(&use_case_id).unwrap();
+        let alternative = scenarios
+            .iter()
+            .find(|s| s.title == "Alternative Flow")
+            .unwrap();
+        assert_eq!(
+            alternative.scenario_type,
+            ScenarioType::AlternativeFlow,
+            "Alternative scenario should have AlternativeFlow type, not Extension"
+        );
+    }
+
+    /// Test that exception flow scenarios are created with ExceptionFlow type
+    ///
+    /// Verifies that when creating an extension scenario with scenario_type set to
+    /// ExceptionFlow, the resulting scenario has the correct type enum value.
+    /// Exception flows typically don't return to the main flow (returns_at_step is None).
+    #[test]
+    #[serial]
+    fn test_create_exception_scenario_type() {
+        let (_temp_dir, mut controller) = setup_test_env();
+        let use_case_id = create_test_use_case(&mut controller);
+        let mut controller = ScenarioController::new().unwrap();
+
+        // Create main scenario with steps
+        controller
+            .create_main_scenario(
+                use_case_id.clone(),
+                "Main Scenario".to_string(),
+                None,
+                None,
+                None,
+                "user".to_string(),
+            )
+            .unwrap();
+
+        let scenarios = controller.app_service.get_scenarios(&use_case_id).unwrap();
+        let main_scenario_id = scenarios[0].id.clone();
+
+        // Add steps to main scenario
+        controller
+            .add_step(
+                use_case_id.clone(),
+                main_scenario_id.clone(),
+                "First action".to_string(),
+                Some(1),
+                Some("User".to_string()),
+                None,
+            )
+            .unwrap();
+
+        // Create exception flow scenario
+        let params = CreateExtensionParams {
+            use_case_id: use_case_id.clone(),
+            parent_scenario_id: main_scenario_id.clone(),
+            extends_at_step: "1".to_string(),
+            returns_at_step: None, // Exceptions typically don't return
+            title: "Exception Flow".to_string(),
+            description: "Exception description".to_string(),
+            primary_actor: "User".to_string(),
+            scenario_type: ScenarioType::ExceptionFlow,
+        };
+        let result = controller.create_extension_scenario(params).unwrap();
+
+        assert!(result.is_success());
+
+        // Verify exception scenario has correct type
+        let scenarios = controller.app_service.get_scenarios(&use_case_id).unwrap();
+        let exception = scenarios
+            .iter()
+            .find(|s| s.title == "Exception Flow")
+            .unwrap();
+        assert_eq!(
+            exception.scenario_type,
+            ScenarioType::ExceptionFlow,
+            "Exception scenario should have ExceptionFlow type, not Extension"
+        );
+    }
+
+    /// Test that generic extension scenarios still create Extension type
+    ///
+    /// Verifies backward compatibility - extension scenarios without a specific
+    /// alternative or exception designation should still use the Extension type.
+    /// This is the catch-all type for scenario branches that don't fit the other categories.
+    #[test]
+    #[serial]
+    fn test_create_extension_scenario_type_generic() {
+        let (_temp_dir, mut controller) = setup_test_env();
+        let use_case_id = create_test_use_case(&mut controller);
+        let mut controller = ScenarioController::new().unwrap();
+
+        // Create main scenario with steps
+        controller
+            .create_main_scenario(
+                use_case_id.clone(),
+                "Main Scenario".to_string(),
+                None,
+                None,
+                None,
+                "user".to_string(),
+            )
+            .unwrap();
+
+        let scenarios = controller.app_service.get_scenarios(&use_case_id).unwrap();
+        let main_scenario_id = scenarios[0].id.clone();
+
+        // Add steps to main scenario
+        controller
+            .add_step(
+                use_case_id.clone(),
+                main_scenario_id.clone(),
+                "First action".to_string(),
+                Some(1),
+                Some("User".to_string()),
+                None,
+            )
+            .unwrap();
+
+        // Create regular extension scenario
+        let params = CreateExtensionParams {
+            use_case_id: use_case_id.clone(),
+            parent_scenario_id: main_scenario_id.clone(),
+            extends_at_step: "1".to_string(),
+            returns_at_step: Some("1".to_string()),
+            title: "Extension".to_string(),
+            description: "Extension description".to_string(),
+            primary_actor: "User".to_string(),
+            scenario_type: ScenarioType::Extension,
+        };
+        let result = controller.create_extension_scenario(params).unwrap();
+
+        assert!(result.is_success());
+
+        // Verify extension scenario has correct type
+        let scenarios = controller.app_service.get_scenarios(&use_case_id).unwrap();
+        let extension = scenarios.iter().find(|s| s.title == "Extension").unwrap();
+        assert_eq!(
+            extension.scenario_type,
+            ScenarioType::Extension,
+            "Extension scenario should have Extension type"
+        );
+    }
 }
