@@ -5,6 +5,8 @@
 **Development Priority:** {{priority}}  
 **Specification Date:** {{created_date}}
 
+**Navigation:** [← Overview](./README.md) | [← Back to {{category}}](../README.md) | [← Back to All Use Cases](../../README.md)
+
 ---
 
 {{#if description}}
@@ -55,14 +57,14 @@
 {{#if preconditions}}
 ## Preconditions
 {{#each preconditions}}
-- {{this.text}}{{#if this.use_case_reference}} (see [{{this.use_case_reference}}](../{{this.use_case_reference}}.md)){{/if}}
+- {{this.text}}{{#if this.target_id}} (see [{{this.target_id}}]({{use_case_link this.target_id}})){{/if}}
 {{/each}}
 
 {{/if}}
 {{#if postconditions}}
 ## Postconditions
 {{#each postconditions}}
-- {{this.text}}{{#if this.use_case_reference}} (see [{{this.use_case_reference}}](../{{this.use_case_reference}}.md)){{/if}}
+- {{this.text}}{{#if this.target_id}} (see [{{this.target_id}}]({{use_case_link this.target_id}})){{/if}}
 {{/each}}
 
 {{/if}}
