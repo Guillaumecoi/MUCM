@@ -76,7 +76,7 @@ action = "displays registration form"
 order = "3"
 acting_actor = "guest-guest-user"
 receiving_actor = "e-commerce-platform"
-action = "ubmits registration form (email, password, name, ...)"
+action = "submits registration form (email, password, name, ...)"
 
 [[scenarios.steps]]
 order = "4"

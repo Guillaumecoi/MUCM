@@ -65,6 +65,9 @@ impl MarkdownGenerator {
             }
         }
 
+        // Process preconditions and postconditions to convert link syntax
+        Self::process_condition_links(&mut data);
+
         // Determine which methodology to use for field flattening
         let methodology_name = if let Some(v) = view {
             &v.methodology
@@ -126,6 +129,109 @@ impl MarkdownGenerator {
 
         // Render using the use_case_overview template
         self.template_engine.render_use_case_overview(&data)
+    }
+
+    /// Processes preconditions and postconditions to convert link syntax to markdown links.
+    ///
+    /// Parses text in the format: "condition text||UC:target_id:relationship"
+    /// and converts it to: "condition text ([UC-XXX-NNN](../../category/UC-XXX-NNN/README.md))"
+    fn process_condition_links(data: &mut HashMap<String, Value>) {
+        // Process preconditions
+        if let Some(Value::Array(preconditions)) = data.get("preconditions") {
+            let processed: Vec<Value> = preconditions
+                .iter()
+                .map(|cond| {
+                    if let Value::Object(cond_obj) = cond {
+                        let mut new_cond = cond_obj.clone();
+                        if let Some(Value::String(text)) = cond_obj.get("text") {
+                            new_cond.insert(
+                                "text".to_string(),
+                                Value::String(Self::convert_condition_link(text)),
+                            );
+                        }
+                        Value::Object(new_cond)
+                    } else if let Value::String(text) = cond {
+                        // Handle simple string preconditions (legacy format)
+                        Value::String(Self::convert_condition_link(text))
+                    } else {
+                        cond.clone()
+                    }
+                })
+                .collect();
+            data.insert("preconditions".to_string(), Value::Array(processed));
+        }
+
+        // Process postconditions
+        if let Some(Value::Array(postconditions)) = data.get("postconditions") {
+            let processed: Vec<Value> = postconditions
+                .iter()
+                .map(|cond| {
+                    if let Value::Object(cond_obj) = cond {
+                        let mut new_cond = cond_obj.clone();
+                        if let Some(Value::String(text)) = cond_obj.get("text") {
+                            new_cond.insert(
+                                "text".to_string(),
+                                Value::String(Self::convert_condition_link(text)),
+                            );
+                        }
+                        Value::Object(new_cond)
+                    } else if let Value::String(text) = cond {
+                        // Handle simple string postconditions (legacy format)
+                        Value::String(Self::convert_condition_link(text))
+                    } else {
+                        cond.clone()
+                    }
+                })
+                .collect();
+            data.insert("postconditions".to_string(), Value::Array(processed));
+        }
+    }
+
+    /// Converts a condition text with link syntax to markdown.
+    ///
+    /// Input: "User must have a registered account||UC:UC-AUTH-001:depend"
+    /// Output: "User must have a registered account ([UC-AUTH-001](../../authentication/UC-AUTH-001/README.md))"
+    fn convert_condition_link(text: &str) -> String {
+        if let Some((condition_text, link_part)) = text.split_once("||UC:") {
+            // Parse the link part: target_id:relationship
+            let parts: Vec<&str> = link_part.split(':').collect();
+            if parts.len() >= 2 {
+                let target_id = parts[0];
+                // We need to resolve the category of the target use case
+                // For now, we'll use the resolve_use_case_link logic from helpers.rs
+                use crate::core::to_snake_case;
+
+                if let Ok(_config) = Config::load() {
+                    if let Ok(coordinator) = crate::core::UseCaseCoordinator::load() {
+                        if let Some(target_uc) = coordinator
+                            .get_all_use_cases()
+                            .iter()
+                            .find(|uc| uc.id == target_id)
+                        {
+                            let category_snake = to_snake_case(&target_uc.category);
+                            return format!(
+                                "{} ([{}](../../{}/{}/README.md))",
+                                condition_text.trim(),
+                                target_id,
+                                category_snake,
+                                target_id
+                            );
+                        }
+                    }
+                }
+
+                // Fallback: assume same category
+                return format!(
+                    "{} ([{}](../{}/README.md))",
+                    condition_text.trim(),
+                    target_id,
+                    target_id
+                );
+            }
+        }
+
+        // No link syntax found, return as-is
+        text.to_string()
     }
 }
 
