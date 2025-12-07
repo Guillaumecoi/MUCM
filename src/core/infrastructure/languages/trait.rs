@@ -22,4 +22,8 @@ pub trait Language {
     /// Returns the Handlebars template content used for generating test files
     /// for this language.
     fn test_template(&self) -> &str;
+
+    /// Returns the comment start syntax for this language (e.g., "#", "//").
+    /// Used for parsing safe zones in test files during regeneration.
+    fn comment_start(&self) -> &str;
 }

@@ -179,10 +179,7 @@ mod tests {
             )
         };
         let info_content = format!(
-            r#"name = "{}"
-aliases = {}
-file_extension = "{}"
-template_file = "test.hbs""#,
+            "name = \"{}\"\naliases = {}\nfile_extension = \"{}\"\ncomment_start = \"#\"\ntemplate_file = \"test.hbs\"",
             name, aliases_str, extension
         );
         fs::write(lang_dir.join("info.toml"), info_content).unwrap();
