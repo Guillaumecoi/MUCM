@@ -272,13 +272,35 @@ impl ScenarioWorkflow {
         let mut controller = ScenarioController::new()?;
         let scenarios = controller.get_scenarios(use_case_id)?;
 
-        // Filter to main scenarios only
-        let main_scenarios: Vec<_> = scenarios.iter().filter(|s| s.is_main).collect();
+        // For exceptions, allow extending both main and alternative scenarios
+        // For alternatives, only allow extending main scenarios (existing behavior)
+        let extendable_scenarios: Vec<_> = if scenario_type == "exception" {
+            scenarios
+                .iter()
+                .filter(|s| {
+                    s.is_main || s.scenario_type == crate::core::ScenarioType::AlternativeFlow
+                })
+                .collect()
+        } else {
+            scenarios.iter().filter(|s| s.is_main).collect()
+        };
 
-        if main_scenarios.is_empty() {
-            println!("\n  ❌ No main scenarios found.");
+        if extendable_scenarios.is_empty() {
             println!(
-                "  Create a main scenario first before adding {} scenarios.",
+                "\n  ❌ No {} scenarios found.",
+                if scenario_type == "exception" {
+                    "main or alternative"
+                } else {
+                    "main"
+                }
+            );
+            println!(
+                "  Create a {} scenario first before adding {} scenarios.",
+                if scenario_type == "exception" {
+                    "main or alternative"
+                } else {
+                    "main"
+                },
                 scenario_type
             );
             println!("  Go to: 'Create main scenario' in the menu above.\n");
@@ -286,17 +308,22 @@ impl ScenarioWorkflow {
             return Ok(());
         }
 
-        // Filter to main scenarios with steps
-        let main_with_steps: Vec<_> = main_scenarios
+        // Filter to scenarios with steps
+        let main_with_steps: Vec<_> = extendable_scenarios
             .iter()
             .filter(|s| !s.steps.is_empty())
             .copied()
             .collect();
 
         if main_with_steps.is_empty() {
-            println!("\n  ⚠️  Main scenarios exist, but none have steps yet.");
+            let scenario_label = if scenario_type == "exception" {
+                "Scenarios"
+            } else {
+                "Main scenarios"
+            };
+            println!("\n  ⚠️  {} exist, but none have steps yet.", scenario_label);
             println!(
-                "  Add at least one step to your main scenario before creating {} scenarios.",
+                "  Add at least one step to a scenario before creating {} scenarios.",
                 scenario_type
             );
             println!("  Go to: Edit scenario → Manage steps → Add step\n");
@@ -310,11 +337,13 @@ impl ScenarioWorkflow {
             .map(|s| format!("{} - {} ({} steps)", s.id, s.title, s.steps.len()))
             .collect();
 
-        let selected = Select::new(
-            &format!("Select main scenario to extend with {}:", scenario_type),
-            scenario_options,
-        )
-        .prompt()?;
+        let prompt_text = if scenario_type == "exception" {
+            format!("Select scenario to extend with {}:", scenario_type)
+        } else {
+            format!("Select main scenario to extend with {}:", scenario_type)
+        };
+
+        let selected = Select::new(&prompt_text, scenario_options).prompt()?;
         let parent_id = selected.split(" - ").next().unwrap();
 
         // Get the selected scenario
