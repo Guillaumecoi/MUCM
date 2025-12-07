@@ -1,4 +1,5 @@
 name = "rust"
 aliases = ["rs"]
 file_extension = "rs"
+comment_start = "//"
 template_file = "test.hbs"
