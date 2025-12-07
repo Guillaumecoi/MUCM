@@ -8,7 +8,7 @@ use_case_references = []
 
 [metadata]
 created_at = "2025-12-03T03:15:46.408167072Z"
-updated_at = "2025-12-07T01:41:38.794273436Z"
+updated_at = "2025-12-07T04:00:18.795260007Z"
 
 [[views]]
 methodology = "developer"
@@ -253,23 +253,91 @@ action = "offers links to login page and password reset"
 [[scenarios.preconditions]]
 text = "Used email is already registered"
 
+[[scenarios]]
+id = "UC-AUTH-001-S04"
+title = "Invalid password"
+description = ""
+scenario_type = "exception_flow"
+status = "implemented"
+is_main = false
+primary_actor = "guest-guest-user"
+supporting_actors = ["e-commerce-platform"]
+extends_scenario_id = "UC-AUTH-001-S01"
+extends_at_step = "5"
+returns_at_step = "2"
+repeat_blocks = []
+preconditions = []
+postconditions = []
+references = []
+
+[[scenarios.steps]]
+order = "1"
+acting_actor = "e-commerce-platform"
+receiving_actor = "guest-guest-user"
+action = ' displays error: "Reason password failed"'
+
+[[scenarios]]
+id = "UC-AUTH-001-S05"
+title = "Email Service Unavailable"
+description = ""
+scenario_type = "exception_flow"
+status = "planned"
+is_main = false
+primary_actor = "guest-guest-user"
+supporting_actors = [
+    "email-service",
+    "e-commerce-platform",
+]
+extends_scenario_id = "UC-AUTH-001-S01"
+extends_at_step = "12"
+returns_at_step = "13"
+repeat_blocks = []
+preconditions = []
+postconditions = []
+references = []
+
+[[scenarios.steps]]
+order = "1"
+acting_actor = "email-service"
+receiving_actor = "e-commerce-platform"
+action = "ails to send (service timeout)"
+
+[[scenarios.steps]]
+order = "2"
+acting_actor = "e-commerce-platform"
+receiving_actor = "guest-guest-user"
+action = 'displays warning: "Account created, but failed to send verification mail. Try to resend later"'
+
+[methodology_fields.tester]
+test_type = [
+    "e2e",
+    "integration",
+    "security",
+    "accessibility",
+]
+test_data_requirements = "10 valid email addresses for testing (test+1@example.com through test+10@example.com), 5 known registered emails for duplicate testing, mock SendGrid API with configurable responses (success, failure, timeout), database with clean state before each test run."
+coverage_areas = [
+    "Input validation (client-side and server-side)",
+    "Database record creation and integrity",
+    "Email delivery and content verification",
+    "Session creation and management",
+    "OAuth registration flows",
+    "Security measures (CSRF, rate limiting, password hashing)",
+    "Accessibility (WCAG 2.1 AA compliance)",
+]
+performance_baseline = ""
+test_environments = [
+    "Staging environment with email service integration",
+    "Database with clean state before each test run",
+    "Mock OAuth providers for social registration tests",
+    "Various browsers and devices for front-end validation tests",
+]
+regression_suites = []
+automation_status = ""
+test_priority = "P0-Critical"
+
 [methodology_fields.developer]
-api_endpoints = [
-    "`POST /api/v1/auth/register` - Email/password registration",
-    "`POST /api/v1/auth/register/oauth` - OAuth social registration",
-]
-database_tables = [
-    "users",
-    "sessions",
-    "email_verifications",
-]
-error_scenarios = [
-    "Email already in use: return 409 Conflict",
-    "Weak password: return 400 Bad Request with validation errors",
-    "Invalid email format: return 400 Bad Request",
-    "OAuth provider error: return 502 Bad Gateway",
-    "Database connection failure: return 503 Service Unavailable",
-]
+performance_requirements = ""
 security_considerations = [
     "HTTPS required for all registration requests",
     "CSRF token validation on form submission",
@@ -280,38 +348,25 @@ security_considerations = [
     "bcrypt password hashing with cost factor 12",
     "Session tokens: 32-byte random, hex-encoded",
 ]
-performance_requirements = ""
 technical_dependencies = [
     "PostgreSQL 14+: for user data storage",
     "Redis 6+: for session management",
     "SendGrid API: for email delivery",
     "OAuth providers (Google, Facebook) for social registration",
 ]
-
-[methodology_fields.tester]
-coverage_areas = [
-    "Input validation (client-side and server-side)",
-    "Database record creation and integrity",
-    "Email delivery and content verification",
-    "Session creation and management",
-    "OAuth registration flows",
-    "Security measures (CSRF, rate limiting, password hashing)",
-    "Accessibility (WCAG 2.1 AA compliance)",
+error_scenarios = [
+    "Email already in use: return 409 Conflict",
+    "Weak password: return 400 Bad Request with validation errors",
+    "Invalid email format: return 400 Bad Request",
+    "OAuth provider error: return 502 Bad Gateway",
+    "Database connection failure: return 503 Service Unavailable",
 ]
-regression_suites = []
-test_data_requirements = "10 valid email addresses for testing (test+1@example.com through test+10@example.com), 5 known registered emails for duplicate testing, mock SendGrid API with configurable responses (success, failure, timeout), database with clean state before each test run."
-performance_baseline = ""
-test_priority = "P0-Critical"
-test_type = [
-    "e2e",
-    "integration",
-    "security",
-    "accessibility",
+api_endpoints = [
+    "`POST /api/v1/auth/register` - Email/password registration",
+    "`POST /api/v1/auth/register/oauth` - OAuth social registration",
 ]
-test_environments = [
-    "Staging environment with email service integration",
-    "Database with clean state before each test run",
-    "Mock OAuth providers for social registration tests",
-    "Various browsers and devices for front-end validation tests",
+database_tables = [
+    "users",
+    "sessions",
+    "email_verifications",
 ]
-automation_status = ""

@@ -105,7 +105,26 @@ Cache->>E-commerce Platform: 9. returns session token
 
 *Extends scenario UC-AUTH-001-S01 at step 3*, returns at step 13
 
-## UC-AUTH-001-S03 - Email Already Registered (Extension)
+## UC-AUTH-001-S03 - OAuth Provider Unavailable (Exception)
+
+**Primary Actor:** [Guest User](../../../actors/guest-guest-user.md)
+
+**Supporting Actors:** [E-commerce Platform](../../../actors/e-commerce-platform.md)
+
+```mermaid
+sequenceDiagram
+participant Guest User
+E-commerce Platform->>Guest User: 1. displays error: 'OAuth provider temporarily unavailable. Please try again or use email registration.'
+E-commerce Platform->>Guest User: 2. offers fallback to email/password registration
+```
+
+### Steps
+1. **E-commerce Platform** → **Guest User**: displays error: &quot;OAuth provider temporarily unavailable. Please try again or use email registration.&quot;
+2. **E-commerce Platform** → **Guest User**: offers fallback to email/password registration
+
+*Extends scenario UC-AUTH-001-S02 at step 5*, returns at step 3
+
+## UC-AUTH-001-S04 - Email Already Registered (Extension)
 
 **Primary Actor:** [Guest User](../../../actors/guest-guest-user.md)
 
@@ -128,6 +147,42 @@ E-commerce Platform->>Guest User: 3. offers links to login page and password res
 3. **E-commerce Platform** → **Guest User**: offers links to login page and password reset
 
 *Extends scenario UC-AUTH-001-S01 at step 6*
+
+## UC-AUTH-001-S05 - Invalid password (Exception)
+
+**Primary Actor:** [Guest User](../../../actors/guest-guest-user.md)
+
+**Supporting Actors:** [E-commerce Platform](../../../actors/e-commerce-platform.md)
+
+```mermaid
+sequenceDiagram
+participant Guest User
+E-commerce Platform->>Guest User: 1.  displays error: 'Reason password failed'
+```
+
+### Steps
+1. **E-commerce Platform** → **Guest User**:  displays error: &quot;Reason password failed&quot;
+
+*Extends scenario UC-AUTH-001-S01 at step 5*, returns at step 2
+
+## UC-AUTH-001-S05 - Email Service Unavailable (Extension)
+
+**Primary Actor:** [Guest User](../../../actors/guest-guest-user.md)
+
+**Supporting Actors:** [Email Service](../../../actors/email-service.md), [E-commerce Platform](../../../actors/e-commerce-platform.md)
+
+```mermaid
+sequenceDiagram
+participant Guest User
+Email Service->>E-commerce Platform: 1. ails to send (service timeout)
+E-commerce Platform->>Guest User: 2. displays warning: 'Account created, but failed to send verification mail. Try to resend later'
+```
+
+### Steps
+1. **Email Service** → **E-commerce Platform**: ails to send (service timeout)
+2. **E-commerce Platform** → **Guest User**: displays warning: &quot;Account created, but failed to send verification mail. Try to resend later&quot;
+
+*Extends scenario UC-AUTH-001-S01 at step 12*, returns at step 13
 
 
 ---
