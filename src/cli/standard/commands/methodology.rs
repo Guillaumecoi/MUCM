@@ -109,3 +109,54 @@ pub fn handle_regenerate_command(
         }
     }
 }
+
+/// Handles the 'regenerate-tests' CLI command.
+///
+/// Regenerates test files while preserving user code in safe zones (START/END USER IMPLEMENTATION markers).
+/// Can regenerate a single use case's test or all use case tests.
+///
+/// # Arguments
+/// * `runner` - A mutable reference to the CLI runner responsible for test regeneration.
+/// * `use_case_id` - Optional ID of the specific use case to regenerate tests for.
+/// * `all` - Flag indicating whether to regenerate all use case tests.
+///
+/// # Returns
+/// Returns `Ok(())` on successful regeneration, or an error if regeneration fails.
+pub fn handle_regenerate_tests_command(
+    runner: &mut CliRunner,
+    use_case_id: Option<String>,
+    all: bool,
+) -> Result<()> {
+    match (use_case_id, all) {
+        // No args or --all flag: regenerate all tests
+        (None, _) => match runner.regenerate_all_tests() {
+            Ok(result) => {
+                DisplayResultFormatter::display(&result);
+                if result.success {
+                    Ok(())
+                } else {
+                    std::process::exit(1);
+                }
+            }
+            Err(e) => {
+                DisplayResultFormatter::display(&DisplayResult::error(e.to_string()));
+                std::process::exit(1);
+            }
+        },
+        // Use case ID: regenerate test for specific use case
+        (Some(id), _) => match runner.regenerate_test(id.clone()) {
+            Ok(result) => {
+                DisplayResultFormatter::display(&result);
+                if result.success {
+                    Ok(())
+                } else {
+                    std::process::exit(1);
+                }
+            }
+            Err(e) => {
+                DisplayResultFormatter::display(&DisplayResult::error(e.to_string()));
+                std::process::exit(1);
+            }
+        },
+    }
+}
