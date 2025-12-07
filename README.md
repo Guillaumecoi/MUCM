@@ -26,45 +26,63 @@
 
 ## Why MUCM?
 
-Keep your use case documentation **in your repository**, not scattered across external tools. MUCM stores structured data (TOML/SQLite) and generates clean markdown files that live alongside your code—version controlled, searchable, and always in sync.
+**Documentation that travels with your code.** MUCM is a documentation compiler that turns structured data (TOML or SQLite) into beautifully formatted markdown documentation. Write once, generate multiple perspectives for developers, testers, business analysts, and product managers.
 
-**No cloud dependencies. No vendor lock-in. Your data, your repo.**
+### The Problem
+- **Online tools create barriers** - contributors need accounts, logins, permissions just to read/edit docs
+- **Documentation lives separately from code** - not in your repo, not in pull requests, not in your workflow
+- **Keeping it structured manually is painful** - consistent formatting across dozens of use cases is tedious
+- **Vendor lock-in** - your documentation is trapped in proprietary systems
 
-Perfect for teams that value documentation as code and want their requirements to travel with the codebase.
+### The Solution
+Edit TOML files (just like config files), commit to git, and get:
+- **Customizable templates without coding** - Handlebars templates you can edit to format output exactly how you want
+- **Version-controlled source of truth** in your repo, no servers, no online services, zero barriers
+- **Auto-generated test scaffolding** with safe zones so your code survives regeneration
+- **Smart cross-references** that automatically link use cases, actors, and preconditions
+- **CI/CD ready** - generate docs automatically in GitHub Actions, no installation needed for contributors.
+- **Multi-view documentation** tailored for different teams (same data, different perspectives)
 
-**[→ See a Complete Example: E-Commerce Demo](examples/ecommerce-demo/)** - Explore a real-world project with personas, use cases, and multiple methodologies in action.
+### See It In Action
+
+**[→ E-Commerce Demo](examples/ecommerce-demo/)** - Complete authentication system with use cases, personas, tests, and Mermaid diagrams. Built in 10 minutes. Zero manual markdown.
 
 ## Features
 
-### 🧩 Extensible
-- Custom fields per methodology
-- Handlebars templates you can modify
-- Test generation for multiple programming languages
-- Combine multiple methodologies in one use case
 
-### 🎨 Four Methodology Templates
-Choose the perspective that fits your team:
-- **Developer** - API design, data models, technical architecture
-- **Tester** - Test scenarios, coverage metrics, quality assurance
-- **Business** - ROI, stakeholder requirements, business value
-- **Feature** - User stories, acceptance criteria, agile workflows
+**🔧 Extend Everything**  
+Create custom methodologies for your industry. Add support for new test languages. Build your own template fields. MUCM adapts to your workflow, not the other way around.
 
-### 🎭 Scenarios & Actors
-- **Four scenario types**: main, alternative, exception, extension
-- **Extension scenarios**: branch from main flow at specific steps
-- **Rich actors**: personas with backgrounds + system actors (Database, API, etc.)
-- Actor-based steps with emoji identification
+**🎨 Customize Templates Without Coding**  
+Edit Handlebars templates to format your documentation exactly how you want. Change headings, reorder sections, add custom fields - no programming experience required. Copy the templates to your project, tweak them in any text editor, and regenerate. Your documentation, your style.
 
-### 🗄️ Flexible Storage
-- **TOML (Recommended)** - Human-readable, git-friendly, perfect for most projects  
-- **SQLite (⚠️ Experimental)** - Database storage for 100+ use cases, still under active development
+**🔗 Smart Cross-References That Never Break**  
+Type `||UC:UC-AUTH-001:depend` in any precondition - MUCM automatically generates clickable markdown links to the right use case. Rename a file? Move a category? All references update automatically. No more hunting for broken links.
 
-### 💬 Two Interfaces
-**Interactive Mode** (`mucm -i`) - Menu-driven, great for getting started  
-**CLI Mode** - Fast commands for automation and scripting
+**🧪 Test Scaffolding That Survives Regeneration**  
+Generate test files in Python, Rust, Java or JavaScript (and soon many more) with protected "safe zones" for your code. Write your test logic once between the markers - regenerate docs 100 times and your implementation stays intact. Only the scaffolding updates.
 
-### 📊 Smart Status Tracking
-Six status levels (Planned → Deployed) with automatic rollup from scenarios to use cases
+**📊 Interactive Diagrams Built From Your Scenarios**  
+Describe your workflow in scenario steps - MUCM generates Mermaid sequence diagrams automatically. Actors, interactions, all visualized. Change a step, regenerate, diagram updates. No drawing tools needed.
+
+**👥 Rich Actor Profiles**  
+Create realistic personas (background, motivations, technical skills) and system actors (APIs, databases, external services). Every actor gets an emoji, a full profile page, and appears consistently across all scenarios.
+
+**🎯 Four Methodology Views (Or Mix Them)**  
+Generate documentation tailored for different audiences from the same source:
+- **Developer** - API specs, data models, security requirements, technical architecture
+- **Tester** - Test scenarios, coverage areas, automation status, quality gates
+- **Business** - ROI analysis, stakeholder requirements, business value, success metrics
+- **Feature** - User stories, acceptance criteria, agile workflows, sprint planning
+
+**⚡ Two Ways to Work**  
+- **Interactive Mode** (`mucm -i`) - Guided menus, perfect for getting started or complex edits
+- **CLI Mode** - Lightning-fast commands for automation, scripting, and CI/CD pipelines
+
+**💾 Choose Your Storage**  
+- **TOML (Recommended)** - Human-readable files, beautiful diffs, perfect for code review and version control
+- **SQLite (Experimental)** - Database backend for projects with 100+ use cases, complex queries, and better performance
+
 
 ## Quick Start
 
@@ -171,105 +189,34 @@ tests/use-cases/
     └── uc_sec_001.rs                         # Test scaffolding (optional)
 ```
 
-## Core Concepts
-
-### Scenarios & Steps
-Break down use cases into **main** (happy path), **alternative**, **exception**, and **extension** scenarios. Extensions can branch from main scenarios at specific steps and return later. Each scenario contains actor-based steps.
-
-**[→ Scenario Management Guide](docs/guides/workflows/scenario-management.md)**
-
-### Rich Actor System
-Create **personas** (human users with backgrounds, roles, technical experience) and **system actors** (Database, API, ExternalService types) with emoji identification. Reference actors in scenario steps.
-
-**[→ Actor Management Guide](docs/guides/workflows/actor-management.md)**
-
-## Methodologies
-
-Each methodology generates documentation optimized for different audiences:
-
-| Methodology | Focus | Best For |
-|-------------|-------|----------|
-| **Developer** | APIs, data models, technical specs | Engineering teams |
-| **Tester** | Test scenarios, coverage, quality | QA teams |
-| **Business** | ROI, stakeholder value, requirements | Product managers |
-| **Feature** | User stories, acceptance criteria | Agile teams |
-
-```bash
-mucm init --methodology developer
-# or mix multiple views
-mucm create "Payment" --category billing --views developer:normal,tester:advanced
-```
-
-**[→ Methodology Selection Guide](docs/guides/workflows/choosing-a-methodology.md)**
-
-## Storage Options
-
-**TOML (Recommended)**
-- ✅ Human-readable files in your repository
-- ✅ Git-friendly (easy diffs, code review)
-- ✅ Works great for most projects
-
-**SQLite (⚠️ Experimental)**
-- 🔬 Database storage for 100+ use cases
-- 🔬 Complex queries and better performance
-- ⚠️ Still under active development
-
-```bash
-mucm init --backend sqlite    # Use SQLite backend
-```
-
-**[→ Configuration Guide](docs/guides/customization/configuration.md)**
-
-## Customization
-
-Everything is customizable via Handlebars templates:
-
-```
-source-templates/
-├── methodologies/          # Add your own methodology
-│   ├── developer/
-│       ├── mythology.toml        # Methodology settings
-│       ├── uc_normal.hbs         # Use case template (normal view)
-│       ├── uc_advanced.hbs       # Use case template (advanced view)
-│       └── uc_custom.hbs         # You can add more views yourself
-│   └── ...
-└── languages/              # Add language support
-    ├── rust/
-        ├── info.toml              # Language configuration
-        └── test.hbs               # Test generation template
-    └── ...
-```
-
-Create custom fields, modify templates, or build entirely new methodologies.
-
-**[→ Template Customization Guide](docs/guides/customization/template-customization.md)**
-
 ## Documentation
 
-- **[Getting Started](docs/guides/getting-started.md)** - Installation and first steps
+**Start Here:**
+- **[E-Commerce Demo](examples/ecommerce-demo/)** - See MUCM in action with a real project
+- **[Getting Started](docs/guides/getting-started.md)** - Installation and your first use case
 - **[CLI Reference](docs/guides/cli/cli-reference.md)** - All commands and options
-- **[Interactive Mode](docs/guides/cli/interactive-mode.md)** - Menu-driven interface
+
+**Guides:**
+- **[Interactive Mode](docs/guides/cli/interactive-mode.md)** - Menu-driven interface walkthrough
+- **[Choosing a Methodology](docs/guides/workflows/choosing-a-methodology.md)** - Pick the right view
+- **[Template Customization](docs/guides/customization/template-customization.md)** - Make MUCM yours
+
+**Deep Dive:**
 - **[Architecture](docs/architecture.md)** - Technical design and implementation
-- **[Contributing](CONTRIBUTING.md)** - How to contribute
+- **[Full Documentation Index](docs/README.md)** - Everything else
 
-**[→ Full Documentation Index](docs/README.md)**
+## Community & Support
 
-## Contributing
+**Questions?** Join the [discussions](https://github.com/Guillaumecoi/MD-usecase-manager/discussions)  
+**Found a bug?** [Open an issue](https://github.com/Guillaumecoi/MD-usecase-manager/issues)  
+**Want to contribute?** See our [Contributing Guide](CONTRIBUTING.md)
 
-Contributions welcome! We especially encourage:
-- 🎨 New methodology templates for different industries
-- 🔧 Additional programming language support
-- 📚 Documentation improvements
-- 🐛 Bug reports and fixes
-
-```bash
-git clone https://github.com/Guillaumecoi/MUCM.git
-cd MUCM
-cargo build
-cargo nextest run    # Requires: cargo install cargo-nextest
-```
-
-**[→ Contributing Guide](CONTRIBUTING.md)**
+We especially encourage:
+- New methodology templates for different industries
+- Additional programming language support for test generation
+- Documentation improvements and examples
+- Feature requests and bug reports
+- Feature development, code contributions and bug fixes
 
 ## License
 
