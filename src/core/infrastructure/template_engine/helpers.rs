@@ -473,6 +473,36 @@ fn unique_personas_helper(
     Ok(())
 }
 
+/// Helper to convert an `id` field to snake_case
+/// Usage: {{snake_case_id id}}
+/// Takes the id as a parameter and converts it to lowercase snake_case
+/// Returns: lowercase snake_case version of the id (e.g., "UC-AUTH-001-S01" -> "uc_auth_001_s01")
+fn snake_case_id_helper(
+    h: &Helper,
+    _: &Handlebars,
+    _ctx: &Context,
+    _: &mut RenderContext,
+    out: &mut dyn Output,
+) -> HelperResult {
+    // Get the first parameter (the id to convert)
+    let id_value = h
+        .param(0)
+        .ok_or_else(|| {
+            RenderErrorReason::Other("snake_case_id helper requires an id parameter".to_string())
+        })?
+        .value()
+        .as_str()
+        .ok_or_else(|| {
+            RenderErrorReason::Other("snake_case_id parameter must be a string".to_string())
+        })?;
+
+    // Convert to snake_case
+    let snake_case = crate::core::to_snake_case(id_value);
+    out.write(&snake_case)?;
+
+    Ok(())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -1007,32 +1037,4 @@ mod tests {
             "Link should point to README.md in use case folder"
         );
     }
-}
-
-/// Helper to convert an `id` field to snake_case
-/// Usage: {{snake_case_id id}}
-/// Takes the id as a parameter and converts it to lowercase snake_case
-/// Returns: lowercase snake_case version of the id (e.g., "UC-AUTH-001-S01" -> "uc_auth_001_s01")
-fn snake_case_id_helper(
-    h: &Helper,
-    _: &Handlebars,
-    _ctx: &Context,
-    _: &mut RenderContext,
-    out: &mut dyn Output,
-) -> HelperResult {
-    // Get the first parameter (the id to convert)
-    let id_value = h
-        .param(0)
-        .ok_or_else(|| {
-            RenderErrorReason::Other("snake_case_id helper requires an id parameter".to_string())
-        })?
-        .value()
-        .as_str()
-        .ok_or_else(|| RenderErrorReason::Other("id parameter must be a string".to_string()))?;
-
-    // Convert to snake_case using the existing utility function
-    let snake_cased = crate::core::utils::to_snake_case(id_value);
-
-    out.write(&snake_cased)?;
-    Ok(())
 }

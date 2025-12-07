@@ -9,6 +9,7 @@ pub mod utils; // Public utilities
 // Explicit public exports from private modules
 // Public exports - Explicit API surface
 pub use application::{
+    generators::TestGenerator,
     methodology_field_collector::{CollectedField, FieldCollection, MethodologyFieldCollector},
     AddScenarioParams, AddScenarioStepParams, CreateExtensionScenarioParams,
     CreateUseCaseWithViewsParams, InsertStepWithExtensionParams, UseCaseCoordinator,
@@ -23,7 +24,7 @@ pub use domain::{
 };
 
 // Exported for integration tests (appear unused to lib but required by tests/)
-pub use domain::Scenario;
+pub use domain::{Scenario, ScenarioStep};
 
 // Re-export infrastructure types (from infrastructure's public interface)
 pub use infrastructure::{

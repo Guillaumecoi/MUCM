@@ -454,12 +454,12 @@ impl UseCaseCoordinator {
         let use_case = self.find_use_case_by_id(use_case_id)?;
 
         // Check if test generation should occur
-        if !self.should_generate_test(&use_case) {
+        if !self.should_generate_test(use_case) {
             return Ok(false);
         }
 
         // Regenerate test using the test generator
-        self.test_generator.regenerate(&use_case)?;
+        self.test_generator.regenerate(use_case)?;
         Ok(true)
     }
 

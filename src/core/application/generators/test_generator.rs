@@ -1,8 +1,44 @@
 //! Test generator for use case test documentation.
 //!
 //! Handles generation of test files from use cases using language-specific templates.
+//!
+//! # Safe Zone Preservation
+//!
+//! The test generator preserves user-written code during regeneration through "safe zones" -
+//! specially marked regions where users can add custom implementation without it being overwritten.
+//!
+//! ## Safe Zone Types
+//!
+//! 1. **Global** - Custom imports and module-level setup code
+//! 2. **setUp** - Test fixture initialization code (before each test)
+//! 3. **tearDown** - Test cleanup code (after each test)
+//! 4. **Scenarios** - Individual test implementations (one per scenario)
+//!
+//! ## Example
+//!
+//! ```python
+//! # Global safe zone
+//! # START USER IMPLEMENTATION - Add your imports and setup code here
+//! from my_module import MyClass
+//! import unittest
+//! # END USER IMPLEMENTATION
+//!
+//! class TestUseCase(unittest.TestCase):
+//!     def setUp(self):
+//!         # START USER IMPLEMENTATION - Add your setup code here
+//!         self.instance = MyClass()
+//!         # END USER IMPLEMENTATION
+//!
+//!     def test_scenario_001(self):
+//!         # START USER IMPLEMENTATION - Feel free to modify the code below this line
+//!         self.assertTrue(self.instance.method())
+//!         # END USER IMPLEMENTATION - Do not modify anything below this line
+//! ```
+//!
+//! During regeneration, all code within START/END markers is preserved, while everything
+//! else (documentation, structure, new scenarios) is regenerated from templates.
 
-use anyhow::Result;
+use anyhow::{anyhow, Result};
 use serde_json::{json, Value};
 use std::collections::HashMap;
 
@@ -10,6 +46,15 @@ use crate::config::Config;
 use crate::core::file_operations::FileOperations;
 use crate::core::{to_snake_case, TemplateEngine, UseCase};
 use crate::presentation::UseCaseFormatter;
+
+/// Type of safe zone for user-editable code preservation.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum SafeZoneType {
+    Global,
+    SetUp,
+    TearDown,
+    Scenario,
+}
 
 /// Storage for preserved safe zone content from existing test files.
 #[derive(Debug, Default, Clone)]
@@ -38,25 +83,93 @@ impl SafeZonePreserver {
         Self { comment_start }
     }
 
+    /// Get the start and end markers for a specific safe zone type.
+    /// This eliminates duplication across merge methods.
+    fn get_safe_zone_markers(&self, zone_type: SafeZoneType) -> (String, String) {
+        let message = match zone_type {
+            SafeZoneType::Global => "Add your imports and setup code here",
+            SafeZoneType::SetUp => "Add your setup code here",
+            SafeZoneType::TearDown => "Add your cleanup code here",
+            SafeZoneType::Scenario => "Feel free to modify the code below this line",
+        };
+
+        let start_marker = format!(
+            "{} START USER IMPLEMENTATION - {}",
+            self.comment_start, message
+        );
+        let end_marker = format!("{} END USER IMPLEMENTATION", self.comment_start);
+
+        (start_marker, end_marker)
+    }
+
+    /// Detects indentation from a line of text.
+    /// Returns a string of spaces matching the indentation, or default spaces if line has no indentation.
+    fn detect_indentation(line: &str, default: usize) -> String {
+        let indent_size = line.len() - line.trim_start().len();
+        " ".repeat(if indent_size > 0 {
+            indent_size
+        } else {
+            default
+        })
+    }
+
+    /// Indents content with the given indentation string.
+    /// Empty lines remain empty, non-empty lines get the indent prefix.
+    fn indent_content(content: &str, indent: &str) -> Vec<String> {
+        content
+            .lines()
+            .map(|line| {
+                if line.trim().is_empty() {
+                    String::new()
+                } else {
+                    format!("{}{}", indent, line)
+                }
+            })
+            .collect()
+    }
+
+    /// Validates safe zone structure in content.
+    /// Checks that START markers have corresponding END markers.
+    fn validate_safe_zone_structure(&self, content: &str, zone_type: SafeZoneType) -> Result<()> {
+        let (start_marker, end_marker) = self.get_safe_zone_markers(zone_type);
+
+        let start_count = content.matches(&start_marker).count();
+        let end_count = content.matches(&end_marker).count();
+
+        if start_count != end_count {
+            return Err(anyhow!(
+                "Mismatched safe zone markers for {:?}: {} START markers but {} END markers",
+                zone_type,
+                start_count,
+                end_count
+            ));
+        }
+
+        Ok(())
+    }
+
     /// Parses an existing test file and extracts all safe zone content.
     ///
     /// Returns a SafeZoneContent with the global safe zone and per-scenario safe zones.
+    /// Validates safe zone structure before parsing.
     fn parse_safe_zones(&self, content: &str) -> SafeZoneContent {
-        let mut result = SafeZoneContent::default();
+        // Validate structure (log warnings but don't fail - be permissive)
+        if let Err(e) = self.validate_safe_zone_structure(content, SafeZoneType::Global) {
+            eprintln!("Warning: {}", e);
+        }
+        if let Err(e) = self.validate_safe_zone_structure(content, SafeZoneType::SetUp) {
+            eprintln!("Warning: {}", e);
+        }
+        if let Err(e) = self.validate_safe_zone_structure(content, SafeZoneType::TearDown) {
+            eprintln!("Warning: {}", e);
+        }
 
-        // Parse global safe zone (imports/setup)
-        result.global = self.extract_global_safe_zone(content);
-
-        // Parse setUp method safe zone
-        result.setup = self.extract_setup_safe_zone(content);
-
-        // Parse tearDown method safe zone
-        result.teardown = self.extract_teardown_safe_zone(content);
-
-        // Parse per-scenario safe zones
-        result.scenarios = self.extract_scenario_safe_zones(content);
-
-        result
+        SafeZoneContent {
+            global: self.extract_global_safe_zone(content),
+            setup: self.extract_setup_safe_zone(content),
+            teardown: self.extract_teardown_safe_zone(content),
+            scenarios: self.extract_scenario_safe_zones(content),
+        }
     }
 
     /// Extracts the global safe zone content for imports and setup code.
@@ -244,34 +357,19 @@ impl SafeZonePreserver {
 
     /// Merges the global safe zone content into the rendered template.
     fn merge_global_safe_zone(&self, rendered: &str, preserved_content: &str) -> String {
-        let start_marker = format!(
-            "{} START USER IMPLEMENTATION - Add your imports and setup code here",
-            self.comment_start
-        );
-        let end_marker = format!("{} END USER IMPLEMENTATION", self.comment_start);
-
+        let (start_marker, end_marker) = self.get_safe_zone_markers(SafeZoneType::Global);
         self.replace_between_markers(rendered, &start_marker, &end_marker, preserved_content)
     }
 
     /// Merges the setUp method safe zone content into the rendered template.
     fn merge_setup_safe_zone(&self, rendered: &str, preserved_content: &str) -> String {
-        let start_marker = format!(
-            "{} START USER IMPLEMENTATION - Add your setup code here",
-            self.comment_start
-        );
-        let end_marker = format!("{} END USER IMPLEMENTATION", self.comment_start);
-
+        let (start_marker, end_marker) = self.get_safe_zone_markers(SafeZoneType::SetUp);
         self.replace_between_markers(rendered, &start_marker, &end_marker, preserved_content)
     }
 
     /// Merges the tearDown method safe zone content into the rendered template.
     fn merge_teardown_safe_zone(&self, rendered: &str, preserved_content: &str) -> String {
-        let start_marker = format!(
-            "{} START USER IMPLEMENTATION - Add your cleanup code here",
-            self.comment_start
-        );
-        let end_marker = format!("{} END USER IMPLEMENTATION", self.comment_start);
-
+        let (start_marker, end_marker) = self.get_safe_zone_markers(SafeZoneType::TearDown);
         self.replace_between_markers(rendered, &start_marker, &end_marker, preserved_content)
     }
 
@@ -287,10 +385,8 @@ impl SafeZonePreserver {
         let mut result_lines: Vec<String> = Vec::new();
         let mut i = 0;
 
-        let start_marker = format!(
-            "{} START USER IMPLEMENTATION - Feel free to modify the code below this line",
-            self.comment_start
-        );
+        let (start_marker, _) = self.get_safe_zone_markers(SafeZoneType::Scenario);
+        // Note: End marker for scenarios includes additional suffix (not using standard end marker)
         let end_marker = format!(
             "{} END USER IMPLEMENTATION - Do not modify anything below this line",
             self.comment_start
@@ -318,20 +414,12 @@ impl SafeZonePreserver {
 
                             // Insert preserved content (with proper indentation from first skipped line)
                             if let Some(first_skipped) = skipped_lines.first() {
-                                let indent = first_skipped.len() - first_skipped.trim_start().len();
-                                let indent_str = " ".repeat(indent);
-                                for line in preserved_content.lines() {
-                                    if line.trim().is_empty() {
-                                        result_lines.push(String::new());
-                                    } else {
-                                        result_lines.push(format!("{}{}", indent_str, line));
-                                    }
-                                }
+                                let indent_str = Self::detect_indentation(first_skipped, 4);
+                                result_lines
+                                    .extend(Self::indent_content(preserved_content, &indent_str));
                             } else {
-                                // No indentation reference, just add the content
-                                for line in preserved_content.lines() {
-                                    result_lines.push(line.to_string());
-                                }
+                                // No indentation reference, just add the content as-is
+                                result_lines.extend(preserved_content.lines().map(String::from));
                             }
 
                             // Add the end marker line (if we found it)
@@ -375,7 +463,7 @@ impl SafeZonePreserver {
                 // Determine indentation from the next line after start marker
                 let between_content = &after_start[..end_pos];
                 let indent = if let Some(first_line) = between_content.lines().nth(1) {
-                    " ".repeat(first_line.len() - first_line.trim_start().len())
+                    Self::detect_indentation(first_line, 4)
                 } else {
                     "    ".to_string() // Default 4 spaces
                 };
@@ -384,16 +472,7 @@ impl SafeZonePreserver {
                 let formatted_content = if new_content.is_empty() {
                     format!("\n{}\n", indent)
                 } else {
-                    let indented_lines: Vec<String> = new_content
-                        .lines()
-                        .map(|line| {
-                            if line.trim().is_empty() {
-                                "".to_string()
-                            } else {
-                                format!("{}{}", indent, line)
-                            }
-                        })
-                        .collect();
+                    let indented_lines = Self::indent_content(new_content, &indent);
                     format!("\n{}\n{}", indented_lines.join("\n"), indent)
                 };
 
@@ -857,8 +936,10 @@ def test_scenario_002(self):
     # END USER IMPLEMENTATION - Do not modify anything below this line
 "#;
 
-        let mut preserved = SafeZoneContent::default();
-        preserved.global = "import unittest".to_string();
+        let mut preserved = SafeZoneContent {
+            global: "import unittest".to_string(),
+            ..Default::default()
+        };
         preserved
             .scenarios
             .insert("scenario_001".to_string(), "assert True".to_string());
