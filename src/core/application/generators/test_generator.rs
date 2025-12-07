@@ -498,11 +498,8 @@ impl TestGenerator {
         self.file_operations
             .save_test_file(use_case, &test_content, &file_extension)?;
 
-        // Use the formatter to display the generated message
-        UseCaseFormatter::display_test_generated(
-            &use_case.id,
-            &test_file_path.display().to_string(),
-        );
+        // Note: Individual test generation messages are suppressed in favor of
+        // summary messages displayed by the controller layer (e.g., "Regenerated N test(s)")
 
         Ok(())
     }
