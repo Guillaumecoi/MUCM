@@ -558,26 +558,20 @@ impl ScenarioWorkflow {
             return Ok(());
         }
 
-        // Select scenario to edit - group by type
+        // Select scenario to edit - group by type (no separators as items)
         let mut scenario_options: Vec<String> = Vec::new();
 
         // Add main scenarios first
         let main_scenarios: Vec<_> = scenarios.iter().filter(|s| s.is_main).collect();
-        if !main_scenarios.is_empty() {
-            scenario_options.push("─── Main Scenarios ───".to_string());
-            for s in main_scenarios {
-                scenario_options.push(format!("{} - {} [Main]", s.id, s.title));
-            }
+        for s in main_scenarios {
+            scenario_options.push(format!("{} - {} [Main]", s.id, s.title));
         }
 
         // Add extension scenarios
         let extension_scenarios: Vec<_> = scenarios.iter().filter(|s| !s.is_main).collect();
-        if !extension_scenarios.is_empty() {
-            scenario_options.push("─── Extensions ───".to_string());
-            for s in extension_scenarios {
-                let ext_type = &s.scenario_type;
-                scenario_options.push(format!("{} - {} [{}]", s.id, s.title, ext_type));
-            }
+        for s in extension_scenarios {
+            let ext_type = &s.scenario_type;
+            scenario_options.push(format!("{} - {} [{}]", s.id, s.title, ext_type));
         }
 
         // Add cancel option
