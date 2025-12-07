@@ -33,6 +33,6 @@ pub use commands::{
     handle_postcondition_remove_command, handle_precondition_add_command,
     handle_precondition_list_command, handle_precondition_remove_command,
     handle_reference_add_command, handle_reference_list_command, handle_reference_remove_command,
-    handle_regenerate_command, handle_reinitialize_command, handle_status_command,
-    handle_usecase_scenario_command,
+    handle_regenerate_command, handle_regenerate_tests_command, handle_reinitialize_command,
+    handle_status_command, handle_usecase_scenario_command,
 };

@@ -35,8 +35,8 @@ use standard::{
     handle_postcondition_remove_command, handle_precondition_add_command,
     handle_precondition_list_command, handle_precondition_remove_command,
     handle_reference_add_command, handle_reference_list_command, handle_reference_remove_command,
-    handle_regenerate_command, handle_reinitialize_command, handle_status_command,
-    handle_usecase_scenario_command, CliRunner,
+    handle_regenerate_command, handle_regenerate_tests_command, handle_reinitialize_command,
+    handle_status_command, handle_usecase_scenario_command, CliRunner,
 };
 
 /// Execute a command with proper error handling and colored output
@@ -148,6 +148,10 @@ pub fn run() -> Result<()> {
             execute_command(|| {
                 handle_regenerate_command(&mut runner, use_case_id, methodology, all)
             });
+            Ok(())
+        }
+        Commands::RegenerateTests { use_case_id, all } => {
+            execute_command(|| handle_regenerate_tests_command(&mut runner, use_case_id, all));
             Ok(())
         }
         Commands::Status => {
