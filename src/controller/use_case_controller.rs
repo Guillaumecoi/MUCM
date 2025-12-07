@@ -292,6 +292,71 @@ impl UseCaseController {
         )))
     }
 
+    /// Regenerate test file for a specific use case, preserving user code in safe zones.
+    ///
+    /// # Arguments
+    /// * `use_case_id` - The ID of the use case to regenerate test for
+    ///
+    /// # Returns
+    /// DisplayResult with success message or error
+    ///
+    /// # Errors
+    /// Returns error if use case not found or test regeneration fails
+    pub fn regenerate_test(&mut self, use_case_id: String) -> Result<DisplayResult> {
+        self.app_service.regenerate_test(&use_case_id)?;
+        Ok(DisplayResult::success(format!(
+            "✅ Regenerated test for {}",
+            use_case_id
+        )))
+    }
+
+    /// Regenerate test files for all use cases, preserving user code in safe zones.
+    ///
+    /// # Returns
+    /// DisplayResult with summary of regenerated tests
+    ///
+    /// # Errors
+    /// Returns error if any test regeneration fails
+    pub fn regenerate_all_tests(&mut self) -> Result<DisplayResult> {
+        let use_cases = self.app_service.get_all_use_cases();
+        let mut success_count = 0;
+        let mut skip_count = 0;
+        let mut errors = Vec::new();
+
+        for use_case in use_cases {
+            match self.app_service.regenerate_test(&use_case.id) {
+                Ok(true) => success_count += 1,
+                Ok(false) => skip_count += 1,
+                Err(e) => errors.push(format!("{}: {}", use_case.id, e)),
+            }
+        }
+
+        if !errors.is_empty() {
+            Ok(DisplayResult::error(format!(
+                "Regenerated {} test(s), skipped {} (generation disabled), {} error(s):\n{}",
+                success_count,
+                skip_count,
+                errors.len(),
+                errors.join("\n")
+            )))
+        } else if success_count == 0 && skip_count > 0 {
+            Ok(DisplayResult::success(format!(
+                "⊙ Test generation disabled for all {} use case(s)",
+                skip_count
+            )))
+        } else {
+            Ok(DisplayResult::success(format!(
+                "✅ Regenerated {} test(s){}",
+                success_count,
+                if skip_count > 0 {
+                    format!(", skipped {} (generation disabled)", skip_count)
+                } else {
+                    String::new()
+                }
+            )))
+        }
+    }
+
     /// Add a precondition to a use case.
     ///
     /// Adds a new precondition to the specified use case.
