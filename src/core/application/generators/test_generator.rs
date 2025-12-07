@@ -234,11 +234,11 @@ impl SafeZonePreserver {
                         scenarios.insert(scenario_id.clone(), safe_zone_content);
                         break;
                     }
-                    j += 1;
                     // Stop searching if we hit another test function
                     if self.extract_scenario_id_from_line(lines[j]).is_some() {
                         break;
                     }
+                    j += 1;
                 }
             }
             i += 1;

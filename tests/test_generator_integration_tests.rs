@@ -20,6 +20,10 @@ fn create_test_config(temp_dir: &TempDir, test_language: &str) -> Config {
     // Create minimal source-templates structure
     common::create_minimal_source_templates(temp_dir.path()).unwrap();
 
+    // Set env var so TestGenerator finds our test templates
+    let templates_dir = temp_dir.path().join("source-templates");
+    std::env::set_var("MUCM_TEST_TEMPLATES_DIR", &templates_dir);
+
     let mut config = Config::default();
     // Set test_dir to full path
     config.directories.test_dir = temp_dir
