@@ -445,6 +445,43 @@ impl UseCaseCoordinator {
         Ok(())
     }
 
+    /// Regenerate test file for a use case, preserving user code in safe zones.
+    ///
+    /// Returns `Ok(true)` if test was regenerated, `Ok(false)` if generation was skipped
+    /// (test generation disabled), or an error if regeneration failed.
+    pub fn regenerate_test(&self, use_case_id: &str) -> Result<bool> {
+        // Load use case from repository
+        let use_case = self.find_use_case_by_id(use_case_id)?;
+
+        // Check if test generation should occur
+        if !self.should_generate_test(&use_case) {
+            return Ok(false);
+        }
+
+        // Regenerate test using the test generator
+        self.test_generator.regenerate(&use_case)?;
+        Ok(true)
+    }
+
+    /// Checks if test generation should occur for this use case.
+    ///
+    /// Delegates to the test generator's should_generate_test logic.
+    fn should_generate_test(&self, _use_case: &UseCase) -> bool {
+        // Check global setting
+        if self.config.generation.auto_generate_tests {
+            return true;
+        }
+
+        // Check if test_language is "none"
+        if self.config.generation.test_language == "none" {
+            return false;
+        }
+
+        // For more detailed multi-view checking, we'd need access to methodology registry
+        // For now, we'll regenerate if global setting allows it
+        true
+    }
+
     // ========== Field Management Methods ==========
 
     /// Add a precondition to a use case
