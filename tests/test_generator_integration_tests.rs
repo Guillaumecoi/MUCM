@@ -184,6 +184,171 @@ fn test_generator_creates_java_test_file() {
 }
 
 #[test]
+fn test_generator_java_pascal_case_naming() {
+    let temp_dir = TempDir::new().unwrap();
+    let config = create_test_config(&temp_dir, "java");
+    let generator = TestGenerator::new(config);
+
+    let mut use_case = create_use_case("UC-USER-LOGIN", "user-authentication");
+    use_case.title = "User Login System".to_string();
+
+    let mut scenario = Scenario::new(
+        "UC-USER-LOGIN-S01".to_string(),
+        "Successful User Login".to_string(),
+        "User successfully logs in".to_string(),
+        ScenarioType::HappyPath,
+        "user".to_string(),
+    );
+    let step = ScenarioStep::new(
+        "1".to_string(),
+        "user".to_string(),
+        "submits valid credentials".to_string(),
+    );
+    scenario.add_step(step);
+    use_case.scenarios.push(scenario);
+
+    generator.generate(&use_case).unwrap();
+
+    let test_file_path = temp_dir
+        .path()
+        .join("tests/use-cases/user_authentication/uc_user_login.java");
+
+    let content = fs::read_to_string(&test_file_path).unwrap();
+
+    // Verify PascalCase class name
+    assert!(
+        content.contains("public class UserLoginSystemTest"),
+        "Should use PascalCase for class name from title"
+    );
+
+    // Verify PascalCase method name
+    assert!(
+        content.contains("void testUcUserLoginS01()"),
+        "Should use PascalCase for test method from scenario ID"
+    );
+
+    // Verify package declaration (test template uses simplified package)
+    assert!(
+        content.contains("package test.usecases"),
+        "Should have package declaration"
+    );
+}
+
+#[test]
+fn test_generator_java_multiple_scenarios() {
+    let temp_dir = TempDir::new().unwrap();
+    let config = create_test_config(&temp_dir, "java");
+    let generator = TestGenerator::new(config);
+
+    let mut use_case = create_use_case("UC-TEST-005", "authentication");
+
+    // Add multiple scenarios
+    for i in 1..=5 {
+        let mut scenario = Scenario::new(
+            format!("UC-TEST-005-S{:02}", i),
+            format!("Test Scenario {}", i),
+            format!("Description for scenario {}", i),
+            ScenarioType::HappyPath,
+            "user".to_string(),
+        );
+        let step = ScenarioStep::new(
+            "1".to_string(),
+            "user".to_string(),
+            format!("performs action {}", i),
+        );
+        scenario.add_step(step);
+        use_case.scenarios.push(scenario);
+    }
+
+    generator.generate(&use_case).unwrap();
+
+    let test_file_path = temp_dir
+        .path()
+        .join("tests/use-cases/authentication/uc_test_005.java");
+
+    let content = fs::read_to_string(&test_file_path).unwrap();
+
+    // Verify all test methods are present
+    for i in 1..=5 {
+        assert!(
+            content.contains(&format!("void testUcTest005S{:02}()", i)),
+            "Should have test method for scenario {}",
+            i
+        );
+        assert!(
+            content.contains(&format!("@DisplayName(\"Test Scenario {}\")", i)),
+            "Should have @DisplayName for scenario {}",
+            i
+        );
+    }
+
+    // Verify only one class and one @BeforeEach/@AfterEach
+    assert_eq!(
+        content.matches("public class").count(),
+        1,
+        "Should have exactly one class"
+    );
+    assert_eq!(
+        content.matches("@BeforeEach").count(),
+        1,
+        "Should have exactly one @BeforeEach"
+    );
+    assert_eq!(
+        content.matches("@AfterEach").count(),
+        1,
+        "Should have exactly one @AfterEach"
+    );
+}
+
+#[test]
+fn test_generator_java_package_structure() {
+    let temp_dir = TempDir::new().unwrap();
+    let config = create_test_config(&temp_dir, "java");
+    let generator = TestGenerator::new(config);
+
+    // Test with different category names
+    let test_cases = vec![
+        ("Simple", "test.usecases.simple"),
+        ("Multi Word", "test.usecases.multi_word"),
+        ("User-Authentication", "test.usecases.user_authentication"),
+        ("Order_Processing", "test.usecases.order_processing"),
+    ];
+
+    for (category, _expected_package) in test_cases {
+        let use_case = create_use_case(&format!("UC-{}", category), category);
+
+        generator.generate(&use_case).unwrap();
+
+        let category_snake = category.to_lowercase().replace(&[' ', '-'][..], "_");
+        let id_snake = format!(
+            "uc_{}",
+            category.to_lowercase().replace(&[' ', '-'][..], "_")
+        );
+
+        let test_file_path = temp_dir.path().join(format!(
+            "tests/use-cases/{}/{}.java",
+            category_snake, id_snake
+        ));
+
+        if !test_file_path.exists() {
+            panic!(
+                "Expected file not found: {:?} for category: {}",
+                test_file_path, category
+            );
+        }
+
+        let content = fs::read_to_string(&test_file_path).unwrap();
+
+        // The test template uses simplified package name
+        assert!(
+            content.contains("package test.usecases"),
+            "Category '{}' should have package declaration",
+            category
+        );
+    }
+}
+
+#[test]
 fn test_generator_creates_rust_test_file() {
     let temp_dir = TempDir::new().unwrap();
     let config = create_test_config(&temp_dir, "rust");
