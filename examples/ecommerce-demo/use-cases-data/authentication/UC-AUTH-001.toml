@@ -8,7 +8,7 @@ use_case_references = []
 
 [metadata]
 created_at = "2025-12-03T03:15:46.408167072Z"
-updated_at = "2025-12-06T21:46:10.262670786Z"
+updated_at = "2025-12-07T01:41:38.794273436Z"
 
 [[views]]
 methodology = "developer"
@@ -214,7 +214,55 @@ action = "returns session token"
 [[scenarios.preconditions]]
 text = "User must have a valid social account"
 
+[[scenarios]]
+id = "UC-AUTH-001-S03"
+title = "Email Already Registered"
+description = ""
+scenario_type = "exception_flow"
+status = "implemented"
+is_main = false
+primary_actor = "guest-guest-user"
+supporting_actors = [
+    "database",
+    "e-commerce-platform",
+]
+extends_scenario_id = "UC-AUTH-001-S01"
+extends_at_step = "6"
+repeat_blocks = []
+postconditions = []
+references = []
+
+[[scenarios.steps]]
+order = "1"
+acting_actor = "database"
+receiving_actor = "e-commerce-platform"
+action = 'returns "email already exists"'
+
+[[scenarios.steps]]
+order = "2"
+acting_actor = "e-commerce-platform"
+receiving_actor = "guest-guest-user"
+action = 'displays error: "An account with this email already exists. Please login or reset your password."'
+
+[[scenarios.steps]]
+order = "3"
+acting_actor = "e-commerce-platform"
+receiving_actor = "guest-guest-user"
+action = "offers links to login page and password reset"
+
+[[scenarios.preconditions]]
+text = "Used email is already registered"
+
 [methodology_fields.developer]
+api_endpoints = [
+    "`POST /api/v1/auth/register` - Email/password registration",
+    "`POST /api/v1/auth/register/oauth` - OAuth social registration",
+]
+database_tables = [
+    "users",
+    "sessions",
+    "email_verifications",
+]
 error_scenarios = [
     "Email already in use: return 409 Conflict",
     "Weak password: return 400 Bad Request with validation errors",
@@ -232,16 +280,7 @@ security_considerations = [
     "bcrypt password hashing with cost factor 12",
     "Session tokens: 32-byte random, hex-encoded",
 ]
-api_endpoints = [
-    "`POST /api/v1/auth/register` - Email/password registration",
-    "`POST /api/v1/auth/register/oauth` - OAuth social registration",
-]
 performance_requirements = ""
-database_tables = [
-    "users",
-    "sessions",
-    "email_verifications",
-]
 technical_dependencies = [
     "PostgreSQL 14+: for user data storage",
     "Redis 6+: for session management",
@@ -250,17 +289,6 @@ technical_dependencies = [
 ]
 
 [methodology_fields.tester]
-regression_suites = []
-test_type = [
-    "e2e",
-    "integration",
-    "security",
-    "accessibility",
-]
-test_data_requirements = "10 valid email addresses for testing (test+1@example.com through test+10@example.com), 5 known registered emails for duplicate testing, mock SendGrid API with configurable responses (success, failure, timeout), database with clean state before each test run."
-test_priority = "P0-Critical"
-performance_baseline = ""
-automation_status = ""
 coverage_areas = [
     "Input validation (client-side and server-side)",
     "Database record creation and integrity",
@@ -270,9 +298,20 @@ coverage_areas = [
     "Security measures (CSRF, rate limiting, password hashing)",
     "Accessibility (WCAG 2.1 AA compliance)",
 ]
+regression_suites = []
+test_data_requirements = "10 valid email addresses for testing (test+1@example.com through test+10@example.com), 5 known registered emails for duplicate testing, mock SendGrid API with configurable responses (success, failure, timeout), database with clean state before each test run."
+performance_baseline = ""
+test_priority = "P0-Critical"
+test_type = [
+    "e2e",
+    "integration",
+    "security",
+    "accessibility",
+]
 test_environments = [
     "Staging environment with email service integration",
     "Database with clean state before each test run",
     "Mock OAuth providers for social registration tests",
     "Various browsers and devices for front-end validation tests",
 ]
+automation_status = ""

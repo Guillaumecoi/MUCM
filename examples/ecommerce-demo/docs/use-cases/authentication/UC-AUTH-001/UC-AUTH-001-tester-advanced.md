@@ -110,6 +110,30 @@ Cache->>E-commerce Platform: 9. returns session token
 
 *Extends scenario UC-AUTH-001-S01 at step 3*, returns at step 13
 
+## UC-AUTH-001-S03 - Email Already Registered (Extension)
+
+**Primary Actor:** [Guest User](../../../actors/guest-guest-user.md)
+
+**Supporting Actors:** [Database](../../../actors/database.md), [E-commerce Platform](../../../actors/e-commerce-platform.md)
+
+**Preconditions:**
+- Used email is already registered
+
+```mermaid
+sequenceDiagram
+participant Guest User
+Database->>E-commerce Platform: 1. returns 'email already exists'
+E-commerce Platform->>Guest User: 2. displays error: 'An account with this email already exists. Please login or reset your password.'
+E-commerce Platform->>Guest User: 3. offers links to login page and password reset
+```
+
+### Steps
+1. **Database** → **E-commerce Platform**: returns &quot;email already exists&quot;
+2. **E-commerce Platform** → **Guest User**: displays error: &quot;An account with this email already exists. Please login or reset your password.&quot;
+3. **E-commerce Platform** → **Guest User**: offers links to login page and password reset
+
+*Extends scenario UC-AUTH-001-S01 at step 6*
+
 ## Test Data Requirements
 10 valid email addresses for testing (test+1@example.com through test+10@example.com), 5 known registered emails for duplicate testing, mock SendGrid API with configurable responses (success, failure, timeout), database with clean state before each test run.
 
@@ -130,7 +154,7 @@ Cache->>E-commerce Platform: 9. returns session token
 
 ---
 
-**Last Updated:** 06/12/2025
+**Last Updated:** 07/12/2025
 
 ---
 

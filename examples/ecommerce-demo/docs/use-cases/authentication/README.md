@@ -12,7 +12,7 @@ This category contains **1** use case.
 
 ### [UC-AUTH-001: User Registration](./UC-AUTH-001/README.md)
 
-**Status:** DEPLOYED | **Priority:** HIGH
+**Status:** PLANNED | **Priority:** HIGH
 
 Allow new users to create an account on the e-commerce platform by providing email, password, and basic profile information. The system validates input, checks for existing accounts, creates the user record, and sends a verification email.
 
