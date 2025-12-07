@@ -2,6 +2,7 @@
 // AUTO-GENERATED TEST DOCUMENTATION
 // Use Case: {{title}} ({{id}})
 // Description: {{description}}
+// Documentation: docs/use-cases/{{category}}/README.md
 // Generated at: {{generated_at}}
 // =============================================================================
 
@@ -64,6 +65,7 @@ describe('{{title}}', () => {
     /**
      * Test for scenario: {{title}} ({{id}})
      * Description: {{description}}
+     * Documentation: docs/use-cases/{{../category}}/README.md#{{id}}
      */
     test('{{title}}', () => {
         // =============================================================================
@@ -71,12 +73,17 @@ describe('{{title}}', () => {
         // =============================================================================
         
         // TODO: Implement test for scenario: {{title}}
+        //
+        // Steps:
+{{#each steps}}
+        // {{order}}. {{{actor_display acting_actor}}} {{action}}{{#if receiving_actor}} to {{{actor_display receiving_actor}}}{{/if}}
+{{/each}}
         
         // Arrange
         // TODO: Set up test data and preconditions
         
         // Act
-        // TODO: Execute the scenario steps
+        // TODO: Execute the scenario steps above
         
         // Assert
         // TODO: Verify the results
