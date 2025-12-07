@@ -48,21 +48,18 @@ last_updated = true
     for lang in &["rust", "python", "javascript"] {
         let lang_dir = languages_dir.join(lang);
         fs::create_dir_all(&lang_dir)?;
+        let (ext, comment) = if *lang == "python" {
+            ("py", "#")
+        } else if *lang == "javascript" {
+            ("js", "//")
+        } else {
+            ("rs", "//")
+        };
         fs::write(
             lang_dir.join("info.toml"),
             format!(
-                r#"name = "{}"
-file_extension = "{}"
-template_file = "test.hbs"
-"#,
-                lang,
-                if *lang == "python" {
-                    "py"
-                } else if *lang == "javascript" {
-                    "js"
-                } else {
-                    "rs"
-                }
+                "name = \"{}\"\naliases = []\nfile_extension = \"{}\"\ncomment_start = \"{}\"\ntemplate_file = \"test.hbs\"\n",
+                lang, ext, comment
             ),
         )?;
         fs::write(lang_dir.join("test.hbs"), "# Test template\n")?;
