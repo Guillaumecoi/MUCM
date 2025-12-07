@@ -82,6 +82,18 @@ pub enum Commands {
         #[arg(long, short)]
         all: bool,
     },
+    /// Regenerate test files from TOML files, preserving user code in safe zones
+    ///
+    /// Regenerates test files while preserving user-written code between
+    /// START/END USER IMPLEMENTATION markers. Without arguments, regenerates
+    /// tests for all use cases. With a use case ID, regenerates just that test.
+    RegenerateTests {
+        /// Use case ID (e.g., UC-SEC-001). If omitted, regenerates all test files.
+        use_case_id: Option<String>,
+        /// Regenerate tests for all use cases (explicit flag, same as omitting use_case_id)
+        #[arg(long, short)]
+        all: bool,
+    },
     /// Show project status
     Status,
     /// Manage use case preconditions

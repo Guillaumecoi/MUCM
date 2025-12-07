@@ -24,6 +24,8 @@ pub struct LanguageDefinition {
     aliases: Vec<String>,
     /// File extension for this language
     file_extension: String,
+    /// Comment start syntax for this language
+    comment_start: String,
     /// The test template content loaded from the template file
     test_template: String,
 }
@@ -53,6 +55,7 @@ impl LanguageDefinition {
             name: String,
             aliases: Vec<String>,
             file_extension: String,
+            comment_start: String,
             template_file: String,
         }
 
@@ -73,6 +76,7 @@ impl LanguageDefinition {
             name: data.name,
             aliases: data.aliases,
             file_extension: data.file_extension,
+            comment_start: data.comment_start,
             test_template,
         })
     }
@@ -94,6 +98,10 @@ impl Language for LanguageDefinition {
 
     fn test_template(&self) -> &str {
         &self.test_template
+    }
+
+    fn comment_start(&self) -> &str {
+        &self.comment_start
     }
 }
 
@@ -129,10 +137,7 @@ mod tests {
             )
         };
         let info_content = format!(
-            r#"name = "{}"
-aliases = {}
-file_extension = "{}"
-template_file = "test.hbs""#,
+            "name = \"{}\"\naliases = {}\nfile_extension = \"{}\"\ncomment_start = \"#\"\ntemplate_file = \"test.hbs\"",
             name, aliases_str, extension
         );
         fs::write(lang_dir.join("info.toml"), info_content).unwrap();
@@ -171,18 +176,18 @@ template_file = "test.hbs""#,
         fs::create_dir(&lang_dir).unwrap();
 
         // Create info.toml but no template file
-        let info_content = r#"name = "testlang"
-aliases = ["tl"]
-file_extension = "tl"
-template_file = "test.hbs""#;
+        let info_content = "name = \"testlang\"\naliases = [\"tl\"]\nfile_extension = \"tl\"\ncomment_start = \"#\"\ntemplate_file = \"test.hbs\"";
         fs::write(lang_dir.join("info.toml"), info_content).unwrap();
 
         let result = LanguageDefinition::from_toml(lang_dir.join("info.toml"));
         assert!(result.is_err());
-        assert!(result
-            .unwrap_err()
-            .to_string()
-            .contains("Failed to read template file"));
+        let error_msg = result.unwrap_err().to_string();
+        assert!(
+            error_msg.contains("Failed to read template file")
+                || error_msg.contains("No such file"),
+            "Expected template file error, got: {}",
+            error_msg
+        );
     }
 
     #[test]

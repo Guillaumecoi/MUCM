@@ -480,12 +480,12 @@ last_updated = true
         for lang in &["rust", "python", "javascript"] {
             let lang_dir = templates_dir.join("languages").join(lang);
             std::fs::create_dir_all(&lang_dir)?;
-            let (ext, alias) = if *lang == "python" {
-                ("py", "py")
+            let (ext, alias, comment) = if *lang == "python" {
+                ("py", "py", "#")
             } else if *lang == "javascript" {
-                ("js", "js")
+                ("js", "js", "//")
             } else {
-                ("rs", "rs")
+                ("rs", "rs", "//")
             };
             std::fs::write(
                 lang_dir.join("info.toml"),
@@ -494,8 +494,9 @@ last_updated = true
 aliases = ["{}"]
 file_extension = "{}"
 template_file = "test.hbs"
+comment_start = "{}"
 "#,
-                    lang, alias, ext
+                    lang, alias, ext, comment
                 ),
             )?;
             // Create minimal but valid test template with ID placeholder

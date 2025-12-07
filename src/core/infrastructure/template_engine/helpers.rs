@@ -20,6 +20,7 @@ pub fn register_helpers(handlebars: &mut Handlebars) {
         Box::new(unique_supporting_actors_helper),
     );
     handlebars.register_helper("use_case_link", Box::new(use_case_link_helper));
+    handlebars.register_helper("snake_case_id", Box::new(snake_case_id_helper));
 }
 
 /// Helper to create a markdown link to actor documentation
@@ -468,6 +469,36 @@ fn unique_personas_helper(
     let json_str = serde_json::to_string(&personas_vec)
         .map_err(|e| RenderError::from(RenderErrorReason::Other(e.to_string())))?;
     out.write(&json_str)?;
+
+    Ok(())
+}
+
+/// Helper to convert an `id` field to snake_case
+/// Usage: {{snake_case_id id}}
+/// Takes the id as a parameter and converts it to lowercase snake_case
+/// Returns: lowercase snake_case version of the id (e.g., "UC-AUTH-001-S01" -> "uc_auth_001_s01")
+fn snake_case_id_helper(
+    h: &Helper,
+    _: &Handlebars,
+    _ctx: &Context,
+    _: &mut RenderContext,
+    out: &mut dyn Output,
+) -> HelperResult {
+    // Get the first parameter (the id to convert)
+    let id_value = h
+        .param(0)
+        .ok_or_else(|| {
+            RenderErrorReason::Other("snake_case_id helper requires an id parameter".to_string())
+        })?
+        .value()
+        .as_str()
+        .ok_or_else(|| {
+            RenderErrorReason::Other("snake_case_id parameter must be a string".to_string())
+        })?;
+
+    // Convert to snake_case
+    let snake_case = crate::core::to_snake_case(id_value);
+    out.write(&snake_case)?;
 
     Ok(())
 }

@@ -105,25 +105,125 @@ last_updated = true
     for lang in &["rust", "python", "javascript"] {
         let lang_dir = languages_dir.join(lang);
         fs::create_dir_all(&lang_dir)?;
+
+        let (ext, comment_start) = match *lang {
+            "python" => ("py", "#"),
+            "javascript" => ("js", "//"),
+            "rust" => ("rs", "//"),
+            _ => unreachable!(),
+        };
+
         fs::write(
             lang_dir.join("info.toml"),
             format!(
                 r#"name = "{}"
 file_extension = "{}"
 template_file = "test.hbs"
+comment_start = "{}"
 aliases = []
 "#,
-                lang,
-                if *lang == "python" {
-                    "py"
-                } else if *lang == "javascript" {
-                    "js"
-                } else {
-                    "rs"
-                }
+                lang, ext, comment_start
             ),
         )?;
-        fs::write(lang_dir.join("test.hbs"), "# Test template\n")?;
+
+        // Create minimal but functional test templates with proper safe zone markers
+        let test_template = match *lang {
+            "rust" => {
+                r#"// Test for {{id}}: {{title}}
+#[cfg(test)]
+mod {{test_module_name}} {
+    // =============================================================================
+    // START USER IMPLEMENTATION - Add your imports and setup code here
+    // =============================================================================
+    // =============================================================================
+    // END USER IMPLEMENTATION
+    // =============================================================================
+
+{{#each scenarios}}
+    #[test]
+    fn test_{{snake_case_id id}}() {
+        // =============================================================================
+        // START USER IMPLEMENTATION - Feel free to modify the code below this line
+        // =============================================================================
+        // Test code here
+        // =============================================================================
+        // END USER IMPLEMENTATION - Do not modify anything below this line
+        // =============================================================================
+    }
+{{/each}}
+}
+"#
+            }
+            "javascript" => {
+                r#"// Test for {{id}}: {{title}}
+// =============================================================================
+// START USER IMPLEMENTATION - Add your imports and setup code here
+// =============================================================================
+// =============================================================================
+// END USER IMPLEMENTATION
+// =============================================================================
+
+describe("{{title}}", () => {
+{{#each scenarios}}
+    test("{{title}}", () => {
+        // =============================================================================
+        // START USER IMPLEMENTATION - Feel free to modify the code below this line
+        // =============================================================================
+        // Test code here
+        // =============================================================================
+        // END USER IMPLEMENTATION - Do not modify anything below this line
+        // =============================================================================
+    });
+{{/each}}
+});
+"#
+            }
+            "python" => {
+                r#"# Test for {{id}}: {{title}}
+import unittest
+
+# =============================================================================
+# START USER IMPLEMENTATION - Add your imports and setup code here
+# =============================================================================
+# =============================================================================
+# END USER IMPLEMENTATION
+# =============================================================================
+
+class Test{{title_snake_case}}(unittest.TestCase):
+    def setUp(self):
+        # =============================================================================
+        # START USER IMPLEMENTATION - Add your setup code here
+        # =============================================================================
+        pass
+        # =============================================================================
+        # END USER IMPLEMENTATION
+        # =============================================================================
+
+{{#each scenarios}}
+    def test_{{snake_case_id id}}(self):
+        """Test for scenario: {{title}}"""
+        # =============================================================================
+        # START USER IMPLEMENTATION - Feel free to modify the code below this line
+        # =============================================================================
+        self.fail("Test not implemented yet")
+        # =============================================================================
+        # END USER IMPLEMENTATION - Do not modify anything below this line
+        # =============================================================================
+
+{{/each}}
+    def tearDown(self):
+        # =============================================================================
+        # START USER IMPLEMENTATION - Add your cleanup code here
+        # =============================================================================
+        pass
+        # =============================================================================
+        # END USER IMPLEMENTATION
+        # =============================================================================
+"#
+            }
+            _ => unreachable!(),
+        };
+        fs::write(lang_dir.join("test.hbs"), test_template)?;
     }
 
     // Create minimal methodology structure

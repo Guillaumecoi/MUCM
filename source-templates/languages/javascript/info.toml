@@ -1,4 +1,5 @@
 name = "javascript"
 aliases = ["js"]
 file_extension = "js"
+comment_start = "//"
 template_file = "test.hbs"

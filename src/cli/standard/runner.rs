@@ -415,6 +415,33 @@ impl CliRunner {
         controller.regenerate_all_use_cases()
     }
 
+    /// Regenerate test file for a specific use case, preserving user code in safe zones.
+    ///
+    /// # Arguments
+    /// * `use_case_id` - The ID of the use case to regenerate test for
+    ///
+    /// # Returns
+    /// DisplayResult with success message or errors
+    ///
+    /// # Errors
+    /// Returns error if use case not found or test regeneration fails
+    pub fn regenerate_test(&mut self, use_case_id: String) -> Result<DisplayResult> {
+        let controller = self.ensure_use_case_controller()?;
+        controller.regenerate_test(Self::sanitize_required_string(use_case_id))
+    }
+
+    /// Regenerate test files for all use cases, preserving user code in safe zones.
+    ///
+    /// # Returns
+    /// DisplayResult with summary of regenerated tests
+    ///
+    /// # Errors
+    /// Returns error if any test regeneration fails
+    pub fn regenerate_all_tests(&mut self) -> Result<DisplayResult> {
+        let controller = self.ensure_use_case_controller()?;
+        controller.regenerate_all_tests()
+    }
+
     /// Add a precondition to a use case.
     ///
     /// Adds a new precondition to the specified use case.

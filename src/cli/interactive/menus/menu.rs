@@ -98,6 +98,20 @@ fn create_main_menu_options() -> Vec<MenuOption<CliRunner>> {
                 }
             }
 
+            // Regenerate tests
+            match uc_controller.regenerate_all_tests() {
+                Ok(result) => {
+                    if result.success {
+                        UI::show_success(&result.message)?;
+                    } else {
+                        UI::show_warning(&result.message)?;
+                    }
+                }
+                Err(e) => {
+                    UI::show_error(&format!("Error regenerating tests: {}", e))?;
+                }
+            }
+
             Ok(false) // Don't exit
         }),
         MenuOption::new("⚙️  Project Settings", |_| {
