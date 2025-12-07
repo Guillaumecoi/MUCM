@@ -69,6 +69,121 @@ E-commerce Platform->>Guest User: 13. displays 'Account created successfully' an
 12. **Email Service** → **E-commerce Platform**: confirms email queued
 13. **E-commerce Platform** → **Guest User**: displays &quot;Account created successfully&quot; and redirects to dashboard
 
+## UC-AUTH-001-S02 - Registration with Social Login (Extension)
+
+**Primary Actor:** [Guest User](../../../actors/guest-guest-user.md)
+
+**Supporting Actors:** [E-commerce Platform](../../../actors/e-commerce-platform.md), [Database](../../../actors/database.md), [Cache](../../../actors/cache.md)
+
+**Preconditions:**
+- User must have a valid social account
+
+```mermaid
+sequenceDiagram
+participant Guest User
+Guest User->>E-commerce Platform: 1. selects 'Sign up with Google' (or other social profile)
+E-commerce Platform->>Guest User: 2. redirects to Google OAuth
+Guest User->>E-commerce Platform: 3. authenticates with Google
+E-commerce Platform->>Database: 4. checks email is not already registered
+Database->>E-commerce Platform: 5. returns 'email available'
+E-commerce Platform->>Database: 6. creates new user record marked as OAuth-verified
+Database->>E-commerce Platform: 7. confirms user created
+E-commerce Platform->>Cache: 8. creates session for new user
+Cache->>E-commerce Platform: 9. returns session token
+```
+
+### Steps
+1. **Guest User** → **E-commerce Platform**: selects &quot;Sign up with Google&quot; (or other social profile)
+2. **E-commerce Platform** → **Guest User**: redirects to Google OAuth
+3. **Guest User** → **E-commerce Platform**: authenticates with Google
+4. **E-commerce Platform** → **Database**: checks email is not already registered
+5. **Database** → **E-commerce Platform**: returns &quot;email available&quot;
+6. **E-commerce Platform** → **Database**: creates new user record marked as OAuth-verified
+7. **Database** → **E-commerce Platform**: confirms user created
+8. **E-commerce Platform** → **Cache**: creates session for new user
+9. **Cache** → **E-commerce Platform**: returns session token
+
+*Extends scenario UC-AUTH-001-S01 at step 3*, returns at step 13
+
+## UC-AUTH-001-S03 - OAuth Provider Unavailable (Exception)
+
+**Primary Actor:** [Guest User](../../../actors/guest-guest-user.md)
+
+**Supporting Actors:** [E-commerce Platform](../../../actors/e-commerce-platform.md)
+
+```mermaid
+sequenceDiagram
+participant Guest User
+E-commerce Platform->>Guest User: 1. displays error: 'OAuth provider temporarily unavailable. Please try again or use email registration.'
+E-commerce Platform->>Guest User: 2. offers fallback to email/password registration
+```
+
+### Steps
+1. **E-commerce Platform** → **Guest User**: displays error: &quot;OAuth provider temporarily unavailable. Please try again or use email registration.&quot;
+2. **E-commerce Platform** → **Guest User**: offers fallback to email/password registration
+
+*Extends scenario UC-AUTH-001-S02 at step 5*, returns at step 3
+
+## UC-AUTH-001-S04 - Email Already Registered (Extension)
+
+**Primary Actor:** [Guest User](../../../actors/guest-guest-user.md)
+
+**Supporting Actors:** [Database](../../../actors/database.md), [E-commerce Platform](../../../actors/e-commerce-platform.md)
+
+**Preconditions:**
+- Used email is already registered
+
+```mermaid
+sequenceDiagram
+participant Guest User
+Database->>E-commerce Platform: 1. returns 'email already exists'
+E-commerce Platform->>Guest User: 2. displays error: 'An account with this email already exists. Please login or reset your password.'
+E-commerce Platform->>Guest User: 3. offers links to login page and password reset
+```
+
+### Steps
+1. **Database** → **E-commerce Platform**: returns &quot;email already exists&quot;
+2. **E-commerce Platform** → **Guest User**: displays error: &quot;An account with this email already exists. Please login or reset your password.&quot;
+3. **E-commerce Platform** → **Guest User**: offers links to login page and password reset
+
+*Extends scenario UC-AUTH-001-S01 at step 6*
+
+## UC-AUTH-001-S05 - Invalid password (Exception)
+
+**Primary Actor:** [Guest User](../../../actors/guest-guest-user.md)
+
+**Supporting Actors:** [E-commerce Platform](../../../actors/e-commerce-platform.md)
+
+```mermaid
+sequenceDiagram
+participant Guest User
+E-commerce Platform->>Guest User: 1.  displays error: 'Reason password failed'
+```
+
+### Steps
+1. **E-commerce Platform** → **Guest User**:  displays error: &quot;Reason password failed&quot;
+
+*Extends scenario UC-AUTH-001-S01 at step 5*, returns at step 2
+
+## UC-AUTH-001-S05 - Email Service Unavailable (Extension)
+
+**Primary Actor:** [Guest User](../../../actors/guest-guest-user.md)
+
+**Supporting Actors:** [Email Service](../../../actors/email-service.md), [E-commerce Platform](../../../actors/e-commerce-platform.md)
+
+```mermaid
+sequenceDiagram
+participant Guest User
+Email Service->>E-commerce Platform: 1. ails to send (service timeout)
+E-commerce Platform->>Guest User: 2. displays warning: 'Account created, but failed to send verification mail. Try to resend later'
+```
+
+### Steps
+1. **Email Service** → **E-commerce Platform**: ails to send (service timeout)
+2. **E-commerce Platform** → **Guest User**: displays warning: &quot;Account created, but failed to send verification mail. Try to resend later&quot;
+
+*Extends scenario UC-AUTH-001-S01 at step 12*, returns at step 13
+
 
 ---
 
