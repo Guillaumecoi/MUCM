@@ -21,6 +21,8 @@ pub fn register_helpers(handlebars: &mut Handlebars) {
     );
     handlebars.register_helper("use_case_link", Box::new(use_case_link_helper));
     handlebars.register_helper("snake_case_id", Box::new(snake_case_id_helper));
+    handlebars.register_helper("pascal_case_id", Box::new(pascal_case_id_helper));
+    handlebars.register_helper("title_pascal_case", Box::new(title_pascal_case_helper));
 }
 
 /// Helper to create a markdown link to actor documentation
@@ -499,6 +501,59 @@ fn snake_case_id_helper(
     // Convert to snake_case
     let snake_case = crate::core::to_snake_case(id_value);
     out.write(&snake_case)?;
+
+    Ok(())
+}
+
+/// Helper to convert an id string to PascalCase
+/// Usage: {{pascal_case_id id}}
+/// Example: "user-login" -> "UserLogin", "my_test_id" -> "MyTestId"
+fn pascal_case_id_helper(
+    h: &Helper,
+    _: &Handlebars,
+    _ctx: &Context,
+    _: &mut RenderContext,
+    out: &mut dyn Output,
+) -> HelperResult {
+    let id_value = h
+        .param(0)
+        .ok_or_else(|| {
+            RenderErrorReason::Other("pascal_case_id helper requires an id parameter".to_string())
+        })?
+        .value()
+        .as_str()
+        .ok_or_else(|| {
+            RenderErrorReason::Other("pascal_case_id parameter must be a string".to_string())
+        })?;
+
+    let pascal_case = crate::core::to_pascal_case(id_value);
+    out.write(&pascal_case)?;
+
+    Ok(())
+}
+
+/// Helper to convert a title string to PascalCase
+/// Usage: {{title_pascal_case}}
+/// Takes title from the current context
+fn title_pascal_case_helper(
+    _h: &Helper,
+    _: &Handlebars,
+    ctx: &Context,
+    _: &mut RenderContext,
+    out: &mut dyn Output,
+) -> HelperResult {
+    let title = ctx
+        .data()
+        .get("title")
+        .and_then(|v| v.as_str())
+        .ok_or_else(|| {
+            RenderErrorReason::Other(
+                "title_pascal_case helper requires title in context".to_string(),
+            )
+        })?;
+
+    let pascal_case = crate::core::to_pascal_case(title);
+    out.write(&pascal_case)?;
 
     Ok(())
 }

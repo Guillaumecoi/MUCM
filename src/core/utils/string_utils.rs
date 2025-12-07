@@ -58,6 +58,27 @@ pub fn to_snake_case(s: &str) -> String {
         .join("_")
 }
 
+/// Convert a string to PascalCase
+/// Example: "user-login" -> "UserLogin", "my_test_id" -> "MyTestId"
+pub fn to_pascal_case(s: &str) -> String {
+    s.chars()
+        .fold((String::new(), true), |(mut acc, capitalize_next), c| {
+            if c.is_alphanumeric() {
+                if capitalize_next {
+                    acc.push(c.to_ascii_uppercase());
+                    (acc, false)
+                } else {
+                    acc.push(c.to_ascii_lowercase());
+                    (acc, false)
+                }
+            } else {
+                // Non-alphanumeric character, capitalize next
+                (acc, true)
+            }
+        })
+        .0
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

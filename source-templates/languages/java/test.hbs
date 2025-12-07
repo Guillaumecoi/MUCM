@@ -1,0 +1,99 @@
+// =============================================================================
+// AUTO-GENERATED TEST DOCUMENTATION
+// Use Case: {{title}} ({{id}})
+// Description: {{description}}
+// Documentation: docs/use-cases/{{category}}/README.md
+// Generated at: {{generated_at}}
+// =============================================================================
+
+{{#each scenarios}}
+// ## Scenario: {{title}} ({{id}})
+// **Description:** {{description}}
+// 
+{{/each}}
+// =============================================================================
+// AUTO-GENERATED TEST CODE
+// ⚠️  WARNING: Only modify code between START/END USER IMPLEMENTATION markers!
+// =============================================================================
+
+package test.usecases.{{snake_case_id category}};
+
+import org.junit.jupiter.api.*;
+import static org.junit.jupiter.api.Assertions.*;
+
+// =============================================================================
+// START USER IMPLEMENTATION - Add your imports and setup code here
+// =============================================================================
+
+// Add your imports here:
+// import your.package.SomeClass;
+
+// Add test helper methods here if needed
+
+// =============================================================================
+// END USER IMPLEMENTATION
+// =============================================================================
+
+/**
+ * Test class for use case: {{title}} ({{id}})
+ * Category: {{category}}
+ * Description: {{description}}
+ */
+@DisplayName("{{title}}")
+public class {{title_pascal_case}}Test {
+
+    @BeforeEach
+    void setUp() {
+        // =============================================================================
+        // START USER IMPLEMENTATION - Add your setup code here
+        // =============================================================================
+        
+        // TODO: Add any setup code needed for all tests
+        
+        // =============================================================================
+        // END USER IMPLEMENTATION
+        // =============================================================================
+    }
+
+    @AfterEach
+    void tearDown() {
+        // =============================================================================
+        // START USER IMPLEMENTATION - Add your cleanup code here
+        // =============================================================================
+        
+        // TODO: Add any cleanup code needed after tests
+        
+        // =============================================================================
+        // END USER IMPLEMENTATION
+        // =============================================================================
+    }
+
+{{#each scenarios}}
+    /**
+     * Test for scenario: {{title}} ({{id}})
+     * Description: {{description}}
+     * Documentation: docs/use-cases/{{../category}}/README.md#{{id}}
+     */
+    @Test
+    @DisplayName("{{title}}")
+    void test{{pascal_case_id id}}() {
+        // =============================================================================
+        // START USER IMPLEMENTATION - Feel free to modify the code below this line
+        // =============================================================================
+        
+        // TODO: Implement test for scenario: {{title}}
+        //
+        // Steps:
+{{#each steps}}
+        // {{step_order}}. {{action}}
+{{/each}}
+        
+        fail("Test not implemented yet");
+        
+        // =============================================================================
+        // END USER IMPLEMENTATION - Do not modify anything below this line
+        // =============================================================================
+    }
+
+{{/each}}
+}

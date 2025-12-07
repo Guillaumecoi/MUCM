@@ -677,6 +677,7 @@ impl TestGenerator {
             "python" => "py".to_string(),
             "javascript" => "js".to_string(),
             "rust" => "rs".to_string(),
+            "java" => "java".to_string(),
             "none" => "txt".to_string(), // fallback for none
             _ => "txt".to_string(),      // fallback for unknown
         }

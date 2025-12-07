@@ -102,7 +102,7 @@ last_updated = true
 
     // Create minimal language structure
     let languages_dir = templates_dir.join("languages");
-    for lang in &["rust", "python", "javascript"] {
+    for lang in &["rust", "python", "javascript", "java"] {
         let lang_dir = languages_dir.join(lang);
         fs::create_dir_all(&lang_dir)?;
 
@@ -110,6 +110,7 @@ last_updated = true
             "python" => ("py", "#"),
             "javascript" => ("js", "//"),
             "rust" => ("rs", "//"),
+            "java" => ("java", "//"),
             _ => unreachable!(),
         };
 
@@ -219,6 +220,58 @@ class Test{{title_snake_case}}(unittest.TestCase):
         # =============================================================================
         # END USER IMPLEMENTATION
         # =============================================================================
+"#
+            }
+            "java" => {
+                r#"// Test for {{id}}: {{title}}
+package test.usecases;
+
+import org.junit.jupiter.api.*;
+import static org.junit.jupiter.api.Assertions.*;
+
+// =============================================================================
+// START USER IMPLEMENTATION - Add your imports and setup code here
+// =============================================================================
+// =============================================================================
+// END USER IMPLEMENTATION
+// =============================================================================
+
+@DisplayName("{{title}}")
+public class {{title_pascal_case}}Test {
+    @BeforeEach
+    void setUp() {
+        // =============================================================================
+        // START USER IMPLEMENTATION - Add your setup code here
+        // =============================================================================
+        // =============================================================================
+        // END USER IMPLEMENTATION
+        // =============================================================================
+    }
+
+{{#each scenarios}}
+    @Test
+    @DisplayName("{{title}}")
+    void test{{pascal_case_id id}}() {
+        // =============================================================================
+        // START USER IMPLEMENTATION - Feel free to modify the code below this line
+        // =============================================================================
+        fail("Test not implemented yet");
+        // =============================================================================
+        // END USER IMPLEMENTATION - Do not modify anything below this line
+        // =============================================================================
+    }
+
+{{/each}}
+    @AfterEach
+    void tearDown() {
+        // =============================================================================
+        // START USER IMPLEMENTATION - Add your cleanup code here
+        // =============================================================================
+        // =============================================================================
+        // END USER IMPLEMENTATION
+        // =============================================================================
+    }
+}
 "#
             }
             _ => unreachable!(),

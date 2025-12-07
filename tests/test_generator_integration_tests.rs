@@ -150,6 +150,40 @@ fn test_generator_creates_javascript_test_file() {
 }
 
 #[test]
+fn test_generator_creates_java_test_file() {
+    let temp_dir = TempDir::new().unwrap();
+    let config = create_test_config(&temp_dir, "java");
+    let generator = TestGenerator::new(config);
+
+    let use_case = create_use_case_with_scenarios("UC-TEST-003");
+
+    generator.generate(&use_case).unwrap();
+
+    let test_file = temp_dir
+        .path()
+        .join("tests/use-cases/authentication/uc_test_003.java");
+    assert!(test_file.exists(), "Java test file should be created");
+
+    let content = fs::read_to_string(&test_file).unwrap();
+    assert!(
+        content.contains("@Test"),
+        "Should use JUnit @Test annotation"
+    );
+    assert!(
+        content.contains("@BeforeEach"),
+        "Should use JUnit @BeforeEach"
+    );
+    assert!(
+        content.contains("@AfterEach"),
+        "Should use JUnit @AfterEach"
+    );
+    assert!(
+        content.contains("@DisplayName"),
+        "Should use JUnit @DisplayName"
+    );
+}
+
+#[test]
 fn test_generator_creates_rust_test_file() {
     let temp_dir = TempDir::new().unwrap();
     let config = create_test_config(&temp_dir, "rust");

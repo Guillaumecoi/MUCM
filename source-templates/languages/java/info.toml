@@ -1,0 +1,5 @@
+name = "java"
+file_extension = "java"
+template_file = "test.hbs"
+comment_start = "//"
+aliases = []

@@ -40,4 +40,4 @@ pub use infrastructure::{
 };
 
 // Re-export utility functions
-pub use utils::to_snake_case;
+pub use utils::{to_pascal_case, to_snake_case};
