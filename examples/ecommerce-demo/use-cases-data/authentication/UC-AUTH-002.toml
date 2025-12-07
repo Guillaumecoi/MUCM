@@ -1,0 +1,174 @@
+id = "UC-AUTH-002"
+title = "User Login"
+category = "Authentication"
+category_abbreviation = "AUTH"
+description = "Allow registered users to authenticate and access their accounts by providing email and password. The system validates credentials, creates a session, and redirects users to their personalized dashboard or previous page."
+priority = "Critical"
+use_case_references = []
+
+[metadata]
+created_at = "2025-12-07T08:07:55.923825505Z"
+updated_at = "2025-12-07T08:13:54.271282139Z"
+
+[[views]]
+methodology = "developer"
+level = "normal"
+enabled = true
+
+[[views]]
+methodology = "tester"
+level = "advanced"
+enabled = true
+
+[[preconditions]]
+text = "User must have a registered account||UC:UC-AUTH-001:depend"
+
+[[preconditions]]
+text = "User must have valid credentials"
+
+[[preconditions]]
+text = "User is authenticated and logged in"
+
+[[postconditions]]
+text = "User is authenticated and logged in"
+
+[[postconditions]]
+text = "Session created and stored in cache"
+
+[[postconditions]]
+text = "Session cookie set in browser"
+
+[[postconditions]]
+text = "User redirected to dashboard or previous page"
+
+[[postconditions]]
+text = "Last login timestamp updated in database"
+
+[[scenarios]]
+id = "UC-AUTH-002-S01"
+title = "Successful Login with Email and Password"
+description = ""
+scenario_type = "happy_path"
+status = "deployed"
+is_main = true
+primary_actor = "customer-support-agent-maria-garcia"
+supporting_actors = [
+    "customer-support-agent-maria-garcia",
+    "e-commerce-platform",
+    "database",
+    "cache",
+]
+repeat_blocks = []
+preconditions = []
+postconditions = []
+references = []
+
+[[scenarios.steps]]
+order = "1"
+acting_actor = "customer-support-agent-maria-garcia"
+receiving_actor = "e-commerce-platform"
+action = "navigates to login page"
+
+[[scenarios.steps]]
+order = "2"
+acting_actor = "e-commerce-platform"
+receiving_actor = "customer-support-agent-maria-garcia"
+action = "displays login form"
+
+[[scenarios.steps]]
+order = "3"
+acting_actor = "customer-support-agent-maria-garcia"
+receiving_actor = "e-commerce-platform"
+action = "submits login credentials (email, password)"
+
+[[scenarios.steps]]
+order = "4"
+acting_actor = "e-commerce-platform"
+action = "validates input"
+
+[[scenarios.steps]]
+order = "5"
+acting_actor = "e-commerce-platform"
+receiving_actor = "database"
+action = "retrieves user record by email"
+
+[[scenarios.steps]]
+order = "6"
+acting_actor = "database"
+receiving_actor = "e-commerce-platform"
+action = "returns user record"
+
+[[scenarios.steps]]
+order = "7"
+acting_actor = "e-commerce-platform"
+action = "verifies password matches stored hash "
+
+[[scenarios.steps]]
+order = "8"
+acting_actor = "e-commerce-platform"
+action = "checks account is not locked or suspended"
+
+[[scenarios.steps]]
+order = "9"
+acting_actor = "e-commerce-platform"
+receiving_actor = "database"
+action = "updates last_login timestamp"
+
+[[scenarios.steps]]
+order = "10"
+acting_actor = "database"
+receiving_actor = "e-commerce-platform"
+action = "confirms update"
+
+[[scenarios.steps]]
+order = "11"
+acting_actor = "e-commerce-platform"
+receiving_actor = "cache"
+action = "creates new session with 30-day expiry"
+
+[[scenarios.steps]]
+order = "12"
+acting_actor = "cache"
+receiving_actor = "e-commerce-platform"
+action = "returns session token"
+
+[[scenarios.steps]]
+order = "13"
+acting_actor = "e-commerce-platform"
+receiving_actor = "customer-support-agent-maria-garcia"
+action = 'sets session cookie, displays "Login successful", and redirects to dashboard'
+
+[methodology_fields.tester]
+automation_status = ""
+test_type = ["e2e"]
+test_environments = []
+test_priority = ""
+coverage_areas = [
+    "Input validation (client-side and server-side)",
+    "Password verification (bcrypt constant-time comparison)",
+    "Session management (create, store, retrieve, invalidate)",
+    "Cookie handling (httpOnly, secure, sameSite attributes)",
+    "Account lockout mechanism",
+    "Rate limiting",
+    "OAuth flow",
+    "Error handling and user feedback",
+]
+regression_suites = [
+    "Authentication & Session Management Regression Suite",
+    "Security Test Suite",
+    "Smoke Test Suite",
+]
+test_data_requirements = "20 test user accounts with known credentials, 5 locked accounts for testing lockout scenarios, 3 OAuth test accounts (Google sandbox), mock Redis cache for session testing, database with known user records and varied account states."
+performance_baseline = ""
+
+[methodology_fields.developer]
+database_tables = [
+    "users",
+    "sessions",
+]
+api_endpoints = [
+    "`POST /api/v1/auth/login` - Email/password login",
+    "`POST /api/v1/auth/login/oauth` - OAuth social login",
+    "`POST /api/v1/auth/logout` - Logout and invalidate session",
+    "`GET /api/v1/auth/session` - Validate current session",
+]

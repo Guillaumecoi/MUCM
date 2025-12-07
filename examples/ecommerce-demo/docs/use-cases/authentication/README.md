@@ -6,9 +6,19 @@
 
 ## Summary
 
-This category contains **1** use case.
+This category contains **2** use cases.
 
 ## Use Cases
+
+### [UC-AUTH-002: User Login](./UC-AUTH-002/README.md)
+
+**Status:** DEPLOYED | **Priority:** CRITICAL
+
+Allow registered users to authenticate and access their accounts by providing email and password. The system validates credentials, creates a session, and redirects users to their personalized dashboard or previous page.
+
+**Available Views:** developer-normal, tester-advanced
+
+---
 
 ### [UC-AUTH-001: User Registration](./UC-AUTH-001/README.md)
 
