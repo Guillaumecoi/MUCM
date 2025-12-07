@@ -39,6 +39,10 @@ pub struct MethodologyDefinition {
     custom_fields: HashMap<String, CustomFieldConfig>,
     /// Per-level configuration (for field resolution with inheritance)
     pub(crate) level_configs: HashMap<String, LevelConfig>,
+    /// Whether to auto-generate tests for this methodology
+    auto_generate_tests: bool,
+    /// Whether to overwrite existing test documentation
+    overwrite_test_documentation: bool,
 }
 
 /// Configuration for a specific documentation level
@@ -53,6 +57,16 @@ pub(crate) struct LevelConfig {
 }
 
 impl MethodologyDefinition {
+    /// Returns whether auto test generation is enabled for this methodology.
+    pub fn auto_generate_tests(&self) -> bool {
+        self.auto_generate_tests
+    }
+
+    /// Returns whether to overwrite existing test documentation.
+    pub fn overwrite_test_documentation(&self) -> bool {
+        self.overwrite_test_documentation
+    }
+
     /// Creates a methodology definition by loading from a single TOML configuration file.
     ///
     /// This method reads the `methodology.toml` file from the specified methodology directory
@@ -80,7 +94,17 @@ impl MethodologyDefinition {
             template: TemplateConfig,
             usage: UsageConfig,
             #[serde(default)]
+            generation: GenerationConfig,
+            #[serde(default)]
             levels: HashMap<String, LevelWithCustomFields>,
+        }
+
+        #[derive(serde::Deserialize, Default)]
+        struct GenerationConfig {
+            #[serde(default)]
+            auto_generate_tests: bool,
+            #[serde(default)]
+            overwrite_test_documentation: bool,
         }
 
         #[derive(serde::Deserialize)]
@@ -165,6 +189,8 @@ impl MethodologyDefinition {
             preferred_style: data.template.preferred_style,
             custom_fields: all_custom_fields,
             level_configs,
+            auto_generate_tests: data.generation.auto_generate_tests,
+            overwrite_test_documentation: data.generation.overwrite_test_documentation,
         })
     }
 }
