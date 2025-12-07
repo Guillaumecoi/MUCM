@@ -113,16 +113,8 @@ impl ScenarioCreator {
                 );
             }
 
-            // Validate return step is at or after extends step (allow same step for retry)
-            if StepOrder::compare(&params.extends_at_step, return_step)
-                == std::cmp::Ordering::Greater
-            {
-                anyhow::bail!(
-                    "Return step '{}' cannot be before divergence step '{}'",
-                    return_step,
-                    params.extends_at_step
-                );
-            }
+            // Allow return to any step, including before divergence (loop-back)
+            // This enables validation retry patterns where errors return to earlier steps
         }
 
         let scenario_id = use_case.next_scenario_id();
