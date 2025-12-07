@@ -2,7 +2,6 @@
 use crate::core::domain::RepeatBlock;
 use crate::core::domain::{Scenario, StepOrder, UseCase};
 use anyhow::{Context, Result};
-use std::cmp::Ordering;
 
 /// Validates scenario flow structures including extensions, step ordering, and repeat blocks
 pub struct ScenarioFlowValidator;
@@ -111,15 +110,8 @@ impl ScenarioFlowValidator {
                 );
             }
 
-            // Validate return step is at or after divergence step (allow same step for retry)
-            if StepOrder::compare(extends_at, returns_at) == Ordering::Greater {
-                anyhow::bail!(
-                    "Extension '{}' return step '{}' cannot be before divergence step '{}'",
-                    scenario.id,
-                    returns_at,
-                    extends_at
-                );
-            }
+            // Allow return to any step, including before divergence (loop-back)
+            // This enables validation retry patterns where errors return to earlier steps
         }
 
         // Validate extension steps fall within divergence-return range
@@ -130,17 +122,31 @@ impl ScenarioFlowValidator {
                 if let Ok(step_order) = StepOrder::parse(&step.order) {
                     if let Ok(extends_order) = StepOrder::parse(extends_at) {
                         if let Ok(returns_order) = StepOrder::parse(returns_at) {
-                            // Step base should be between extends and returns
-                            if step_order.base < extends_order.base
-                                || step_order.base > returns_order.base
-                            {
-                                anyhow::bail!(
-                                    "Extension '{}' step '{}' is outside the divergence-return range ({}->{})",
-                                    scenario.id,
-                                    step.order,
-                                    extends_at,
-                                    returns_at
-                                );
+                            // For loop-back (return < divergence), extension steps should be after divergence
+                            // For normal flow (return >= divergence), steps should be between divergence and return
+                            if returns_order.base < extends_order.base {
+                                // Loop-back case: steps must be after or at divergence point
+                                if step_order.base < extends_order.base {
+                                    anyhow::bail!(
+                                        "Extension '{}' step '{}' is before divergence point '{}' (loop-back flow)",
+                                        scenario.id,
+                                        step.order,
+                                        extends_at
+                                    );
+                                }
+                            } else {
+                                // Normal case: steps should be between extends and returns
+                                if step_order.base < extends_order.base
+                                    || step_order.base > returns_order.base
+                                {
+                                    anyhow::bail!(
+                                        "Extension '{}' step '{}' is outside the divergence-return range ({}->{})",
+                                        scenario.id,
+                                        step.order,
+                                        extends_at,
+                                        returns_at
+                                    );
+                                }
                             }
                         }
                     }
@@ -342,9 +348,70 @@ mod tests {
 
         assert!(ScenarioFlowValidator::validate_extension(&extension, &use_case).is_ok());
 
-        // Test invalid: return before divergence
+        // Test loop-back: return before divergence is now allowed
         extension.returns_at_step = Some("1".to_string());
-        assert!(ScenarioFlowValidator::validate_extension(&extension, &use_case).is_err());
+        assert!(ScenarioFlowValidator::validate_extension(&extension, &use_case).is_ok());
+    }
+
+    #[test]
+    fn test_validate_loop_back_extension() {
+        let mut use_case = create_test_use_case();
+
+        // Create main scenario with more steps
+        let mut main_scenario = Scenario::new(
+            "UC-TEST-001-S01".to_string(),
+            "Main".to_string(),
+            "Test".to_string(),
+            ScenarioType::HappyPath,
+            "user".to_string(),
+        );
+        for i in 1..=5 {
+            main_scenario.add_step(ScenarioStep::new(
+                i.to_string(),
+                if i % 2 == 0 {
+                    "system".to_string()
+                } else {
+                    "user".to_string()
+                },
+                format!("Step {}", i),
+            ));
+        }
+        use_case.add_scenario(main_scenario);
+
+        // Create loop-back extension (diverges at 4, returns to 2)
+        let mut loop_extension = Scenario::new(
+            "UC-TEST-001-S02".to_string(),
+            "Loop Back".to_string(),
+            "Test loop-back".to_string(),
+            ScenarioType::ExceptionFlow,
+            "user".to_string(),
+        );
+        loop_extension.is_main = false;
+        loop_extension.extends_scenario_id = Some("UC-TEST-001-S01".to_string());
+        loop_extension.extends_at_step = Some("4".to_string());
+        loop_extension.returns_at_step = Some("2".to_string());
+
+        // Add extension steps (should be after divergence point)
+        loop_extension.add_step(ScenarioStep::new(
+            "4a".to_string(),
+            "system".to_string(),
+            "Error handling".to_string(),
+        ));
+        loop_extension.add_step(ScenarioStep::new(
+            "4b".to_string(),
+            "system".to_string(),
+            "Show error message".to_string(),
+        ));
+
+        assert!(ScenarioFlowValidator::validate_extension(&loop_extension, &use_case).is_ok());
+
+        // Test invalid: extension step before divergence point in loop-back
+        loop_extension.add_step(ScenarioStep::new(
+            "3a".to_string(),
+            "system".to_string(),
+            "Invalid step".to_string(),
+        ));
+        assert!(ScenarioFlowValidator::validate_extension(&loop_extension, &use_case).is_err());
     }
 
     #[test]
