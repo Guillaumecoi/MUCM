@@ -28,7 +28,7 @@ text = "User must have a registered account||UC:UC-AUTH-001:depend"
 ```
 
 MUCM auto-converts that to:  
-→ *User must have a registered account* **([UC-AUTH-001](../../authentication/UC-AUTH-001/README.md))**
+→ *User must have a registered account* **([UC-AUTH-001](docs/use-cases/authentication/UC-AUTH-001/README.md))**
 
 **Clickable. Cross-referenced. Automatic.**
 
