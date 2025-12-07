@@ -64,7 +64,7 @@ sequenceDiagram
 participant Guest User
 Guest User->>E-commerce Platform: 1. navigates to registration page
 E-commerce Platform->>Guest User: 2. displays registration form
-Guest User->>E-commerce Platform: 3. ubmits registration form (email, password, name, ...)
+Guest User->>E-commerce Platform: 3. submits registration form (email, password, name, ...)
 E-commerce Platform->>E-commerce Platform: 4. validates email format and password requirements
 E-commerce Platform->>Database: 5. checks email is not already registered
 Database->>E-commerce Platform: 6. returns 'email available'
@@ -80,7 +80,7 @@ E-commerce Platform->>Guest User: 13. displays 'Account created successfully' an
 ### Steps
 1. **Guest User** → **E-commerce Platform**: navigates to registration page
 2. **E-commerce Platform** → **Guest User**: displays registration form
-3. **Guest User** → **E-commerce Platform**: ubmits registration form (email, password, name, ...)
+3. **Guest User** → **E-commerce Platform**: submits registration form (email, password, name, ...)
 4. **E-commerce Platform**: validates email format and password requirements
 5. **E-commerce Platform** → **Database**: checks email is not already registered
 6. **Database** → **E-commerce Platform**: returns &quot;email available&quot;
