@@ -2,8 +2,12 @@
 # AUTO-GENERATED TEST DOCUMENTATION
 # Use Case: {{title}} ({{id}})
 {{#if description}}# Description: {{description}}
-{{/if}}# Documentation: docs/use-cases/{{category}}/README.md
-# Generated at: {{generated_at}}
+{{/if}}{{#if preconditions}}# Preconditions:
+{{#each preconditions}}# - {{text}}
+{{/each}}{{/if}}{{#if postconditions}}# Postconditions:
+{{#each postconditions}}# - {{text}}
+{{/each}}{{/if}}# Documentation: docs/use-cases/{{category}}/README.md
+# Last Changed: {{metadata.updated_at}}
 # =============================================================================
 
 {{#each scenarios}}
@@ -19,7 +23,7 @@
 
 """Generated test file for use case: {{title}}
 ID: {{id}}
-Generated at: {{generated_at}}
+Last Changed: {{metadata.updated_at}}
 """
 
 import unittest
@@ -52,6 +56,12 @@ class Test{{title_snake_case}}(unittest.TestCase):
         # START USER IMPLEMENTATION - Add your setup code here
         # =============================================================================
         
+{{#if preconditions}}
+        # Use case preconditions to consider:
+{{#each preconditions}}
+        # - {{text}}
+{{/each}}
+{{/if}}
         # TODO: Add any setup code needed for all tests
         pass
         
@@ -85,6 +95,7 @@ class Test{{title_snake_case}}(unittest.TestCase):
         
         # TODO: Implement test for scenario: {{title}}
         #
+
         # Steps:
 {{#each steps}}
         # {{order}}. {{{actor_display acting_actor}}} {{action}}{{#if receiving_actor}} to {{{actor_display receiving_actor}}}{{/if}}
@@ -92,12 +103,64 @@ class Test{{title_snake_case}}(unittest.TestCase):
         
         # Arrange
         # TODO: Set up test data and preconditions
+{{#if ../preconditions}}
+        # Preconditions:
+{{#each ../preconditions}}
+        # - {{text}}
+{{/each}}{{#if preconditions}}{{#each preconditions}}
+        # - {{text}}
+{{/each}}{{/if}}
+{{else if preconditions}}
+        # Preconditions:
+{{#each preconditions}}
+        # - {{text}}
+{{/each}}
+{{/if}}
+{{#if ../preconditions}}
+        # Preconditions:
+{{#each ../preconditions}}
+        # - {{text}}
+{{/each}}{{#if preconditions}}{{#each preconditions}}
+        # - {{text}}
+{{/each}}{{/if}}
+{{else if preconditions}}
+        # Preconditions:
+{{#each preconditions}}
+        # - {{text}}
+{{/each}}
+{{/if}}
         
         # Act
         # TODO: Execute the scenario steps above
         
-        # Assert
+        # Assert        
         # TODO: Verify the results
+{{#if ../postconditions}}
+        # Postconditions:
+{{#each ../postconditions}}
+        # - {{text}}
+{{/each}}{{#if postconditions}}{{#each postconditions}}
+        # - {{text}}
+{{/each}}{{/if}}
+{{else if postconditions}}
+        # Postconditions:
+{{#each postconditions}}
+        # - {{text}}
+{{/each}}
+{{/if}}
+{{#if ../postconditions}}
+        # Postconditions:
+{{#each ../postconditions}}
+        # - {{text}}
+{{/each}}{{#if postconditions}}{{#each postconditions}}
+        # - {{text}}
+{{/each}}{{/if}}
+{{else if postconditions}}
+        # Postconditions:
+{{#each postconditions}}
+        # - {{text}}
+{{/each}}
+{{/if}}
         
         self.fail("Test not implemented yet")
         

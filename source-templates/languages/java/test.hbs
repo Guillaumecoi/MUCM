@@ -2,8 +2,12 @@
 // AUTO-GENERATED TEST DOCUMENTATION
 // Use Case: {{title}} ({{id}})
 {{#if description}}// Description: {{description}}
-{{/if}}// Documentation: docs/use-cases/{{category}}/README.md
-// Generated at: {{generated_at}}
+{{/if}}{{#if preconditions}}// Preconditions:
+{{#each preconditions}}// - {{text}}
+{{/each}}{{/if}}{{#if postconditions}}// Postconditions:
+{{#each postconditions}}// - {{text}}
+{{/each}}{{/if}}// Documentation: docs/use-cases/{{category}}/README.md
+// Last Changed: {{metadata.updated_at}}
 // =============================================================================
 
 {{#each scenarios}}
@@ -49,6 +53,12 @@ public class {{title_pascal_case}}Test {
         // START USER IMPLEMENTATION - Add your setup code here
         // =============================================================================
         
+{{#if preconditions}}
+        // Use case preconditions to consider:
+{{#each preconditions}}
+        // - {{text}}
+{{/each}}
+{{/if}}
         // TODO: Add any setup code needed for all tests
         
         // =============================================================================
@@ -88,6 +98,41 @@ public class {{title_pascal_case}}Test {
 {{#each steps}}
         // {{step_order}}. {{action}}
 {{/each}}
+        
+        // Arrange
+        // TODO: Set up test data and preconditions
+{{#if ../preconditions}}
+        // Preconditions:
+{{#each ../preconditions}}
+        // - {{text}}
+{{/each}}{{#if preconditions}}{{#each preconditions}}
+        // - {{text}}
+{{/each}}{{/if}}
+{{else if preconditions}}
+        // Preconditions:
+{{#each preconditions}}
+        // - {{text}}
+{{/each}}
+{{/if}}
+        
+        // Act
+        // TODO: Execute the scenario steps above
+        
+        // Assert
+        // TODO: Verify the results
+{{#if ../postconditions}}
+        // Postconditions:
+{{#each ../postconditions}}
+        // - {{text}}
+{{/each}}{{#if postconditions}}{{#each postconditions}}
+        // - {{text}}
+{{/each}}{{/if}}
+{{else if postconditions}}
+        // Postconditions:
+{{#each postconditions}}
+        // - {{text}}
+{{/each}}
+{{/if}}
         
         fail("Test not implemented yet");
         

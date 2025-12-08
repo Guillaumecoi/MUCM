@@ -2,8 +2,12 @@
 // AUTO-GENERATED TEST DOCUMENTATION
 // Use Case: {{title}} ({{id}})
 {{#if description}}// Description: {{description}}
-{{/if}}// Documentation: docs/use-cases/{{category}}/README.md
-// Generated at: {{generated_at}}
+{{/if}}{{#if preconditions}}// Preconditions:
+{{#each preconditions}}// - {{text}}
+{{/each}}{{/if}}{{#if postconditions}}// Postconditions:
+{{#each postconditions}}// - {{text}}
+{{/each}}{{/if}}// Documentation: docs/use-cases/{{category}}/README.md
+// Last Changed: {{metadata.updated_at}}
 // =============================================================================
 
 {{#each scenarios}}
@@ -55,12 +59,38 @@ mod {{test_module_name}} {
         
         // Arrange
         // TODO: Set up test data and preconditions
+{{#if ../preconditions}}
+        // Preconditions:
+{{#each ../preconditions}}
+        // - {{text}}
+{{/each}}{{#if preconditions}}{{#each preconditions}}
+        // - {{text}}
+{{/each}}{{/if}}
+{{else if preconditions}}
+        // Preconditions:
+{{#each preconditions}}
+        // - {{text}}
+{{/each}}
+{{/if}}
         
         // Act
         // TODO: Execute the scenario steps above
         
         // Assert
         // TODO: Verify the results
+{{#if ../postconditions}}
+        // Postconditions:
+{{#each ../postconditions}}
+        // - {{text}}
+{{/each}}{{#if postconditions}}{{#each postconditions}}
+        // - {{text}}
+{{/each}}{{/if}}
+{{else if postconditions}}
+        // Postconditions:
+{{#each postconditions}}
+        // - {{text}}
+{{/each}}
+{{/if}}
         
         panic!("Test not implemented yet");
         
