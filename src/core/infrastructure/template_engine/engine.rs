@@ -215,7 +215,8 @@ impl TemplateEngine {
                                         &template_name,
                                         language.test_template(),
                                     )?;
-                                    test_templates.insert(language.name().to_string(), template_name);
+                                    test_templates
+                                        .insert(language.name().to_string(), template_name);
                                 }
                             }
                         }

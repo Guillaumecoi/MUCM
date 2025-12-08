@@ -111,8 +111,6 @@ impl SafeZonePreserver {
             .join("\n")
     }
 
-
-
     /// Parses an existing test file and extracts all safe zone content.
     ///
     /// Returns a SafeZoneContent with the global safe zone and per-scenario safe zones.
@@ -262,12 +260,12 @@ impl SafeZonePreserver {
             if line.contains(end_marker) {
                 break;
             }
-            
+
             // Detect base indentation from first non-empty line
             if base_indent_size.is_none() && !line.trim().is_empty() {
                 base_indent_size = Some(line.len() - line.trim_start().len());
             }
-            
+
             // Strip base indentation if we have it
             if let Some(base_indent) = base_indent_size {
                 if line.trim().is_empty() {
@@ -413,11 +411,11 @@ impl SafeZonePreserver {
                         if lines[i].contains(&start_marker) {
                             // Add START marker line
                             result_lines.push(lines[i].to_string());
-                            
+
                             // Detect base indentation from the START marker line
                             let base_indent_size = lines[i].len() - lines[i].trim_start().len();
                             let base_indent = " ".repeat(base_indent_size);
-                            
+
                             i += 1;
 
                             // Skip old content until END marker
@@ -426,7 +424,8 @@ impl SafeZonePreserver {
                             }
 
                             // Insert preserved content with base indentation applied
-                            let cleaned_preserved = self.clean_preserved_content(preserved_content, &end_marker);
+                            let cleaned_preserved =
+                                self.clean_preserved_content(preserved_content, &end_marker);
                             if !cleaned_preserved.is_empty() {
                                 for line in cleaned_preserved.lines() {
                                     if line.trim().is_empty() {
@@ -481,11 +480,11 @@ impl SafeZonePreserver {
             if lines[i].contains(start_marker) {
                 // Add the START marker line as-is
                 result_lines.push(lines[i].to_string());
-                
+
                 // Detect base indentation from the START marker line
                 let base_indent_size = lines[i].len() - lines[i].trim_start().len();
                 let base_indent = " ".repeat(base_indent_size);
-                
+
                 i += 1;
 
                 // Skip old content until we find the END marker
@@ -1071,25 +1070,33 @@ def test_scenario_001(self):
         let preserver = SafeZonePreserver::new("#".to_string());
 
         let (start, end) = preserver.get_safe_zone_markers(SafeZoneType::Global);
-        assert_eq!(start, "# START USER IMPLEMENTATION - Add your imports and setup code here");
+        assert_eq!(
+            start,
+            "# START USER IMPLEMENTATION - Add your imports and setup code here"
+        );
         assert_eq!(end, "# END USER IMPLEMENTATION");
 
         let (start, end) = preserver.get_safe_zone_markers(SafeZoneType::SetUp);
-        assert_eq!(start, "# START USER IMPLEMENTATION - Add your setup code here");
+        assert_eq!(
+            start,
+            "# START USER IMPLEMENTATION - Add your setup code here"
+        );
         assert_eq!(end, "# END USER IMPLEMENTATION");
 
         let (start, end) = preserver.get_safe_zone_markers(SafeZoneType::TearDown);
-        assert_eq!(start, "# START USER IMPLEMENTATION - Add your cleanup code here");
+        assert_eq!(
+            start,
+            "# START USER IMPLEMENTATION - Add your cleanup code here"
+        );
         assert_eq!(end, "# END USER IMPLEMENTATION");
 
         let (start, end) = preserver.get_safe_zone_markers(SafeZoneType::Scenario);
-        assert_eq!(start, "# START USER IMPLEMENTATION - Feel free to modify the code below this line");
+        assert_eq!(
+            start,
+            "# START USER IMPLEMENTATION - Feel free to modify the code below this line"
+        );
         assert_eq!(end, "# END USER IMPLEMENTATION");
     }
-
-
-
-
 
     #[test]
     fn test_clean_preserved_content() {
@@ -1099,26 +1106,23 @@ def test_scenario_001(self):
         assert_eq!(cleaned, "import os\nprint('hello')");
     }
 
-
-
-
-
-
-
-
-
     #[test]
     fn test_replace_between_markers() {
         let preserver = SafeZonePreserver::new("#".to_string());
         let rendered = "before\n# START USER IMPLEMENTATION - Add your imports and setup code here\nold content\n# END USER IMPLEMENTATION\nafter";
-        let result = preserver.replace_between_markers(rendered, "# START USER IMPLEMENTATION - Add your imports and setup code here", "# END USER IMPLEMENTATION", "new content");
+        let result = preserver.replace_between_markers(
+            rendered,
+            "# START USER IMPLEMENTATION - Add your imports and setup code here",
+            "# END USER IMPLEMENTATION",
+            "new content",
+        );
         assert_eq!(result, "before\n# START USER IMPLEMENTATION - Add your imports and setup code here\nnew content\n# END USER IMPLEMENTATION\nafter");
     }
 
     #[test]
     fn test_replace_between_markers_preserves_exact_formatting() {
         let preserver = SafeZonePreserver::new("#".to_string());
-        
+
         // Test with decorator lines (realistic Python test file format)
         let rendered = r#"# =============================================================================
 # START USER IMPLEMENTATION - Add your imports and setup code here
@@ -1129,56 +1133,69 @@ def test_scenario_001(self):
 # =============================================================================
 # END USER IMPLEMENTATION
 # ============================================================================="#;
-        
+
         let new_content = "import os\nimport sys";
         let result = preserver.replace_between_markers(
             rendered,
             "# START USER IMPLEMENTATION - Add your imports and setup code here",
             "# END USER IMPLEMENTATION",
-            new_content
+            new_content,
         );
-        
+
         // The result should preserve the newline structure
-        assert!(result.contains("# START USER IMPLEMENTATION - Add your imports and setup code here\n"),
-            "Should have newline after START marker");
+        assert!(
+            result.contains("# START USER IMPLEMENTATION - Add your imports and setup code here\n"),
+            "Should have newline after START marker"
+        );
         assert!(result.contains("import os"), "Should contain new content");
-        assert!(result.contains("\n# END USER IMPLEMENTATION"), "Should have newline before END marker");
-        
+        assert!(
+            result.contains("\n# END USER IMPLEMENTATION"),
+            "Should have newline before END marker"
+        );
+
         // Count newlines to ensure formatting is preserved
         let lines: Vec<&str> = result.lines().collect();
         // Original has ~9 lines, after replacement should have at least 5
-        assert!(lines.len() >= 5, "Should preserve reasonable line count, got: {}", lines.len());
+        assert!(
+            lines.len() >= 5,
+            "Should preserve reasonable line count, got: {}",
+            lines.len()
+        );
     }
 
     #[test]
     fn test_replace_between_markers_with_empty_content() {
         let preserver = SafeZonePreserver::new("#".to_string());
-        
+
         let rendered = r#"    def setUp(self):
         # START USER IMPLEMENTATION - Add your setup code here
         
         pass
         
         # END USER IMPLEMENTATION"#;
-        
+
         let result = preserver.replace_between_markers(
             rendered,
             "# START USER IMPLEMENTATION - Add your setup code here",
             "# END USER IMPLEMENTATION",
-            ""
+            "",
         );
-        
+
         // Should preserve structure even with empty content
-        assert!(result.contains("# START USER IMPLEMENTATION - Add your setup code here"),
-            "Should contain START marker");
-        assert!(result.contains("# END USER IMPLEMENTATION"),
-            "Should contain END marker");
+        assert!(
+            result.contains("# START USER IMPLEMENTATION - Add your setup code here"),
+            "Should contain START marker"
+        );
+        assert!(
+            result.contains("# END USER IMPLEMENTATION"),
+            "Should contain END marker"
+        );
     }
 
     #[test]
     fn test_replace_between_markers_preserves_indentation_context() {
         let preserver = SafeZonePreserver::new("#".to_string());
-        
+
         // setUp method with indentation
         let rendered = r#"    def setUp(self):
         """Set up test fixtures before each test method."""
@@ -1188,23 +1205,29 @@ def test_scenario_001(self):
         pass
         
         # END USER IMPLEMENTATION"#;
-        
+
         let new_content = "self.db = Database()";
         let result = preserver.replace_between_markers(
             rendered,
             "# START USER IMPLEMENTATION - Add your setup code here",
             "# END USER IMPLEMENTATION",
-            new_content
+            new_content,
         );
-        
+
         // Verify the new content is in the result
-        assert!(result.contains("self.db = Database()"),
-            "Should contain new content");
+        assert!(
+            result.contains("self.db = Database()"),
+            "Should contain new content"
+        );
         // Verify markers are preserved
-        assert!(result.contains("# START USER IMPLEMENTATION - Add your setup code here"),
-            "Should preserve START marker");
-        assert!(result.contains("# END USER IMPLEMENTATION"),
-            "Should preserve END marker");
+        assert!(
+            result.contains("# START USER IMPLEMENTATION - Add your setup code here"),
+            "Should preserve START marker"
+        );
+        assert!(
+            result.contains("# END USER IMPLEMENTATION"),
+            "Should preserve END marker"
+        );
     }
 
     // ============================================================================
@@ -1225,31 +1248,58 @@ def test_scenario_001(self):
 
         // First regeneration - user adds code with proper indentation stripped
         let preserved_content = "line1 = 'test'\nline2 = 'test'";
-        let result1 = preserver.merge_scenario_safe_zone(rendered, "scenario_001", preserved_content);
-        
+        let result1 =
+            preserver.merge_scenario_safe_zone(rendered, "scenario_001", preserved_content);
+
         // Verify correct indentation (4 spaces)
-        assert!(result1.contains("    line1 = 'test'"), "First regeneration should have 4 spaces, got:\n{}", result1);
-        assert!(result1.contains("    line2 = 'test'"), "First regeneration should have 4 spaces");
-        assert!(!result1.contains("        line1"), "First regeneration should NOT have 8 spaces");
+        assert!(
+            result1.contains("    line1 = 'test'"),
+            "First regeneration should have 4 spaces, got:\n{}",
+            result1
+        );
+        assert!(
+            result1.contains("    line2 = 'test'"),
+            "First regeneration should have 4 spaces"
+        );
+        assert!(
+            !result1.contains("        line1"),
+            "First regeneration should NOT have 8 spaces"
+        );
 
         // Second regeneration - extract and reinsert the same content
         let safe_zones = preserver.parse_safe_zones(&result1);
         let extracted = safe_zones.scenarios.get("scenario_001").unwrap();
-        
+
         let result2 = preserver.merge_scenario_safe_zone(rendered, "scenario_001", extracted);
-        
+
         // BUG FIX: This should still have only 4 spaces
-        assert!(result2.contains("    line1 = 'test'"), "Second regeneration should still have 4 spaces, got:\n{}", result2);
-        assert!(result2.contains("    line2 = 'test'"), "Second regeneration should still have 4 spaces");
-        assert!(!result2.contains("        line1"), "Second regeneration should NOT have 8 spaces");
-        
+        assert!(
+            result2.contains("    line1 = 'test'"),
+            "Second regeneration should still have 4 spaces, got:\n{}",
+            result2
+        );
+        assert!(
+            result2.contains("    line2 = 'test'"),
+            "Second regeneration should still have 4 spaces"
+        );
+        assert!(
+            !result2.contains("        line1"),
+            "Second regeneration should NOT have 8 spaces"
+        );
+
         // Third regeneration - should still be the same
         let safe_zones3 = preserver.parse_safe_zones(&result2);
         let extracted3 = safe_zones3.scenarios.get("scenario_001").unwrap();
         let result3 = preserver.merge_scenario_safe_zone(rendered, "scenario_001", extracted3);
-        
-        assert!(result3.contains("    line1 = 'test'"), "Third regeneration should still have 4 spaces");
-        assert!(!result3.contains("        line1"), "Third regeneration should NOT have 8 spaces");
+
+        assert!(
+            result3.contains("    line1 = 'test'"),
+            "Third regeneration should still have 4 spaces"
+        );
+        assert!(
+            !result3.contains("        line1"),
+            "Third regeneration should NOT have 8 spaces"
+        );
     }
 
     #[test]
@@ -1284,27 +1334,61 @@ class TestCase(unittest.TestCase):
             teardown: "self.db.close()".to_string(),
             scenarios: HashMap::new(),
         };
-        preserved.scenarios.insert("scenario_001".to_string(), "assert 1 == 1".to_string());
-        preserved.scenarios.insert("scenario_002".to_string(), "assert 2 == 2".to_string());
+        preserved
+            .scenarios
+            .insert("scenario_001".to_string(), "assert 1 == 1".to_string());
+        preserved
+            .scenarios
+            .insert("scenario_002".to_string(), "assert 2 == 2".to_string());
 
         let result = preserver.merge_safe_zones(rendered, &preserved);
 
         // Check all zones are present
-        assert!(result.contains("import os"), "Global zone should contain import os");
-        assert!(result.contains("import sys"), "Global zone should contain import sys");
-        assert!(result.contains("self.db = Database()"), "setUp should contain database init");
-        assert!(result.contains("self.db.close()"), "tearDown should contain database close");
-        assert!(result.contains("assert 1 == 1"), "scenario_001 should contain assert");
-        assert!(result.contains("assert 2 == 2"), "scenario_002 should contain assert");
+        assert!(
+            result.contains("import os"),
+            "Global zone should contain import os"
+        );
+        assert!(
+            result.contains("import sys"),
+            "Global zone should contain import sys"
+        );
+        assert!(
+            result.contains("self.db = Database()"),
+            "setUp should contain database init"
+        );
+        assert!(
+            result.contains("self.db.close()"),
+            "tearDown should contain database close"
+        );
+        assert!(
+            result.contains("assert 1 == 1"),
+            "scenario_001 should contain assert"
+        );
+        assert!(
+            result.contains("assert 2 == 2"),
+            "scenario_002 should contain assert"
+        );
 
         // Check proper indentation for each zone
         // Global zone has no extra indentation
         // setUp, tearDown, and scenarios should have 8 spaces (method body indentation)
         // Note: Our implementation adds indentation based on the template's placeholder indentation
-        assert!(result.contains("self.db = Database()"), "setUp should contain database init");
-        assert!(result.contains("self.db.close()"), "tearDown should contain database close");
-        assert!(result.contains("assert 1 == 1"), "scenario_001 should contain assertion");
-        assert!(result.contains("assert 2 == 2"), "scenario_002 should contain assertion");
+        assert!(
+            result.contains("self.db = Database()"),
+            "setUp should contain database init"
+        );
+        assert!(
+            result.contains("self.db.close()"),
+            "tearDown should contain database close"
+        );
+        assert!(
+            result.contains("assert 1 == 1"),
+            "scenario_001 should contain assertion"
+        );
+        assert!(
+            result.contains("assert 2 == 2"),
+            "scenario_002 should contain assertion"
+        );
     }
 
     #[test]
@@ -1337,44 +1421,61 @@ class TestAuth(unittest.TestCase):
         let safe_zones = preserver.extract_scenario_safe_zones(content);
 
         assert_eq!(safe_zones.len(), 3, "Should extract all 3 scenarios");
-        
+
         let s1 = safe_zones.get("scenario_001").unwrap();
-        assert!(s1.contains("user = create_user()"), "Scenario 001 should contain user creation");
-        assert!(s1.contains("assert user.is_valid()"), "Scenario 001 should contain assertion");
-        
+        assert!(
+            s1.contains("user = create_user()"),
+            "Scenario 001 should contain user creation"
+        );
+        assert!(
+            s1.contains("assert user.is_valid()"),
+            "Scenario 001 should contain assertion"
+        );
+
         let s2 = safe_zones.get("scenario_002").unwrap();
-        assert!(s2.contains("login_result"), "Scenario 002 should contain login_result");
-        assert!(s2.contains("assert login_result.success"), "Scenario 002 should contain assertion");
-        
+        assert!(
+            s2.contains("login_result"),
+            "Scenario 002 should contain login_result"
+        );
+        assert!(
+            s2.contains("assert login_result.success"),
+            "Scenario 002 should contain assertion"
+        );
+
         let s3 = safe_zones.get("scenario_003").unwrap();
-        assert!(s3.contains("# Multi-line"), "Scenario 003 should contain multi-line comment");
-        assert!(s3.contains("# comment block"), "Scenario 003 should contain comment block");
-        assert!(s3.contains("assert result"), "Scenario 003 should contain assertion");
+        assert!(
+            s3.contains("# Multi-line"),
+            "Scenario 003 should contain multi-line comment"
+        );
+        assert!(
+            s3.contains("# comment block"),
+            "Scenario 003 should contain comment block"
+        );
+        assert!(
+            s3.contains("assert result"),
+            "Scenario 003 should contain assertion"
+        );
     }
-
-
-
-
 
     #[test]
     fn test_clean_preserved_content_comprehensive() {
         let preserver = SafeZonePreserver::new("#".to_string());
-        
+
         // Content with END marker at the end
         let content = "line1\nline2\n# END USER IMPLEMENTATION";
         let cleaned = preserver.clean_preserved_content(content, "# END USER IMPLEMENTATION");
         assert_eq!(cleaned, "line1\nline2");
-        
+
         // Content with END marker in middle
         let content = "line1\n# END USER IMPLEMENTATION\nline2";
         let cleaned = preserver.clean_preserved_content(content, "# END USER IMPLEMENTATION");
         assert_eq!(cleaned, "line1\nline2");
-        
+
         // Content without END marker
         let content = "line1\nline2";
         let cleaned = preserver.clean_preserved_content(content, "# END USER IMPLEMENTATION");
         assert_eq!(cleaned, "line1\nline2");
-        
+
         // Content with multiple END markers
         let content = "line1\n# END USER IMPLEMENTATION\nline2\n# END USER IMPLEMENTATION";
         let cleaned = preserver.clean_preserved_content(content, "# END USER IMPLEMENTATION");
@@ -1384,7 +1485,7 @@ class TestAuth(unittest.TestCase):
     #[test]
     fn test_full_roundtrip_extract_merge() {
         let preserver = SafeZonePreserver::new("#".to_string());
-        
+
         let original = r#"
 # START USER IMPLEMENTATION - Add your imports and setup code here
 import unittest
@@ -1406,7 +1507,7 @@ class TestCase(unittest.TestCase):
 
         // Extract
         let safe_zones = preserver.parse_safe_zones(original);
-        
+
         // Create new template
         let template = r#"
 # START USER IMPLEMENTATION - Add your imports and setup code here
@@ -1426,17 +1527,38 @@ class TestCase(unittest.TestCase):
 
         // Merge
         let result = preserver.merge_safe_zones(template, &safe_zones);
-        
+
         // Verify all content is preserved
-        assert!(result.contains("import unittest"), "Should contain import unittest");
-        assert!(result.contains("from mymodule import MyClass"), "Should contain import MyClass");
-        assert!(result.contains("self.obj = MyClass()"), "Should contain object initialization");
-        assert!(result.contains("result = self.obj.method()"), "Should contain method call");
-        assert!(result.contains("assert result == \"expected\""), "Should contain assertion");
-        
+        assert!(
+            result.contains("import unittest"),
+            "Should contain import unittest"
+        );
+        assert!(
+            result.contains("from mymodule import MyClass"),
+            "Should contain import MyClass"
+        );
+        assert!(
+            result.contains("self.obj = MyClass()"),
+            "Should contain object initialization"
+        );
+        assert!(
+            result.contains("result = self.obj.method()"),
+            "Should contain method call"
+        );
+        assert!(
+            result.contains("assert result == \"expected\""),
+            "Should contain assertion"
+        );
+
         // Verify placeholders are replaced
-        assert!(!result.contains("TODO: Add setup"), "Should not contain TODO in setup");
-        assert!(!result.contains("TODO: Implement"), "Should not contain TODO in scenario");
+        assert!(
+            !result.contains("TODO: Add setup"),
+            "Should not contain TODO in setup"
+        );
+        assert!(
+            !result.contains("TODO: Implement"),
+            "Should not contain TODO in scenario"
+        );
     }
 
     #[test]
@@ -1453,13 +1575,22 @@ class TestCase(unittest.TestCase):
         // Preserved content with nested structures (already has proper relative indentation)
         let preserved = "if True:\n    nested_line()\n    another_nested()";
         let result = preserver.merge_scenario_safe_zone(rendered, "complex_scenario", preserved);
-        
+
         // The function applies base indentation from the template and preserves relative indentation
         // Base indentation should be 8 spaces (matching the TODO line's indentation)
-        assert!(result.contains("        if True:"), "Should have base indentation (8 spaces)");
+        assert!(
+            result.contains("        if True:"),
+            "Should have base indentation (8 spaces)"
+        );
         // Nested lines maintain their relative 4-space indentation from the preserved content
-        assert!(result.contains("        nested_line()"), "Should preserve relative indentation");
-        assert!(result.contains("        another_nested()"), "Should preserve relative indentation");
+        assert!(
+            result.contains("        nested_line()"),
+            "Should preserve relative indentation"
+        );
+        assert!(
+            result.contains("        another_nested()"),
+            "Should preserve relative indentation"
+        );
     }
 
     #[test]
@@ -1478,31 +1609,55 @@ class TestCase(unittest.TestCase):
 
         // Initial user code (no leading indentation - will be added during merge)
         let user_code = "x = 1\ny = 2\nassert x + y == 3";
-        
+
         // First generation
         let gen1 = preserver.merge_scenario_safe_zone(template, "scenario_001", user_code);
-        assert!(gen1.contains("        x = 1"), "Gen 1: should have 8 spaces");
-        assert!(!gen1.contains("            x = 1"), "Gen 1: should NOT have 12 spaces");
-        
+        assert!(
+            gen1.contains("        x = 1"),
+            "Gen 1: should have 8 spaces"
+        );
+        assert!(
+            !gen1.contains("            x = 1"),
+            "Gen 1: should NOT have 12 spaces"
+        );
+
         // Extract and regenerate 4 more times
         let mut current = gen1;
         for i in 2..=5 {
             let safe_zones = preserver.parse_safe_zones(&current);
             let extracted = safe_zones.scenarios.get("scenario_001").unwrap();
             current = preserver.merge_scenario_safe_zone(template, "scenario_001", extracted);
-            
-            assert!(current.contains("        x = 1"), "Gen {}: should have 8 spaces", i);
-            assert!(!current.contains("            x = 1"), "Gen {}: should NOT have 12 spaces (indentation creep)", i);
-            assert!(!current.contains("                x = 1"), "Gen {}: should NOT have 16 spaces (severe indentation creep)", i);
+
+            assert!(
+                current.contains("        x = 1"),
+                "Gen {}: should have 8 spaces",
+                i
+            );
+            assert!(
+                !current.contains("            x = 1"),
+                "Gen {}: should NOT have 12 spaces (indentation creep)",
+                i
+            );
+            assert!(
+                !current.contains("                x = 1"),
+                "Gen {}: should NOT have 16 spaces (severe indentation creep)",
+                i
+            );
         }
-        
+
         // Final verification: code should be identical after 5 regenerations
         let safe_zones_final = preserver.parse_safe_zones(&current);
         let final_extracted = safe_zones_final.scenarios.get("scenario_001").unwrap();
-        
+
         // The extracted content should be clean (no extra indentation accumulated)
-        assert!(final_extracted.contains("x = 1"), "Extracted content should be normalized");
-        assert!(!final_extracted.contains("        x = 1"), "Extracted content should NOT have accumulated indentation");
+        assert!(
+            final_extracted.contains("x = 1"),
+            "Extracted content should be normalized"
+        );
+        assert!(
+            !final_extracted.contains("        x = 1"),
+            "Extracted content should NOT have accumulated indentation"
+        );
     }
 
     #[test]
