@@ -413,14 +413,8 @@ impl SafeZonePreserver {
                             }
 
                             // Insert preserved content (with proper indentation from first skipped line)
-                            if let Some(first_skipped) = skipped_lines.first() {
-                                let indent_str = Self::detect_indentation(first_skipped, 4);
-                                result_lines
-                                    .extend(Self::indent_content(preserved_content, &indent_str));
-                            } else {
-                                // No indentation reference, just add the content as-is
-                                result_lines.extend(preserved_content.lines().map(String::from));
-                            }
+                            // Preserved content already has correct indentation, don't indent again
+                            result_lines.extend(preserved_content.lines().map(String::from));
 
                             // Add the end marker line (if we found it)
                             if i < lines.len() {
@@ -472,8 +466,8 @@ impl SafeZonePreserver {
                 let formatted_content = if new_content.is_empty() {
                     format!("\n{}\n", indent)
                 } else {
-                    let indented_lines = Self::indent_content(new_content, &indent);
-                    format!("\n{}\n{}", indented_lines.join("\n"), indent)
+                    // Preserved content already has correct indentation, don't indent again
+                    format!("\n{}\n", new_content)
                 };
 
                 return format!("{}{}{}", before_start, formatted_content, after_end);
