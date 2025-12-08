@@ -78,6 +78,39 @@ impl TemplateEngine {
             }
         }
 
+        // Load test templates from languages directory
+        let user_languages_path = Path::new(".config/.mucm")
+            .join(crate::config::Config::TEMPLATES_DIR)
+            .join("languages");
+        let source_languages_path = Path::new("source-templates/languages").to_path_buf();
+
+        let languages_path = if user_languages_path.exists() {
+            &user_languages_path
+        } else {
+            &source_languages_path
+        };
+
+        let mut test_templates = HashMap::new();
+
+        if languages_path.exists() {
+            for entry in fs::read_dir(languages_path)? {
+                let entry = entry?;
+                let path = entry.path();
+
+                if path.is_dir() {
+                    if let Some(language_name) = path.file_name().and_then(|n| n.to_str()) {
+                        let test_hbs_path = path.join("test.hbs");
+                        if test_hbs_path.exists() {
+                            let template = fs::read_to_string(&test_hbs_path)?;
+                            let template_name = format!("test-{}", language_name);
+                            handlebars.register_template_string(&template_name, template)?;
+                            test_templates.insert(language_name.to_string(), template_name);
+                        }
+                    }
+                }
+            }
+        }
+
         // Register general overview template (not methodology-specific)
         // Overview.hbs is at the root of template-assets, not in methodologies subdirectory
         let overview_path = if user_templates_path.parent().is_some()
@@ -164,7 +197,7 @@ impl TemplateEngine {
         }
 
         // Register language test templates using LanguageRegistry
-        let mut test_templates = HashMap::new();
+        // let mut test_templates = HashMap::new();  // Remove redeclaration
 
         use super::super::languages::LanguageRegistry;
         use crate::config::TemplateManager;
@@ -175,13 +208,15 @@ impl TemplateEngine {
                 match LanguageRegistry::new_dynamic(&templates_dir) {
                     Ok(language_registry) => {
                         for language_name in language_registry.available_languages() {
-                            if let Some(language) = language_registry.get(&language_name) {
-                                let template_name = format!("{}_test", language.name());
-                                handlebars.register_template_string(
-                                    &template_name,
-                                    language.test_template(),
-                                )?;
-                                test_templates.insert(language.name().to_string(), template_name);
+                            if !test_templates.contains_key(&language_name) {
+                                if let Some(language) = language_registry.get(&language_name) {
+                                    let template_name = format!("{}_test", language.name());
+                                    handlebars.register_template_string(
+                                        &template_name,
+                                        language.test_template(),
+                                    )?;
+                                    test_templates.insert(language.name().to_string(), template_name);
+                                }
                             }
                         }
                     }
