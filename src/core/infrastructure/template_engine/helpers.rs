@@ -24,6 +24,7 @@ pub fn register_helpers(handlebars: &mut Handlebars) {
     handlebars.register_helper("pascal_case_id", Box::new(pascal_case_id_helper));
     handlebars.register_helper("title_pascal_case", Box::new(title_pascal_case_helper));
     handlebars.register_helper("date_format", Box::new(date_format_helper));
+    handlebars.register_helper("gt", Box::new(gt_helper));
 }
 
 /// Helper to create a markdown link to actor documentation
@@ -583,6 +584,26 @@ fn date_format_helper(
     } else {
         // If parsing fails, return the original string
         out.write(date_str)?;
+    }
+
+    Ok(())
+}
+
+/// Helper to check if first parameter is greater than second
+/// Usage: {{#if (gt a b)}} ... {{/if}}
+/// Returns: true if a > b, false otherwise
+fn gt_helper(
+    h: &Helper,
+    _: &Handlebars,
+    _: &Context,
+    _rc: &mut RenderContext,
+    out: &mut dyn Output,
+) -> HelperResult {
+    let a = h.param(0).and_then(|v| v.value().as_f64()).unwrap_or(0.0);
+    let b = h.param(1).and_then(|v| v.value().as_f64()).unwrap_or(0.0);
+
+    if a > b {
+        out.write("true")?;
     }
 
     Ok(())

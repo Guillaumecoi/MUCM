@@ -157,7 +157,7 @@ impl TemplateEngine {
                 .unwrap()
                 .join("category_overview.hbs")
         } else {
-            Path::new("source-templates/category_overview.hbs").to_path_buf()
+            Path::new(env!("CARGO_MANIFEST_DIR")).join("source-templates/category_overview.hbs")
         };
         if category_overview_path.exists() {
             let template = fs::read_to_string(category_overview_path)?;
