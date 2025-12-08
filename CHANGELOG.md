@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **ci:** Add automated changelog generation with git-cliff ([#62](https://github.com/Guillaumecoi/MUCM/pull/62))
 
+### Fixed
+
+- Resolve Indentation Accumulation Bug + Template Standardization ([#64](https://github.com/Guillaumecoi/MUCM/pull/64))
+
 ## [0.2.0] - 2025-12-07
 
 ### Added
