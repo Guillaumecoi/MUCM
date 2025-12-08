@@ -1,15 +1,16 @@
 // =============================================================================
 // AUTO-GENERATED TEST DOCUMENTATION
 // Use Case: {{title}} ({{id}})
-// Description: {{description}}
-// Documentation: docs/use-cases/{{category}}/README.md
+{{#if description}}// Description: {{description}}
+{{/if}}// Documentation: docs/use-cases/{{category}}/README.md
 // Generated at: {{generated_at}}
 // =============================================================================
 
 {{#each scenarios}}
 // ## Scenario: {{title}} ({{id}})
-// **Description:** {{description}}
-// 
+{{#if description}}// **Description:** {{description}}
+{{/if}}
+//
 {{/each}}
 // =============================================================================
 // AUTO-GENERATED TEST CODE
@@ -37,8 +38,8 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  * Test class for use case: {{title}} ({{id}})
  * Category: {{category}}
- * Description: {{description}}
- */
+{{#if description}} * Description: {{description}}
+{{/if}} */
 @DisplayName("{{title}}")
 public class {{title_pascal_case}}Test {
 
@@ -71,8 +72,8 @@ public class {{title_pascal_case}}Test {
 {{#each scenarios}}
     /**
      * Test for scenario: {{title}} ({{id}})
-     * Description: {{description}}
-     * Documentation: docs/use-cases/{{../category}}/README.md#{{id}}
+{{#if description}}     * Description: {{description}}
+{{/if}}     * Documentation: docs/use-cases/{{../category}}/README.md#{{id}}
      */
     @Test
     @DisplayName("{{title}}")

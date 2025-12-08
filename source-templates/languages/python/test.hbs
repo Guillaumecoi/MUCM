@@ -1,15 +1,16 @@
 # =============================================================================
 # AUTO-GENERATED TEST DOCUMENTATION
 # Use Case: {{title}} ({{id}})
-# Description: {{description}}
-# Documentation: docs/use-cases/{{category}}/README.md
+{{#if description}}# Description: {{description}}
+{{/if}}# Documentation: docs/use-cases/{{category}}/README.md
 # Generated at: {{generated_at}}
 # =============================================================================
 
 {{#each scenarios}}
 # ## Scenario: {{title}} ({{id}})
-# **Description:** {{description}}
-# 
+{{#if description}}# **Description:** {{description}}
+{{/if}}
+#
 {{/each}}
 # =============================================================================
 # AUTO-GENERATED TEST CODE
@@ -42,8 +43,8 @@ class Test{{title_snake_case}}(unittest.TestCase):
     """
     Test class for use case: {{title}} ({{id}})
     Category: {{category}}
-    Description: {{description}}
-    """
+{{#if description}}    Description: {{description}}
+{{/if}}    """
     
     def setUp(self):
         """Set up test fixtures before each test method."""
@@ -75,8 +76,8 @@ class Test{{title_snake_case}}(unittest.TestCase):
     def test_{{snake_case_id id}}(self):
         """
         Test for scenario: {{title}} ({{id}})
-        Description: {{description}}
-        Documentation: docs/use-cases/{{../category}}/README.md#{{id}}
+{{#if description}}        Description: {{description}}
+{{/if}}        Documentation: docs/use-cases/{{../category}}/README.md#{{id}}
         """
         # =============================================================================
         # START USER IMPLEMENTATION - Feel free to modify the code below this line

@@ -1,15 +1,15 @@
 // =============================================================================
 // AUTO-GENERATED TEST DOCUMENTATION
 // Use Case: {{title}} ({{id}})
-// Description: {{description}}
-// Documentation: docs/use-cases/{{category}}/README.md
+{{#if description}}// Description: {{description}}
+{{/if}}// Documentation: docs/use-cases/{{category}}/README.md
 // Generated at: {{generated_at}}
 // =============================================================================
 
 {{#each scenarios}}
 /// ## Scenario: {{title}} ({{id}})
-/// **Description:** {{description}}
- 
+{{#if description}}/// **Description:** {{description}}
+{{/if}}
 {{/each}}
 // =============================================================================
 // AUTO-GENERATED TEST CODE
@@ -39,8 +39,8 @@ mod {{test_module_name}} {
     #[test]
     fn test_{{snake_case_id id}}() {
         // Scenario: {{title}} ({{id}})
-        // Description: {{description}}
-        // Documentation: docs/use-cases/{{../category}}/README.md#{{id}}
+{{#if description}}        // Description: {{description}}
+{{/if}}        // Documentation: docs/use-cases/{{../category}}/README.md#{{id}}
         
         // =============================================================================
         // START USER IMPLEMENTATION - Feel free to modify the code below this line
