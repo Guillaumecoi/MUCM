@@ -3,7 +3,7 @@
 **Use Case ID:** {{id}}  
 **Implementation Status:** {{status}}  
 **Development Priority:** {{priority}}  
-**Specification Date:** {{created_date}}
+**Specification Date:** {{date_format metadata.created_at}}
 
 **Navigation:** [← Overview](./README.md) | [← Back to {{category}}](../README.md) | [← Back to All Use Cases](../../README.md)
 
@@ -76,10 +76,10 @@
 {{/each}}
 
 {{/if}}
-{{#if last_updated}}
+{{#if metadata.updated_at}}
 ---
 
-**Last Updated:** {{last_updated}}
+**Last Updated:** {{date_format metadata.updated_at}}
 {{/if}}
 
 ---

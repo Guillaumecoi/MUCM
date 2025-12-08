@@ -23,6 +23,8 @@ pub fn register_helpers(handlebars: &mut Handlebars) {
     handlebars.register_helper("snake_case_id", Box::new(snake_case_id_helper));
     handlebars.register_helper("pascal_case_id", Box::new(pascal_case_id_helper));
     handlebars.register_helper("title_pascal_case", Box::new(title_pascal_case_helper));
+    handlebars.register_helper("date_format", Box::new(date_format_helper));
+    handlebars.register_helper("gt", Box::new(gt_helper));
 }
 
 /// Helper to create a markdown link to actor documentation
@@ -554,6 +556,55 @@ fn title_pascal_case_helper(
 
     let pascal_case = crate::core::to_pascal_case(title);
     out.write(&pascal_case)?;
+
+    Ok(())
+}
+
+/// Helper to format dates according to the configured date format
+/// Usage: {{date_format date_string}}
+/// Returns: The date formatted according to the config's date_format setting
+fn date_format_helper(
+    h: &Helper,
+    _: &Handlebars,
+    _: &Context,
+    _rc: &mut RenderContext,
+    out: &mut dyn Output,
+) -> HelperResult {
+    let date_str = h.param(0).and_then(|v| v.value().as_str()).unwrap_or("");
+
+    // Load config for date formatting
+    let date_format = crate::config::Config::load()
+        .map(|c| c.metadata.date_format)
+        .unwrap_or_else(|_| "%d/%m/%Y".to_string());
+
+    // Parse the date string and format it
+    if let Ok(dt) = chrono::DateTime::parse_from_rfc3339(date_str) {
+        let formatted = dt.format(&date_format).to_string();
+        out.write(&formatted)?;
+    } else {
+        // If parsing fails, return the original string
+        out.write(date_str)?;
+    }
+
+    Ok(())
+}
+
+/// Helper to check if first parameter is greater than second
+/// Usage: {{#if (gt a b)}} ... {{/if}}
+/// Returns: true if a > b, false otherwise
+fn gt_helper(
+    h: &Helper,
+    _: &Handlebars,
+    _: &Context,
+    _rc: &mut RenderContext,
+    out: &mut dyn Output,
+) -> HelperResult {
+    let a = h.param(0).and_then(|v| v.value().as_f64()).unwrap_or(0.0);
+    let b = h.param(1).and_then(|v| v.value().as_f64()).unwrap_or(0.0);
+
+    if a > b {
+        out.write("true")?;
+    }
 
     Ok(())
 }

@@ -1,15 +1,20 @@
 // =============================================================================
 // AUTO-GENERATED TEST DOCUMENTATION
 // Use Case: {{title}} ({{id}})
-// Description: {{description}}
-// Documentation: docs/use-cases/{{category}}/README.md
-// Generated at: {{generated_at}}
+{{#if description}}// Description: {{description}}
+{{/if}}{{#if preconditions}}// Preconditions:
+{{#each preconditions}}// - {{text}}
+{{/each}}{{/if}}{{#if postconditions}}// Postconditions:
+{{#each postconditions}}// - {{text}}
+{{/each}}{{/if}}// Documentation: docs/use-cases/{{category}}/README.md
+// Last Changed: {{metadata.updated_at}}
 // =============================================================================
 
 {{#each scenarios}}
 // ## Scenario: {{title}} ({{id}})
-// **Description:** {{description}}
-// 
+{{#if description}}// **Description:** {{description}}
+{{/if}}
+//
 {{/each}}
 // =============================================================================
 // AUTO-GENERATED TEST CODE
@@ -33,8 +38,8 @@
 /**
  * Test suite for use case: {{title}} ({{id}})
  * Category: {{category}}
- * Description: {{description}}
- */
+{{#if description}} * Description: {{description}}
+{{/if}} */
 describe('{{title}}', () => {
     
     // =============================================================================
@@ -42,6 +47,12 @@ describe('{{title}}', () => {
     // =============================================================================
     
     beforeEach(() => {
+{{#if preconditions}}
+        // Use case preconditions to consider:
+{{#each preconditions}}
+        // - {{text}}
+{{/each}}
+{{/if}}
         // TODO: Add setup code that runs before each test
     });
     
@@ -64,8 +75,8 @@ describe('{{title}}', () => {
 {{#each scenarios}}
     /**
      * Test for scenario: {{title}} ({{id}})
-     * Description: {{description}}
-     * Documentation: docs/use-cases/{{../category}}/README.md#{{id}}
+{{#if description}}     * Description: {{description}}
+{{/if}}     * Documentation: docs/use-cases/{{../category}}/README.md#{{id}}
      */
     test('{{title}}', () => {
         // =============================================================================
@@ -81,12 +92,38 @@ describe('{{title}}', () => {
         
         // Arrange
         // TODO: Set up test data and preconditions
+{{#if ../preconditions}}
+        // Preconditions:
+{{#each ../preconditions}}
+        // - {{text}}
+{{/each}}{{#if preconditions}}{{#each preconditions}}
+        // - {{text}}
+{{/each}}{{/if}}
+{{else if preconditions}}
+        // Preconditions:
+{{#each preconditions}}
+        // - {{text}}
+{{/each}}
+{{/if}}
         
         // Act
         // TODO: Execute the scenario steps above
         
         // Assert
         // TODO: Verify the results
+{{#if ../postconditions}}
+        // Postconditions:
+{{#each ../postconditions}}
+        // - {{text}}
+{{/each}}{{#if postconditions}}{{#each postconditions}}
+        // - {{text}}
+{{/each}}{{/if}}
+{{else if postconditions}}
+        // Postconditions:
+{{#each postconditions}}
+        // - {{text}}
+{{/each}}
+{{/if}}
         
         throw new Error('Test not implemented yet');
         

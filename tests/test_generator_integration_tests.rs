@@ -649,6 +649,61 @@ fn test_generator_file_path_generation() {
 }
 
 #[test]
+fn test_generator_regenerate_preserves_user_implementation_content() {
+    // Use real templates to reproduce the bug
+    let project_root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"));
+    let source_templates = project_root.join("source-templates");
+    unsafe {
+        std::env::set_var("MUCM_TEST_TEMPLATES_DIR", source_templates);
+    }
+
+    let temp_dir = TempDir::new().unwrap();
+    let config = create_test_config(&temp_dir, "python");
+    let generator = TestGenerator::new(config);
+
+    let use_case = create_use_case_with_scenarios("UC-TEST-009");
+
+    // Generate initial test
+    generator.generate(&use_case).unwrap();
+
+    let test_file = temp_dir
+        .path()
+        .join("tests/use-cases/authentication/uc_test_009.py");
+
+    // Extract content between user implementation markers
+    let initial_content = fs::read_to_string(&test_file).unwrap();
+    let initial_user_content = extract_user_implementation_content(&initial_content);
+
+    // Regenerate
+    generator.regenerate(&use_case).unwrap();
+
+    // Extract content again
+    let regenerated_content = fs::read_to_string(&test_file).unwrap();
+    let regenerated_user_content = extract_user_implementation_content(&regenerated_content);
+
+    // Verify content is identical
+    assert_eq!(
+        initial_user_content, regenerated_user_content,
+        "User implementation content should not change during regeneration. Initial: '{}', Regenerated: '{}'",
+        initial_user_content, regenerated_user_content
+    );
+}
+
+fn extract_user_implementation_content(content: &str) -> String {
+    const START_MARKER: &str = "# START USER IMPLEMENTATION - Add your imports and setup code here\n# =============================================================================\n";
+    const END_MARKER: &str = "# =============================================================================\n# END USER IMPLEMENTATION\n# =============================================================================\n";
+
+    if let Some(start_pos) = content.find(START_MARKER) {
+        let start = start_pos + START_MARKER.len();
+        if let Some(end_pos) = content[start..].find(END_MARKER) {
+            let end = start + end_pos;
+            return content[start..end].to_string();
+        }
+    }
+    panic!("Could not find user implementation markers in content");
+}
+
+#[test]
 fn test_generator_snake_case_conversion() {
     let temp_dir = TempDir::new().unwrap();
     let config = create_test_config(&temp_dir, "python");

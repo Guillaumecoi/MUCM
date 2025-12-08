@@ -102,10 +102,10 @@
 {{/each}}
 
 {{/if}}
-{{#if last_updated}}
+{{#if metadata.updated_at}}
 ---
 
-**Last Updated:** {{last_updated}}
+**Last Updated:** {{date_format metadata.updated_at}}
 {{/if}}
 
 ---

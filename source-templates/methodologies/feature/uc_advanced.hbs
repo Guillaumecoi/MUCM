@@ -3,7 +3,7 @@
 **ID:** {{id}}  
 **Status:** {{status}}  
 **Priority:** {{priority}}  
-**Created:** {{created_date}}
+**Created:** {{date_format metadata.created_at}}
 
 **Navigation:** [← Overview](./README.md) | [← Back to {{category}}](../README.md) | [← Back to All Use Cases](../../README.md)
 
@@ -68,10 +68,10 @@
 {{/each}}
 
 {{/if}}
-{{#if last_updated}}
+{{#if metadata.updated_at}}
 ---
 
-**Last Updated:** {{last_updated}}
+**Last Updated:** {{date_format metadata.updated_at}}
 {{/if}}
 
 ---
