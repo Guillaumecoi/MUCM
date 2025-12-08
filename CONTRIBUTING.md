@@ -140,9 +140,9 @@ cargo bench
 
 ## Commit Messages
 
-### Format
+This project uses [Conventional Commits](https://www.conventionalcommits.org/) to automatically generate the changelog. Your commit messages directly affect the changelog, so please follow the format carefully.
 
-Follow conventional commit format:
+### Format
 
 ```
 <type>(<scope>): <subject>
@@ -154,15 +154,28 @@ Follow conventional commit format:
 
 ### Types
 
-- `feat`: New feature
-- `fix`: Bug fix
-- `docs`: Documentation only
-- `style`: Code style changes (formatting, no code change)
-- `refactor`: Code refactoring (no feature change)
-- `perf`: Performance improvements
-- `test`: Adding or updating tests
-- `chore`: Maintenance tasks, dependency updates
-- `ci`: CI/CD changes
+| Type       | Description                              | Changelog Section |
+|------------|------------------------------------------|-------------------|
+| `feat`     | New feature                              | Added             |
+| `fix`      | Bug fix                                  | Fixed             |
+| `docs`     | Documentation only                       | Documentation     |
+| `refactor` | Code refactoring (no feature change)     | Changed           |
+| `perf`     | Performance improvements                 | Performance       |
+| `test`     | Adding or updating tests                 | Testing           |
+| `style`    | Code style changes (formatting)          | Changed           |
+| `chore`    | Maintenance tasks, dependency updates    | Miscellaneous     |
+| `ci`       | CI/CD changes                            | Miscellaneous     |
+| `revert`   | Revert a previous commit                 | Reverted          |
+
+### Automatic Changelog Generation
+
+When your PR is merged to `master`, a GitHub Action automatically:
+1. Runs [git-cliff](https://git-cliff.org/) to regenerate `CHANGELOG.md`
+2. Groups commits by type into appropriate sections
+3. Links PR numbers to GitHub (e.g., `#123` becomes a clickable link)
+4. Commits the updated changelog
+
+**Important**: Use lowercase commit types (`feat:`, `fix:`, etc.) for consistency. The system handles both cases, but lowercase is preferred.
 
 ### Examples
 
