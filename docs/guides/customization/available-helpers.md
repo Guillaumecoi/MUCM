@@ -77,12 +77,17 @@ Step performed by: {{actor_name acting_actor}}
 
 **Usage:** `{{unique_supporting_actors supporting_actors primary_actor}}`
 **Description:** Gets unique supporting actors excluding the primary actor.
-**Returns:** JSON array of supporting actor IDs (deduplicated and sorted).
+**Returns:** JSON array string of supporting actor IDs (deduplicated and sorted).
 
-**Example:**
+**⚠️ IMPORTANT LIMITATION**: Like `merged_scenario_steps`, this helper returns a JSON string that **cannot** be directly iterated with `{{#each}}` in Handlebars Rust.
+
+**Workaround Example:**
 ```handlebars
-{{#each (unique_supporting_actors supporting_actors primary_actor)}}
+{{!-- Instead of using the helper, iterate directly over supporting_actors --}}
+{{#each supporting_actors}}
+{{#unless (eq this ../primary_actor)}}
 participant {{{actor_name this}}}
+{{/unless}}
 {{/each}}
 ```
 
@@ -120,26 +125,39 @@ See also: [{{target_id}}]({{use_case_link target_id}})
 ```
 **Output:** `See also: [UC-AUTH-001](../../authentication/UC-AUTH-001/README.md)`
 
-### `merged_scenario_steps`
+### `merged_steps` (Field)
 
-**Usage:** `{{merged_scenario_steps scenario all_scenarios}}`
-**Description:** Returns the complete flow of steps for a scenario, merging parent steps for extension scenarios.
+**Usage:** `{{#each merged_steps}}...{{/each}}`
+**Description:** Pre-merged scenario steps available directly in template data. This field is automatically added to each scenario during template rendering.
 
 **Behavior:**
-- **Main scenarios:** Returns the scenario's own steps unchanged
-- **Extension scenarios:**
-  1. Gets parent steps before the divergence point (`extends_at_step`)
-  2. Adds all extension scenario steps
-  3. If `returns_at_step` exists:
+- **Main scenarios:** `merged_steps` contains the same steps as the `steps` field
+- **Extension scenarios:** `merged_steps` contains the complete merged flow:
+  1. Parent steps before the divergence point (`extends_at_step`)
+  2. All extension scenario steps
+  3. Parent steps after return point (if `returns_at_step` is specified):
      - If `returns_at_step >= extends_at_step`: Appends parent steps from return point onward
      - If `returns_at_step < extends_at_step` (loop case): Appends parent steps from return point up to divergence point
 
 **Example:**
 ```handlebars
-{{#each (merged_scenario_steps this ../scenarios)}}
-{{order}}. **{{actor_name acting_actor}}**: {{action}}
+{{#if scenarios}}
+{{#each scenarios}}
+## {{id}} - {{title}}{{#if extends_scenario_id}} (Extension){{/if}}
+
+### Complete Flow
+{{#each merged_steps}}
+{{order}}. **{{{actor_name acting_actor}}}**{{#if receiving_actor}} → **{{{actor_name receiving_actor}}}**{{/if}}: {{action}}
 {{/each}}
+
+{{#if extends_scenario_id}}
+*Extends {{extends_scenario_id}} at step {{extends_at_step}}*
+{{/if}}
+{{/each}}
+{{/if}}
 ```
+
+**Note:** The original `steps` field still contains only the scenario's own steps (not merged), which is useful if you want to show the extension steps separately.
 
 **Loop Case Example:**
 If parent has steps 1-5, and exception extends at step 4 returning to step 2:

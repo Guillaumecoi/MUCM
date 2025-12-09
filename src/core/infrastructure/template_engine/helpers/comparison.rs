@@ -439,7 +439,7 @@ mod tests {
             .register_template_string("test", template)
             .unwrap();
 
-        let data = json!({ "a": 3.14, "b": 2.71 });
+        let data = json!({ "a": std::f64::consts::PI, "b": std::f64::consts::E });
         let result = handlebars.render("test", &data).unwrap();
         assert_eq!(result, "yes");
     }

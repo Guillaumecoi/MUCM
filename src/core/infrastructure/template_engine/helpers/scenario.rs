@@ -16,9 +16,15 @@ use std::cmp::Ordering;
 /// Register all scenario-related helpers
 pub fn register(handlebars: &mut Handlebars) {
     handlebars.register_helper("use_case_link", Box::new(use_case_link_helper));
-    handlebars.register_helper("merged_scenario_steps", Box::new(merged_scenario_steps_helper));
+    handlebars.register_helper(
+        "merged_scenario_steps",
+        Box::new(merged_scenario_steps_helper),
+    );
     handlebars.register_helper("is_main_scenario", Box::new(is_main_scenario_helper));
-    handlebars.register_helper("is_extension_scenario", Box::new(is_extension_scenario_helper));
+    handlebars.register_helper(
+        "is_extension_scenario",
+        Box::new(is_extension_scenario_helper),
+    );
 }
 
 /// Helper to create a markdown link to another use case
@@ -70,7 +76,7 @@ fn resolve_use_case_link(target_id: &str) -> String {
 }
 
 /// Helper to merge scenario steps for extension scenarios
-/// Usage: {{merged_scenario_steps scenario all_scenarios}}
+/// Usage: {{#each (merged_scenario_steps scenario all_scenarios)}}...{{/each}}
 ///
 /// For main scenarios: Returns the scenario's own steps unchanged.
 /// For extension scenarios:
@@ -201,7 +207,7 @@ fn merged_scenario_steps_helper(
         }
     }
 
-    // Write as JSON which Handlebars will parse
+    // Write as JSON which Handlebars will parse for iteration
     let json_str = serde_json::to_string(&merged)
         .map_err(|e| RenderError::from(RenderErrorReason::Other(e.to_string())))?;
     out.write(&json_str)?;
