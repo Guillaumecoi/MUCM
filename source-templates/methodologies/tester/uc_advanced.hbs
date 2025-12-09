@@ -3,9 +3,7 @@
 **Use Case ID:** {{id}}  
 **Test Status:** {{status}}  
 **Test Priority:** {{priority}}  
-**Test Plan Date:** {{created_date}}
-
-**Navigation:** [← Overview](./README.md) | [← Back to {{category}}](../README.md) | [← Back to All Use Cases](../../README.md)
+**Test Plan Date:** {{date_format metadata.created_at}}
 
 ---
 
@@ -102,11 +100,9 @@
 {{/each}}
 
 {{/if}}
-{{#if metadata.updated_at}}
 ---
 
 **Last Updated:** {{date_format metadata.updated_at}}
-{{/if}}
 
 ---
 

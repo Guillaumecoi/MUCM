@@ -1,8 +1,7 @@
 # Business Analysis: {{title}}
 
-**Use Case ID:** {{id}} | **Status:** {{status}} | **Priority:** {{priority}} | **Analysis Date:** {{created}}
-
-**Navigation:** [← Overview](./README.md) | [← Back to {{category}}](../README.md) | [← Back to All Use Cases](../../README.md)
+**Use Case ID:** {{id}} | **Status:** {{status}} | **Priority:** {{priority}} | **Analysis Date:** {{date_format metadata.created_at}}
+---
 
 {{#if core.description}}
 ## Executive Summary
@@ -49,11 +48,9 @@
 {{/each}}
 
 {{/if}}
-{{#if last_updated}}
 ---
 
-**Last Updated:** {{last_updated}}
-{{/if}}
+**Last Updated:** {{date_format metadata.updated_at}}
 
 ---
 
