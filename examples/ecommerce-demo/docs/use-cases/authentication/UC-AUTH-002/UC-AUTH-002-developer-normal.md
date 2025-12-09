@@ -69,4 +69,8 @@ E-commerce Platform->>Maria Garcia: 13. sets session cookie, displays 'Login suc
 
 ---
 
+**Last Updated:** 07/12/2025
+
+---
+
 **Navigation:** [← Back to Authentication](../README.md) | [← Back to All Use Cases](../../README.md)
