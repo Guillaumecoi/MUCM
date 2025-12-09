@@ -43,10 +43,6 @@ impl OverviewGenerator {
 
         // Project name and generated date
         data.insert("project_name".to_string(), json!(self.config.project.name));
-        data.insert(
-            "generated_date".to_string(),
-            json!(chrono::Utc::now().format("%Y-%m-%d").to_string()),
-        );
 
         // Group use cases by category to count them
         let mut categories_map: HashMap<String, usize> = HashMap::new();

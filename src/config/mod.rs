@@ -707,7 +707,6 @@ sequenceDiagram
             r#"# Use Cases Overview
 
 **Project:** {{project_name}}
-**Generated:** {{generated_date}}
 
 ## Summary
 - **Total Use Cases:** {{total_use_cases}}

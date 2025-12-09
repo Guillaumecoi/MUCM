@@ -43,7 +43,7 @@ participant {{{actor_name primary_actor}}}
 
 ### Steps
 {{#each steps}}
-{{order}}. **{{{actor_display acting_actor}}}**{{#if receiving_actor}} → **{{{actor_display receiving_actor}}}**{{/if}}: {{action}}
+{{order}}. **{{{actor_name acting_actor}}}**{{#if receiving_actor}} → **{{{actor_name receiving_actor}}}**{{/if}}: {{action}}
 {{/each}}
 
 {{#if extends_scenario_id}}

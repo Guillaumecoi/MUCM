@@ -13,7 +13,6 @@ pub fn register_helpers(handlebars: &mut Handlebars) {
     handlebars.register_helper("actor_emoji", Box::new(actor_emoji_helper));
     handlebars.register_helper("actor_link", Box::new(actor_link_helper));
     handlebars.register_helper("actor_name", Box::new(actor_name_helper));
-    handlebars.register_helper("actor_display", Box::new(actor_display_helper));
     handlebars.register_helper("mermaid_safe", Box::new(mermaid_safe_helper));
     handlebars.register_helper(
         "unique_supporting_actors",
@@ -160,27 +159,6 @@ fn resolve_actor_name(actor_id: &str) -> String {
 
     // Fallback to the input string (for backward compatibility with names)
     actor_id.to_string()
-}
-
-/// Helper to display actor name without emoji (for steps section)
-/// Usage: {{actor_display actor_id_or_name}}
-/// Returns: actor display name without emoji
-/// Falls back to the input string if actor not found (for backward compatibility)
-/// Note: This is an alias for actor_name for clarity in templates
-fn actor_display_helper(
-    h: &Helper,
-    _: &Handlebars,
-    _: &Context,
-    _rc: &mut RenderContext,
-    out: &mut dyn Output,
-) -> HelperResult {
-    let actor_id_or_name = h.param(0).and_then(|v| v.value().as_str()).unwrap_or("");
-
-    // Try to resolve as actor ID (without emoji)
-    let display_name = resolve_actor_name(actor_id_or_name);
-
-    out.write(&display_name)?;
-    Ok(())
 }
 
 /// Helper to make text safe for mermaid diagrams
