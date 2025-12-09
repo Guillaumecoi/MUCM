@@ -1,6 +1,7 @@
 # Business Analysis: {{title}}
 
-**Use Case ID:** {{id}} | **Status:** {{status}} | **Priority:** {{priority}} | **Analysis Date:** {{created}}
+**Use Case ID:** {{id}} | **Status:** {{status}} | **Priority:** {{priority}} | **Analysis Date:** {{date_format metadata.created_at}}
+---
 
 {{#if core.description}}
 ## Executive Summary
@@ -28,14 +29,14 @@
 {{#if preconditions}}
 ## Preconditions
 {{#each preconditions}}
-- {{this.text}}{{#if this.use_case_reference}} (see [{{this.use_case_reference}}](../{{this.use_case_reference}}.md)){{/if}}
+- {{this.text}}{{#if this.target_id}} (see [{{this.target_id}}]({{use_case_link this.target_id}})){{/if}}
 {{/each}}
 
 {{/if}}
 {{#if postconditions}}
 ## Postconditions
 {{#each postconditions}}
-- {{this.text}}{{#if this.use_case_reference}} (see [{{this.use_case_reference}}](../{{this.use_case_reference}}.md)){{/if}}
+- {{this.text}}{{#if this.target_id}} (see [{{this.target_id}}]({{use_case_link this.target_id}})){{/if}}
 {{/each}}
 
 {{/if}}
@@ -47,11 +48,9 @@
 {{/each}}
 
 {{/if}}
-{{#if last_updated}}
 ---
 
-**Last Updated:** {{last_updated}}
-{{/if}}
+**Last Updated:** {{date_format metadata.updated_at}}
 
 ---
 
