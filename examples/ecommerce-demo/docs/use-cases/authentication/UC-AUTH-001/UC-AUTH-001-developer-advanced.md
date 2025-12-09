@@ -62,6 +62,10 @@ Allow new users to create an account on the e-commerce platform by providing ema
 ```mermaid
 sequenceDiagram
 participant Guest User
+participant Database
+participant E-commerce Platform
+participant Cache
+participant Email Service
 Guest User->>E-commerce Platform: 1. navigates to registration page
 E-commerce Platform->>Guest User: 2. displays registration form
 Guest User->>E-commerce Platform: 3. submits registration form (email, password, name, ...)
@@ -104,6 +108,11 @@ E-commerce Platform->>Guest User: 13. displays 'Account created successfully' an
 ```mermaid
 sequenceDiagram
 participant Guest User
+participant E-commerce Platform
+participant Database
+participant Cache
+Guest User->>E-commerce Platform: 1. navigates to registration page
+E-commerce Platform->>Guest User: 2. displays registration form
 Guest User->>E-commerce Platform: 1. selects 'Sign up with Google' (or other social profile)
 E-commerce Platform->>Guest User: 2. redirects to Google OAuth
 Guest User->>E-commerce Platform: 3. authenticates with Google
@@ -113,9 +122,12 @@ E-commerce Platform->>Database: 6. creates new user record marked as OAuth-verif
 Database->>E-commerce Platform: 7. confirms user created
 E-commerce Platform->>Cache: 8. creates session for new user
 Cache->>E-commerce Platform: 9. returns session token
+E-commerce Platform->>Guest User: 13. displays 'Account created successfully' and redirects to dashboard
 ```
 
 ### Steps
+1. **Guest User** → **E-commerce Platform**: navigates to registration page
+2. **E-commerce Platform** → **Guest User**: displays registration form
 1. **Guest User** → **E-commerce Platform**: selects &quot;Sign up with Google&quot; (or other social profile)
 2. **E-commerce Platform** → **Guest User**: redirects to Google OAuth
 3. **Guest User** → **E-commerce Platform**: authenticates with Google
@@ -125,6 +137,7 @@ Cache->>E-commerce Platform: 9. returns session token
 7. **Database** → **E-commerce Platform**: confirms user created
 8. **E-commerce Platform** → **Cache**: creates session for new user
 9. **Cache** → **E-commerce Platform**: returns session token
+13. **E-commerce Platform** → **Guest User**: displays &quot;Account created successfully&quot; and redirects to dashboard
 
 *Extends scenario UC-AUTH-001-S01 at step 3*, returns at step 13
 
@@ -140,12 +153,24 @@ Cache->>E-commerce Platform: 9. returns session token
 ```mermaid
 sequenceDiagram
 participant Guest User
+participant Database
+participant E-commerce Platform
+Guest User->>E-commerce Platform: 1. navigates to registration page
+E-commerce Platform->>Guest User: 2. displays registration form
+Guest User->>E-commerce Platform: 3. submits registration form (email, password, name, ...)
+E-commerce Platform->>E-commerce Platform: 4. validates email format and password requirements
+E-commerce Platform->>Database: 5. checks email is not already registered
 Database->>E-commerce Platform: 1. returns 'email already exists'
 E-commerce Platform->>Guest User: 2. displays error: 'An account with this email already exists. Please login or reset your password.'
 E-commerce Platform->>Guest User: 3. offers links to login page and password reset
 ```
 
 ### Steps
+1. **Guest User** → **E-commerce Platform**: navigates to registration page
+2. **E-commerce Platform** → **Guest User**: displays registration form
+3. **Guest User** → **E-commerce Platform**: submits registration form (email, password, name, ...)
+4. **E-commerce Platform**: validates email format and password requirements
+5. **E-commerce Platform** → **Database**: checks email is not already registered
 1. **Database** → **E-commerce Platform**: returns &quot;email already exists&quot;
 2. **E-commerce Platform** → **Guest User**: displays error: &quot;An account with this email already exists. Please login or reset your password.&quot;
 3. **E-commerce Platform** → **Guest User**: offers links to login page and password reset
@@ -161,11 +186,26 @@ E-commerce Platform->>Guest User: 3. offers links to login page and password res
 ```mermaid
 sequenceDiagram
 participant Guest User
+participant E-commerce Platform
+Guest User->>E-commerce Platform: 1. navigates to registration page
+E-commerce Platform->>Guest User: 2. displays registration form
+Guest User->>E-commerce Platform: 3. submits registration form (email, password, name, ...)
+E-commerce Platform->>E-commerce Platform: 4. validates email format and password requirements
 E-commerce Platform->>Guest User: 1.  displays error: 'Reason password failed'
+E-commerce Platform->>Guest User: 2. displays registration form
+Guest User->>E-commerce Platform: 3. submits registration form (email, password, name, ...)
+E-commerce Platform->>E-commerce Platform: 4. validates email format and password requirements
 ```
 
 ### Steps
+1. **Guest User** → **E-commerce Platform**: navigates to registration page
+2. **E-commerce Platform** → **Guest User**: displays registration form
+3. **Guest User** → **E-commerce Platform**: submits registration form (email, password, name, ...)
+4. **E-commerce Platform**: validates email format and password requirements
 1. **E-commerce Platform** → **Guest User**:  displays error: &quot;Reason password failed&quot;
+2. **E-commerce Platform** → **Guest User**: displays registration form
+3. **Guest User** → **E-commerce Platform**: submits registration form (email, password, name, ...)
+4. **E-commerce Platform**: validates email format and password requirements
 
 *Extends scenario UC-AUTH-001-S01 at step 5*, returns at step 2
 
@@ -178,13 +218,39 @@ E-commerce Platform->>Guest User: 1.  displays error: 'Reason password failed'
 ```mermaid
 sequenceDiagram
 participant Guest User
+participant Email Service
+participant E-commerce Platform
+Guest User->>E-commerce Platform: 1. navigates to registration page
+E-commerce Platform->>Guest User: 2. displays registration form
+Guest User->>E-commerce Platform: 3. submits registration form (email, password, name, ...)
+E-commerce Platform->>E-commerce Platform: 4. validates email format and password requirements
+E-commerce Platform->>Database: 5. checks email is not already registered
+Database->>E-commerce Platform: 6. returns 'email available'
+E-commerce Platform->>Database: 7. creates new user record with hashed password
+Database->>E-commerce Platform: 8. confirms user created
+E-commerce Platform->>Cache: 9. creates session for new user
+Cache->>E-commerce Platform: 10. returns session token
+E-commerce Platform->>Email Service: 11. sends verification email request
 Email Service->>E-commerce Platform: 1. ails to send (service timeout)
 E-commerce Platform->>Guest User: 2. displays warning: 'Account created, but failed to send verification mail. Try to resend later'
+E-commerce Platform->>Guest User: 13. displays 'Account created successfully' and redirects to dashboard
 ```
 
 ### Steps
+1. **Guest User** → **E-commerce Platform**: navigates to registration page
+2. **E-commerce Platform** → **Guest User**: displays registration form
+3. **Guest User** → **E-commerce Platform**: submits registration form (email, password, name, ...)
+4. **E-commerce Platform**: validates email format and password requirements
+5. **E-commerce Platform** → **Database**: checks email is not already registered
+6. **Database** → **E-commerce Platform**: returns &quot;email available&quot;
+7. **E-commerce Platform** → **Database**: creates new user record with hashed password
+8. **Database** → **E-commerce Platform**: confirms user created
+9. **E-commerce Platform** → **Cache**: creates session for new user
+10. **Cache** → **E-commerce Platform**: returns session token
+11. **E-commerce Platform** → **Email Service**: sends verification email request
 1. **Email Service** → **E-commerce Platform**: ails to send (service timeout)
 2. **E-commerce Platform** → **Guest User**: displays warning: &quot;Account created, but failed to send verification mail. Try to resend later&quot;
+13. **E-commerce Platform** → **Guest User**: displays &quot;Account created successfully&quot; and redirects to dashboard
 
 *Extends scenario UC-AUTH-001-S01 at step 12*, returns at step 13
 

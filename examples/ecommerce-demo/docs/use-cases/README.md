@@ -1,7 +1,6 @@
 # Use Cases Overview
 
-**Project:** My Project  
-**Generated:** 2025-12-09
+**Project:** My Project
 
 ## Summary
 - **Total Use Cases:** 2
