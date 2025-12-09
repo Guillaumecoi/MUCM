@@ -36,6 +36,9 @@ Allow registered users to authenticate and access their accounts by providing em
 ```mermaid
 sequenceDiagram
 participant Maria Garcia
+participant E-commerce Platform
+participant Database
+participant Cache
 Maria Garcia->>E-commerce Platform: 1. navigates to login page
 E-commerce Platform->>Maria Garcia: 2. displays login form
 Maria Garcia->>E-commerce Platform: 3. submits login credentials (email, password)
@@ -66,6 +69,10 @@ E-commerce Platform->>Maria Garcia: 13. sets session cookie, displays 'Login suc
 12. **Cache** → **E-commerce Platform**: returns session token
 13. **E-commerce Platform** → **Maria Garcia**: sets session cookie, displays &quot;Login successful&quot;, and redirects to dashboard
 
+
+---
+
+**Last Updated:** 07/12/2025
 
 ---
 

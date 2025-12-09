@@ -3,7 +3,7 @@
 **Use Case ID:** {{id}}  
 **Analysis Status:** {{status}}  
 **Business Priority:** {{priority}}  
-**Analysis Date:** {{created_date}}
+**Last Updated:** {{date_format metadata.updated_at}}
 
 ---
 
@@ -58,11 +58,9 @@
 {{/each}}
 
 {{/if}}
-{{#if last_updated}}
 ---
 
-**Last Updated:** {{last_updated}}
-{{/if}}
+**Last Updated:** {{date_format metadata.updated_at}}
 
 ---
 

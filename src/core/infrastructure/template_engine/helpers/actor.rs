@@ -1,3 +1,10 @@
+//! Actor and persona related Handlebars helpers.
+//!
+//! Provides helpers for:
+//! - Creating markdown links to actor documentation
+//! - Displaying actor names
+//! - Extracting unique actors/personas from scenarios
+
 use handlebars::{
     Context, Handlebars, Helper, HelperResult, Output, RenderContext, RenderError,
     RenderErrorReason,
@@ -5,26 +12,18 @@ use handlebars::{
 use serde_json::Value;
 use std::collections::HashSet;
 
-/// Register all custom Handlebars helpers for actor and persona support
-pub fn register_helpers(handlebars: &mut Handlebars) {
-    handlebars.register_helper("unique_actors", Box::new(unique_actors_helper));
-    handlebars.register_helper("has_personas", Box::new(has_personas_helper));
-    handlebars.register_helper("unique_personas", Box::new(unique_personas_helper));
-    handlebars.register_helper("actor_emoji", Box::new(actor_emoji_helper));
+/// Register all actor-related helpers
+pub fn register(handlebars: &mut Handlebars) {
     handlebars.register_helper("actor_link", Box::new(actor_link_helper));
     handlebars.register_helper("actor_name", Box::new(actor_name_helper));
-    handlebars.register_helper("actor_display", Box::new(actor_display_helper));
-    handlebars.register_helper("mermaid_safe", Box::new(mermaid_safe_helper));
+    handlebars.register_helper("actor_emoji", Box::new(actor_emoji_helper));
+    handlebars.register_helper("unique_actors", Box::new(unique_actors_helper));
+    handlebars.register_helper("unique_personas", Box::new(unique_personas_helper));
     handlebars.register_helper(
         "unique_supporting_actors",
         Box::new(unique_supporting_actors_helper),
     );
-    handlebars.register_helper("use_case_link", Box::new(use_case_link_helper));
-    handlebars.register_helper("snake_case_id", Box::new(snake_case_id_helper));
-    handlebars.register_helper("pascal_case_id", Box::new(pascal_case_id_helper));
-    handlebars.register_helper("title_pascal_case", Box::new(title_pascal_case_helper));
-    handlebars.register_helper("date_format", Box::new(date_format_helper));
-    handlebars.register_helper("gt", Box::new(gt_helper));
+    handlebars.register_helper("has_personas", Box::new(has_personas_helper));
 }
 
 /// Helper to create a markdown link to actor documentation
@@ -56,7 +55,7 @@ fn actor_link_helper(
 ///
 /// # Returns
 /// Relative path string (e.g., "../../../docs/personas")
-fn calculate_actor_relative_path(use_case_dir: &str, actor_dir: &str) -> String {
+pub fn calculate_actor_relative_path(use_case_dir: &str, actor_dir: &str) -> String {
     // File is at: {use_case_dir}/{category}/{use-case-id}/file.md
     // actor_dir is relative from the project root (e.g., "docs/personas")
     // We need to calculate the relative path from file to actor_dir
@@ -85,7 +84,7 @@ fn calculate_actor_relative_path(use_case_dir: &str, actor_dir: &str) -> String 
 
 /// Resolve actor ID to markdown link
 /// Falls back to the input if actor not found
-fn resolve_actor_link(actor_id: &str) -> String {
+pub fn resolve_actor_link(actor_id: &str) -> String {
     use crate::config::Config;
     use crate::controller::ActorController;
 
@@ -142,7 +141,7 @@ fn actor_name_helper(
 
 /// Resolve actor ID to plain display name (no emoji)
 /// Falls back to the input if actor not found
-fn resolve_actor_name(actor_id: &str) -> String {
+pub fn resolve_actor_name(actor_id: &str) -> String {
     use crate::controller::ActorController;
 
     // Try to load actor controller
@@ -162,145 +161,6 @@ fn resolve_actor_name(actor_id: &str) -> String {
     actor_id.to_string()
 }
 
-/// Helper to display actor name without emoji (for steps section)
-/// Usage: {{actor_display actor_id_or_name}}
-/// Returns: actor display name without emoji
-/// Falls back to the input string if actor not found (for backward compatibility)
-/// Note: This is an alias for actor_name for clarity in templates
-fn actor_display_helper(
-    h: &Helper,
-    _: &Handlebars,
-    _: &Context,
-    _rc: &mut RenderContext,
-    out: &mut dyn Output,
-) -> HelperResult {
-    let actor_id_or_name = h.param(0).and_then(|v| v.value().as_str()).unwrap_or("");
-
-    // Try to resolve as actor ID (without emoji)
-    let display_name = resolve_actor_name(actor_id_or_name);
-
-    out.write(&display_name)?;
-    Ok(())
-}
-
-/// Helper to make text safe for mermaid diagrams
-/// Usage: {{mermaid_safe text}}
-/// Returns: text with quotes replaced by single quotes to avoid HTML entity issues
-fn mermaid_safe_helper(
-    h: &Helper,
-    _: &Handlebars,
-    _: &Context,
-    _rc: &mut RenderContext,
-    out: &mut dyn Output,
-) -> HelperResult {
-    let text = h.param(0).and_then(|v| v.value().as_str()).unwrap_or("");
-    // Replace double quotes with single quotes to avoid HTML entity conversion issues in mermaid
-    let safe_text = text.replace('"', "'");
-    out.write(&safe_text)?;
-    Ok(())
-}
-
-/// Helper to create a markdown link to another use case
-/// Usage: {{use_case_link target_use_case_id}}
-/// Returns: ../../category/UC-XXX-001/README.md
-/// Resolves the category from the use case repository to build correct cross-category links
-fn use_case_link_helper(
-    h: &Helper,
-    _: &Handlebars,
-    _: &Context,
-    _rc: &mut RenderContext,
-    out: &mut dyn Output,
-) -> HelperResult {
-    let target_id = h.param(0).and_then(|v| v.value().as_str()).unwrap_or("");
-
-    if target_id.is_empty() {
-        return Ok(());
-    }
-
-    let link_path = resolve_use_case_link(target_id);
-    out.write(&link_path)?;
-    Ok(())
-}
-
-/// Resolve use case ID to relative link path
-/// Returns: ../../category/UC-XXX-001/README.md
-fn resolve_use_case_link(target_id: &str) -> String {
-    use crate::config::Config;
-    use crate::core::to_snake_case;
-
-    // Try to load use case coordinator to find the category
-    if let Ok(_config) = Config::load() {
-        // Try to load all use cases to find the target
-        if let Ok(coordinator) = crate::core::UseCaseCoordinator::load() {
-            if let Some(target_uc) = coordinator
-                .get_all_use_cases()
-                .iter()
-                .find(|uc| uc.id == target_id)
-            {
-                let category_snake = to_snake_case(&target_uc.category);
-                // Path from current use case folder: ../../category/use-case-id/README.md
-                return format!("../../{}/{}/README.md", category_snake, target_id);
-            }
-        }
-    }
-
-    // Fallback: assume same category if we can't resolve
-    format!("../{}/README.md", target_id)
-}
-
-/// Helper to get unique supporting actors excluding the primary actor
-/// Usage: {{#each (unique_supporting_actors supporting_actors primary_actor)}}{{this}}{{/each}}
-/// Returns: unique list of supporting actors with primary actor filtered out
-fn unique_supporting_actors_helper(
-    h: &Helper,
-    _: &Handlebars,
-    _: &Context,
-    _rc: &mut RenderContext,
-    out: &mut dyn Output,
-) -> HelperResult {
-    // Get the supporting_actors array parameter
-    let supporting_actors = h.param(0).ok_or_else(|| {
-        RenderError::from(RenderErrorReason::Other(
-            "unique_supporting_actors requires supporting_actors parameter".to_string(),
-        ))
-    })?;
-
-    let supporting_array = supporting_actors.value().as_array().ok_or_else(|| {
-        RenderError::from(RenderErrorReason::Other(
-            "supporting_actors must be an array".to_string(),
-        ))
-    })?;
-
-    // Get the primary_actor parameter (optional)
-    let primary_actor = h.param(1).and_then(|v| v.value().as_str());
-
-    let mut actors = HashSet::new();
-
-    // Add all supporting actors except the primary one
-    for actor in supporting_array {
-        if let Value::String(actor_name) = actor {
-            // Skip if this is the primary actor
-            if let Some(primary) = primary_actor {
-                if actor_name == primary {
-                    continue;
-                }
-            }
-            actors.insert(actor_name.clone());
-        }
-    }
-
-    // Convert to sorted Vec for consistent output
-    let mut actors_vec: Vec<String> = actors.into_iter().collect();
-    actors_vec.sort();
-
-    // Write as JSON which Handlebars will parse
-    let json_str = serde_json::to_string(&actors_vec)
-        .map_err(|e| RenderError::from(RenderErrorReason::Other(e.to_string())))?;
-    out.write(&json_str)?;
-
-    Ok(())
-}
-
 /// Helper to return an emoji for an actor
 /// Usage: {{actor_emoji actor_name}}
 /// Note: Deprecated - emoji should come from ActorEntity data in the template context
@@ -316,7 +176,7 @@ fn actor_emoji_helper(
     Ok(())
 }
 
-/// Helper to extract unique actors from scenarios  
+/// Helper to extract unique actors from scenarios
 /// Usage: {{#each (unique_actors scenarios)}}{{this}}{{/each}}
 ///
 /// This is a Handlebars helper function that returns an array value.
@@ -477,134 +337,55 @@ fn unique_personas_helper(
     Ok(())
 }
 
-/// Helper to convert an `id` field to snake_case
-/// Usage: {{snake_case_id id}}
-/// Takes the id as a parameter and converts it to lowercase snake_case
-/// Returns: lowercase snake_case version of the id (e.g., "UC-AUTH-001-S01" -> "uc_auth_001_s01")
-fn snake_case_id_helper(
-    h: &Helper,
-    _: &Handlebars,
-    _ctx: &Context,
-    _: &mut RenderContext,
-    out: &mut dyn Output,
-) -> HelperResult {
-    // Get the first parameter (the id to convert)
-    let id_value = h
-        .param(0)
-        .ok_or_else(|| {
-            RenderErrorReason::Other("snake_case_id helper requires an id parameter".to_string())
-        })?
-        .value()
-        .as_str()
-        .ok_or_else(|| {
-            RenderErrorReason::Other("snake_case_id parameter must be a string".to_string())
-        })?;
-
-    // Convert to snake_case
-    let snake_case = crate::core::to_snake_case(id_value);
-    out.write(&snake_case)?;
-
-    Ok(())
-}
-
-/// Helper to convert an id string to PascalCase
-/// Usage: {{pascal_case_id id}}
-/// Example: "user-login" -> "UserLogin", "my_test_id" -> "MyTestId"
-fn pascal_case_id_helper(
-    h: &Helper,
-    _: &Handlebars,
-    _ctx: &Context,
-    _: &mut RenderContext,
-    out: &mut dyn Output,
-) -> HelperResult {
-    let id_value = h
-        .param(0)
-        .ok_or_else(|| {
-            RenderErrorReason::Other("pascal_case_id helper requires an id parameter".to_string())
-        })?
-        .value()
-        .as_str()
-        .ok_or_else(|| {
-            RenderErrorReason::Other("pascal_case_id parameter must be a string".to_string())
-        })?;
-
-    let pascal_case = crate::core::to_pascal_case(id_value);
-    out.write(&pascal_case)?;
-
-    Ok(())
-}
-
-/// Helper to convert a title string to PascalCase
-/// Usage: {{title_pascal_case}}
-/// Takes title from the current context
-fn title_pascal_case_helper(
-    _h: &Helper,
-    _: &Handlebars,
-    ctx: &Context,
-    _: &mut RenderContext,
-    out: &mut dyn Output,
-) -> HelperResult {
-    let title = ctx
-        .data()
-        .get("title")
-        .and_then(|v| v.as_str())
-        .ok_or_else(|| {
-            RenderErrorReason::Other(
-                "title_pascal_case helper requires title in context".to_string(),
-            )
-        })?;
-
-    let pascal_case = crate::core::to_pascal_case(title);
-    out.write(&pascal_case)?;
-
-    Ok(())
-}
-
-/// Helper to format dates according to the configured date format
-/// Usage: {{date_format date_string}}
-/// Returns: The date formatted according to the config's date_format setting
-fn date_format_helper(
+/// Helper to get unique supporting actors excluding the primary actor
+/// Usage: {{#each (unique_supporting_actors supporting_actors primary_actor)}}{{this}}{{/each}}
+/// Returns: unique list of supporting actors with primary actor filtered out
+fn unique_supporting_actors_helper(
     h: &Helper,
     _: &Handlebars,
     _: &Context,
     _rc: &mut RenderContext,
     out: &mut dyn Output,
 ) -> HelperResult {
-    let date_str = h.param(0).and_then(|v| v.value().as_str()).unwrap_or("");
+    // Get the supporting_actors array parameter
+    let supporting_actors = h.param(0).ok_or_else(|| {
+        RenderError::from(RenderErrorReason::Other(
+            "unique_supporting_actors requires supporting_actors parameter".to_string(),
+        ))
+    })?;
 
-    // Load config for date formatting
-    let date_format = crate::config::Config::load()
-        .map(|c| c.metadata.date_format)
-        .unwrap_or_else(|_| "%d/%m/%Y".to_string());
+    let supporting_array = supporting_actors.value().as_array().ok_or_else(|| {
+        RenderError::from(RenderErrorReason::Other(
+            "supporting_actors must be an array".to_string(),
+        ))
+    })?;
 
-    // Parse the date string and format it
-    if let Ok(dt) = chrono::DateTime::parse_from_rfc3339(date_str) {
-        let formatted = dt.format(&date_format).to_string();
-        out.write(&formatted)?;
-    } else {
-        // If parsing fails, return the original string
-        out.write(date_str)?;
+    // Get the primary_actor parameter (optional)
+    let primary_actor = h.param(1).and_then(|v| v.value().as_str());
+
+    let mut actors = HashSet::new();
+
+    // Add all supporting actors except the primary one
+    for actor in supporting_array {
+        if let Value::String(actor_name) = actor {
+            // Skip if this is the primary actor
+            if let Some(primary) = primary_actor {
+                if actor_name == primary {
+                    continue;
+                }
+            }
+            actors.insert(actor_name.clone());
+        }
     }
 
-    Ok(())
-}
+    // Convert to sorted Vec for consistent output
+    let mut actors_vec: Vec<String> = actors.into_iter().collect();
+    actors_vec.sort();
 
-/// Helper to check if first parameter is greater than second
-/// Usage: {{#if (gt a b)}} ... {{/if}}
-/// Returns: true if a > b, false otherwise
-fn gt_helper(
-    h: &Helper,
-    _: &Handlebars,
-    _: &Context,
-    _rc: &mut RenderContext,
-    out: &mut dyn Output,
-) -> HelperResult {
-    let a = h.param(0).and_then(|v| v.value().as_f64()).unwrap_or(0.0);
-    let b = h.param(1).and_then(|v| v.value().as_f64()).unwrap_or(0.0);
-
-    if a > b {
-        out.write("true")?;
-    }
+    // Write as JSON which Handlebars will parse
+    let json_str = serde_json::to_string(&actors_vec)
+        .map_err(|e| RenderError::from(RenderErrorReason::Other(e.to_string())))?;
+    out.write(&json_str)?;
 
     Ok(())
 }
@@ -617,7 +398,7 @@ mod tests {
     #[test]
     fn test_unique_actors_helper() {
         let mut handlebars = Handlebars::new();
-        register_helpers(&mut handlebars);
+        register(&mut handlebars);
 
         // Test that the helper returns JSON array
         let template = "{{unique_actors scenarios}}";
@@ -653,7 +434,7 @@ mod tests {
     #[test]
     fn test_has_personas_helper_true() {
         let mut handlebars = Handlebars::new();
-        register_helpers(&mut handlebars);
+        register(&mut handlebars);
 
         // Test with actual usage in template
         let template = "{{#if (has_personas scenarios)}}yes{{else}}no{{/if}}";
@@ -675,7 +456,7 @@ mod tests {
     #[test]
     fn test_has_personas_helper_false() {
         let mut handlebars = Handlebars::new();
-        register_helpers(&mut handlebars);
+        register(&mut handlebars);
 
         let template = "{{#if (has_personas scenarios)}}yes{{else}}no{{/if}}";
         handlebars
@@ -696,7 +477,7 @@ mod tests {
     #[test]
     fn test_unique_personas_helper() {
         let mut handlebars = Handlebars::new();
-        register_helpers(&mut handlebars);
+        register(&mut handlebars);
 
         // Test that the helper returns JSON array
         let template = "{{unique_personas scenarios}}";
@@ -721,7 +502,7 @@ mod tests {
     #[test]
     fn test_actor_link_helper_registered() {
         let mut handlebars = Handlebars::new();
-        register_helpers(&mut handlebars);
+        register(&mut handlebars);
 
         // Verify the helper is registered and can be used in templates
         let template = "{{{actor_link actor_name}}}";
@@ -741,7 +522,7 @@ mod tests {
     #[test]
     fn test_actor_link_helper_with_empty_string() {
         let mut handlebars = Handlebars::new();
-        register_helpers(&mut handlebars);
+        register(&mut handlebars);
 
         let template = "Actor: {{{actor_link actor_name}}}";
         handlebars
@@ -760,7 +541,7 @@ mod tests {
     #[test]
     fn test_actor_link_helper_with_unknown_id() {
         let mut handlebars = Handlebars::new();
-        register_helpers(&mut handlebars);
+        register(&mut handlebars);
 
         let template = "Actor: {{{actor_link actor_name}}}";
         handlebars
@@ -779,7 +560,7 @@ mod tests {
     #[test]
     fn test_actor_link_helper_with_display_name_fallback() {
         let mut handlebars = Handlebars::new();
-        register_helpers(&mut handlebars);
+        register(&mut handlebars);
 
         let template = "{{{actor_link actor_name}}}";
         handlebars
@@ -798,7 +579,7 @@ mod tests {
     #[test]
     fn test_actor_link_in_scenario_step_template() {
         let mut handlebars = Handlebars::new();
-        register_helpers(&mut handlebars);
+        register(&mut handlebars);
 
         // Simulate a scenario step template pattern
         let template =
@@ -819,47 +600,9 @@ mod tests {
     }
 
     #[test]
-    fn test_mermaid_safe_helper() {
-        let mut handlebars = Handlebars::new();
-        register_helpers(&mut handlebars);
-
-        let template = r#"{{{mermaid_safe text}}}"#;
-        handlebars
-            .register_template_string("test", template)
-            .unwrap();
-
-        let data = json!({
-            "text": r#"User says "hello world" to System"#
-        });
-
-        let result = handlebars.render("test", &data).unwrap();
-        // Double quotes should be replaced with single quotes
-        assert_eq!(result, "User says 'hello world' to System");
-    }
-
-    #[test]
-    fn test_mermaid_safe_helper_with_mixed_quotes() {
-        let mut handlebars = Handlebars::new();
-        register_helpers(&mut handlebars);
-
-        let template = r#"{{{mermaid_safe text}}}"#;
-        handlebars
-            .register_template_string("test", template)
-            .unwrap();
-
-        let data = json!({
-            "text": r#"User's action: "submit" form"#
-        });
-
-        let result = handlebars.render("test", &data).unwrap();
-        // Double quotes replaced, single quotes preserved
-        assert_eq!(result, "User's action: 'submit' form");
-    }
-
-    #[test]
     fn test_actor_name_helper() {
         let mut handlebars = Handlebars::new();
-        register_helpers(&mut handlebars);
+        register(&mut handlebars);
 
         // Verify the helper is registered and can be used in templates
         let template = "{{{actor_name actor_id}}}";
@@ -879,7 +622,7 @@ mod tests {
     #[test]
     fn test_actor_name_helper_with_unknown_id() {
         let mut handlebars = Handlebars::new();
-        register_helpers(&mut handlebars);
+        register(&mut handlebars);
 
         let template = "{{{actor_name actor_id}}}";
         handlebars
@@ -898,7 +641,7 @@ mod tests {
     #[test]
     fn test_actor_link_creates_markdown_link_format() {
         let mut handlebars = Handlebars::new();
-        register_helpers(&mut handlebars);
+        register(&mut handlebars);
 
         let template = "{{{actor_link actor_id}}}";
         handlebars
@@ -975,172 +718,41 @@ mod tests {
     }
 
     #[test]
-    fn test_use_case_link_helper_registered() {
+    fn test_unique_supporting_actors_excludes_primary() {
         let mut handlebars = Handlebars::new();
-        register_helpers(&mut handlebars);
+        register(&mut handlebars);
 
-        // Verify the helper is registered and can be used in templates
-        let template = "{{use_case_link target_id}}";
+        let template = "{{unique_supporting_actors supporting_actors primary_actor}}";
         handlebars
             .register_template_string("test", template)
             .unwrap();
 
         let data = json!({
-            "target_id": "UC-TEST-001"
-        });
-
-        // Should not panic - helper is registered and callable
-        let result = handlebars.render("test", &data);
-        assert!(result.is_ok(), "use_case_link helper should be registered");
-    }
-
-    #[test]
-    fn test_use_case_link_helper_with_empty_string() {
-        let mut handlebars = Handlebars::new();
-        register_helpers(&mut handlebars);
-
-        let template = "Link: {{use_case_link target_id}}";
-        handlebars
-            .register_template_string("test", template)
-            .unwrap();
-
-        let data = json!({
-            "target_id": ""
+            "supporting_actors": ["User", "Admin", "System"],
+            "primary_actor": "User"
         });
 
         let result = handlebars.render("test", &data).unwrap();
-        // Empty string should return empty string
-        assert_eq!(result, "Link: ");
+        // User should be excluded since it's the primary actor
+        assert_eq!(result, r#"["Admin","System"]"#);
     }
 
     #[test]
-    fn test_use_case_link_helper_with_unknown_id() {
+    fn test_unique_supporting_actors_no_primary() {
         let mut handlebars = Handlebars::new();
-        register_helpers(&mut handlebars);
+        register(&mut handlebars);
 
-        let template = "See: {{use_case_link target_id}}";
+        let template = "{{unique_supporting_actors supporting_actors}}";
         handlebars
             .register_template_string("test", template)
             .unwrap();
 
         let data = json!({
-            "target_id": "UC-UNKNOWN-999"
+            "supporting_actors": ["User", "Admin", "User"]  // duplicate
         });
 
         let result = handlebars.render("test", &data).unwrap();
-        // Unknown IDs should fall back to same-category assumption
-        assert_eq!(
-            result, "See: ../UC-UNKNOWN-999/README.md",
-            "Should assume same category for unknown use cases"
-        );
-    }
-
-    #[test]
-    fn test_use_case_link_helper_in_precondition_template() {
-        let mut handlebars = Handlebars::new();
-        register_helpers(&mut handlebars);
-
-        // Simulate a precondition template pattern
-        let template = "- {{text}} (see [{{target_id}}]({{use_case_link target_id}}))";
-        handlebars
-            .register_template_string("test", template)
-            .unwrap();
-
-        let data = json!({
-            "text": "User must be authenticated",
-            "target_id": "UC-AUTH-001"
-        });
-
-        let result = handlebars.render("test", &data).unwrap();
-        // Should format properly with use case link
-        // Will fall back to same-category if use case not found in repository
-        assert_eq!(
-            result,
-            "- User must be authenticated (see [UC-AUTH-001](../UC-AUTH-001/README.md))"
-        );
-    }
-
-    #[test]
-    fn test_use_case_link_helper_with_null_value() {
-        let mut handlebars = Handlebars::new();
-        register_helpers(&mut handlebars);
-
-        let template = "Link: {{use_case_link target_id}}";
-        handlebars
-            .register_template_string("test", template)
-            .unwrap();
-
-        let data = json!({
-            "target_id": null
-        });
-
-        let result = handlebars.render("test", &data).unwrap();
-        // Null should be treated as empty string
-        assert_eq!(result, "Link: ");
-    }
-
-    #[test]
-    fn test_use_case_link_fallback_behavior() {
-        // Test the fallback behavior when coordinator can't be loaded
-        let link = resolve_use_case_link("UC-FALLBACK-001");
-        // Should fall back to same-category assumption
-        assert_eq!(
-            link, "../UC-FALLBACK-001/README.md",
-            "Should provide fallback link when coordinator unavailable"
-        );
-    }
-
-    #[test]
-    fn test_use_case_link_in_postcondition_array() {
-        let mut handlebars = Handlebars::new();
-        register_helpers(&mut handlebars);
-
-        // Simulate iterating over postconditions
-        let template = "{{#each postconditions}}- {{text}}{{#if target_id}} (see [{{target_id}}]({{use_case_link target_id}})){{/if}}\n{{/each}}";
-        handlebars
-            .register_template_string("test", template)
-            .unwrap();
-
-        let data = json!({
-            "postconditions": [
-                {
-                    "text": "User is logged in",
-                    "target_id": "UC-AUTH-001"
-                },
-                {
-                    "text": "Session is created",
-                    "target_id": null
-                },
-                {
-                    "text": "Account is activated",
-                    "target_id": "UC-AUTH-003"
-                }
-            ]
-        });
-
-        let result = handlebars.render("test", &data).unwrap();
-        // Should only add links for non-null target_ids
-        assert!(result.contains("User is logged in (see [UC-AUTH-001](../UC-AUTH-001/README.md))"));
-        assert!(result.contains("Session is created\n"));
-        assert!(!result.contains("Session is created (see"));
-        assert!(
-            result.contains("Account is activated (see [UC-AUTH-003](../UC-AUTH-003/README.md))")
-        );
-    }
-
-    #[test]
-    fn test_use_case_link_path_format() {
-        // Test that the link format is correct for folder structure
-        let link = resolve_use_case_link("UC-TEST-001");
-
-        // Should be relative to current use case folder
-        assert!(
-            link.starts_with("../") || link.starts_with("../../"),
-            "Link should be relative path starting with ../"
-        );
-        assert!(
-            link.ends_with("/README.md"),
-            "Link should point to README.md in use case folder"
-        );
+        // Should deduplicate and sort
+        assert_eq!(result, r#"["Admin","User"]"#);
     }
 }

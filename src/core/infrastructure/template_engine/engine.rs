@@ -127,8 +127,7 @@ impl TemplateEngine {
             // If no overview template found, register a default one matching the new category structure
             let default_overview_template = r#"# Use Cases Overview
 
-**Project:** {{project_name}}  
-**Generated:** {{generated_date}}
+**Project:** {{project_name}}
 
 ## Summary
 - **Total Use Cases:** {{total_use_cases}}

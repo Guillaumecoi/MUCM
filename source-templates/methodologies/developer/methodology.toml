@@ -36,7 +36,7 @@ name = "Advanced"
 abbreviation = "a"
 filename = "uc_advanced.hbs"
 # Uncomment to override the global default_scenario_template from mucm.toml
-scenario_template = "scenarios/scenario.hbs"
+# scenario_template = "scenarios/scenario.hbs"
 description = "Comprehensive technical specification with performance, security, error handling, and dependencies"
 inherits = ["Normal"]
 

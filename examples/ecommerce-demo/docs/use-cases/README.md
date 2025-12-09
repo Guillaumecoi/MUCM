@@ -1,14 +1,19 @@
 # Use Cases Overview
 
-**Project:** My Project  
-**Generated:** 2025-12-07
+**Project:** My Project
 
 ## Summary
 - **Total Use Cases:** 2
+- **Total Categories:** 1
 
 
 ## Categories
-- Authentication
 
-## Use Cases
-### Authentication
+### [Authentication](./authentication/README.md)
+
+**Use Cases:** 2
+
+
+
+---
+

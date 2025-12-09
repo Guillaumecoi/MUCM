@@ -1,8 +1,6 @@
 # Feature: {{title}}
 
-**ID:** {{id}} | **Status:** {{status}} | **Priority:** {{priority}} | **Created:** {{created_date}}
-
-**Navigation:** [← Overview](./README.md) | [← Back to {{category}}](../README.md) | [← Back to All Use Cases](../../README.md)
+**ID:** {{id}} | **Status:** {{status}} | **Priority:** {{priority}} | **Created:** {{date_format metadata.created_at}}
 
 {{#if description}}
 ## Summary
@@ -49,6 +47,10 @@
 {{/each}}
 
 {{/if}}
+
+---
+
+**Last Updated:** {{date_format metadata.updated_at}}
 
 ---
 

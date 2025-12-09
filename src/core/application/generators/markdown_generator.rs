@@ -4,6 +4,7 @@
 
 use anyhow::Result;
 use serde_json::Value;
+use std::cmp::Ordering;
 use std::collections::HashMap;
 
 use crate::config::Config;
@@ -68,6 +69,9 @@ impl MarkdownGenerator {
         // Process preconditions and postconditions to convert link syntax
         Self::process_condition_links(&mut data);
 
+        // Add merged_steps to each scenario for easy template access
+        Self::add_merged_steps_to_scenarios(&mut data);
+
         // Determine which methodology to use for field flattening
         let methodology_name = if let Some(v) = view {
             &v.methodology
@@ -126,6 +130,9 @@ impl MarkdownGenerator {
                 data.insert(key, value);
             }
         }
+
+        // Add merged_steps to each scenario
+        Self::add_merged_steps_to_scenarios(&mut data);
 
         // Render using the use_case_overview template
         self.template_engine.render_use_case_overview(&data)
@@ -232,6 +239,137 @@ impl MarkdownGenerator {
 
         // No link syntax found, return as-is
         text.to_string()
+    }
+
+    /// Adds merged_steps field to each scenario in the data.
+    ///
+    /// For main scenarios, merged_steps is a copy of steps.
+    /// For extension scenarios, merged_steps contains:
+    /// 1. Parent steps before extends_at_step
+    /// 2. Extension scenario steps
+    /// 3. Parent steps after returns_at_step (if specified)
+    fn add_merged_steps_to_scenarios(data: &mut HashMap<String, Value>) {
+        // Get scenarios array
+        let scenarios = match data.get("scenarios") {
+            Some(Value::Array(scenarios)) => scenarios.clone(),
+            _ => return, // No scenarios or wrong type
+        };
+
+        // Process each scenario and add merged_steps
+        let processed_scenarios: Vec<Value> = scenarios
+            .iter()
+            .map(|scenario| {
+                let mut scenario_obj = match scenario {
+                    Value::Object(obj) => obj.clone(),
+                    _ => return scenario.clone(),
+                };
+
+                // Check if this is an extension scenario
+                let extends_id = scenario_obj
+                    .get("extends_scenario_id")
+                    .and_then(|v| v.as_str());
+
+                if extends_id.is_none() {
+                    // Main scenario - merged_steps is same as steps
+                    if let Some(steps) = scenario_obj.get("steps") {
+                        scenario_obj.insert("merged_steps".to_string(), steps.clone());
+                    }
+                    return Value::Object(scenario_obj);
+                }
+
+                // Extension scenario - merge with parent steps
+                let extends_id = extends_id.unwrap();
+                let extends_at = scenario_obj
+                    .get("extends_at_step")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("");
+                let returns_at = scenario_obj.get("returns_at_step").and_then(|v| v.as_str());
+
+                // Find parent scenario
+                let parent_scenario = scenarios.iter().find(|s| {
+                    s.get("id")
+                        .and_then(|v| v.as_str())
+                        .map(|id| id == extends_id)
+                        .unwrap_or(false)
+                });
+
+                let merged_steps = if let Some(parent) = parent_scenario {
+                    Self::merge_steps(&scenario_obj, parent, extends_at, returns_at)
+                } else {
+                    // Parent not found, just use scenario's own steps
+                    scenario_obj
+                        .get("steps")
+                        .cloned()
+                        .unwrap_or(Value::Array(vec![]))
+                };
+
+                scenario_obj.insert("merged_steps".to_string(), merged_steps);
+                Value::Object(scenario_obj)
+            })
+            .collect();
+
+        data.insert("scenarios".to_string(), Value::Array(processed_scenarios));
+    }
+
+    /// Merges steps from parent and extension scenarios.
+    fn merge_steps(
+        extension: &serde_json::Map<String, Value>,
+        parent: &Value,
+        extends_at: &str,
+        returns_at: Option<&str>,
+    ) -> Value {
+        use crate::core::domain::StepOrder;
+
+        let parent_steps = parent
+            .get("steps")
+            .and_then(|v| v.as_array())
+            .cloned()
+            .unwrap_or_default();
+
+        let extension_steps = extension
+            .get("steps")
+            .and_then(|v| v.as_array())
+            .cloned()
+            .unwrap_or_default();
+
+        let mut merged = Vec::new();
+
+        // Step 1: Parent steps BEFORE extends_at_step (exclusive)
+        for step in &parent_steps {
+            let order = step.get("order").and_then(|v| v.as_str()).unwrap_or("");
+            if StepOrder::compare(order, extends_at) == Ordering::Less {
+                merged.push(step.clone());
+            }
+        }
+
+        // Step 2: ALL extension scenario steps
+        merged.extend(extension_steps);
+
+        // Step 3: Handle returns_at_step
+        if let Some(returns_at) = returns_at {
+            if StepOrder::compare(returns_at, extends_at) != Ordering::Less {
+                // Normal case: returns_at >= extends_at, get steps FROM returns_at onward
+                for step in &parent_steps {
+                    let order = step.get("order").and_then(|v| v.as_str()).unwrap_or("");
+                    if StepOrder::compare(order, returns_at) != Ordering::Less {
+                        merged.push(step.clone());
+                    }
+                }
+            } else {
+                // LOOP case: returns_at < extends_at
+                // Get steps from returns_at up to (but not including) extends_at
+                for step in &parent_steps {
+                    let order = step.get("order").and_then(|v| v.as_str()).unwrap_or("");
+                    if StepOrder::compare(order, returns_at) != Ordering::Less
+                        && StepOrder::compare(order, extends_at) == Ordering::Less
+                    {
+                        merged.push(step.clone());
+                    }
+                }
+            }
+        }
+
+        Value::Array(merged)
     }
 }
 

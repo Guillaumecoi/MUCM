@@ -3,7 +3,7 @@
 **ID:** {{id}}  
 **Status:** {{status}}  
 **Priority:** {{priority}}  
-**Created:** {{created_date}}
+**Created:** {{date_format metadata.created_at}}
 
 ---
 
@@ -66,11 +66,9 @@
 {{/each}}
 
 {{/if}}
-{{#if last_updated}}
 ---
 
-**Last Updated:** {{last_updated}}
-{{/if}}
+**Last Updated:** {{date_format metadata.updated_at}}
 
 ---
 

@@ -1,4 +1,5 @@
 name = "python"
 aliases = ["py"]
 file_extension = "py"
+comment_start = "#"
 template_file = "test.hbs"

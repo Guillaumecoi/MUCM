@@ -7,7 +7,7 @@
 {{/each}}{{/if}}{{#if postconditions}}// Postconditions:
 {{#each postconditions}}// - {{text}}
 {{/each}}{{/if}}// Documentation: docs/use-cases/{{category}}/README.md
-// Last Changed: {{metadata.updated_at}}
+// Last Changed: {{date_format metadata.updated_at}}
 // =============================================================================
 
 {{#each scenarios}}
@@ -87,7 +87,7 @@ describe('{{title}}', () => {
         //
         // Steps:
 {{#each steps}}
-        // {{order}}. {{{actor_display acting_actor}}} {{action}}{{#if receiving_actor}} to {{{actor_display receiving_actor}}}{{/if}}
+        // {{order}}. {{{actor_name acting_actor}}} {{action}}{{#if receiving_actor}} to {{{actor_name receiving_actor}}}{{/if}}
 {{/each}}
         
         // Arrange

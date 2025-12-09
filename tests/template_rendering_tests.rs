@@ -534,7 +534,6 @@ fn test_overview_template() {
     // Updated data structure for new category-focused overview
     let data: HashMap<String, Value> = [
         ("project_name".to_string(), json!("Test Project")),
-        ("generated_date".to_string(), json!("2025-11-25")),
         ("total_use_cases".to_string(), json!(5)),
         ("total_categories".to_string(), json!(2)),
         (

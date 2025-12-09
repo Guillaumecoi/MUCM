@@ -13,26 +13,28 @@
 {{#if preconditions}}
 **Preconditions:**
 {{#each preconditions}}
-- {{this.text}}{{#if this.use_case_reference}} (see [{{this.use_case_reference}}](../{{this.use_case_reference}}.md)){{/if}}
+- {{this.text}}{{#if this.target_id}} (see [{{this.target_id}}]({{use_case_link this.target_id}})){{/if}}
 {{/each}}
 
 {{/if}}
 {{#if postconditions}}
 **Postconditions:**
 {{#each postconditions}}
-- {{this.text}}{{#if this.use_case_reference}} (see [{{this.use_case_reference}}](../{{this.use_case_reference}}.md)){{/if}}
+- {{this.text}}{{#if this.target_id}} (see [{{this.target_id}}]({{use_case_link this.target_id}})){{/if}}
 {{/each}}
 
 {{/if}}
 ```mermaid
 sequenceDiagram
-{{#each (unique_supporting_actors supporting_actors primary_actor)}}
-participant {{{actor_name this}}}
-{{/each}}
 {{#if primary_actor}}
 participant {{{actor_name primary_actor}}}
 {{/if}}
-{{#each steps}}
+{{#each supporting_actors}}
+{{#unless (eq this ../primary_actor)}}
+participant {{{actor_name this}}}
+{{/unless}}
+{{/each}}
+{{#each merged_steps}}
 {{#if receiving_actor}}
 {{{actor_name acting_actor}}}->>{{actor_name receiving_actor}}: {{order}}. {{{mermaid_safe action}}}
 {{else}}
@@ -42,8 +44,8 @@ participant {{{actor_name primary_actor}}}
 ```
 
 ### Steps
-{{#each steps}}
-{{order}}. **{{{actor_display acting_actor}}}**{{#if receiving_actor}} → **{{{actor_display receiving_actor}}}**{{/if}}: {{action}}
+{{#each merged_steps}}
+{{order}}. **{{{actor_name acting_actor}}}**{{#if receiving_actor}} → **{{{actor_name receiving_actor}}}**{{/if}}: {{action}}
 {{/each}}
 
 {{#if extends_scenario_id}}
