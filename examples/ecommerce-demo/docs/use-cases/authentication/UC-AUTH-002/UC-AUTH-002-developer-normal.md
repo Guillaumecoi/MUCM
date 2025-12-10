@@ -1,6 +1,6 @@
 # Technical Specification: User Login
 
-**Use Case ID:** UC-AUTH-002 | **Status:**  | **Priority:** Critical | **Created:** 07/12/2025
+**Use Case ID:** UC-AUTH-002 | **Status:** PLANNED | **Priority:** Critical | **Created:** 07/12/2025
 
 ## Technical Overview
 Allow registered users to authenticate and access their accounts by providing email and password. The system validates credentials, creates a session, and redirects users to their personalized dashboard or previous page.

@@ -34,8 +34,8 @@
 - **Keeping it structured manually is painful** - consistent formatting across dozens of use cases is tedious
 - **Vendor lock-in** - your documentation is trapped in proprietary systems
 
-### The Solution
-Edit TOML files (just like config files), commit to git, and get:
+git clone https://github.com/Guillaumecoi/MUCM
+cd MUCM
 - **Customizable templates without coding** - Handlebars templates you can edit to format output exactly how you want
 - **Version-controlled source of truth** in your repo, no servers, no online services, zero barriers
 - **Auto-generated test scaffolding** with safe zones so your code survives regeneration

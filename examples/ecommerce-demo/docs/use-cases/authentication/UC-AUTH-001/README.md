@@ -1,6 +1,6 @@
 # Use Case: UC-AUTH-001: User Registration
 
-**Status:**  | **Priority:** High
+**Status:** PLANNED | **Priority:** High
 
 **Category:** Authentication
 

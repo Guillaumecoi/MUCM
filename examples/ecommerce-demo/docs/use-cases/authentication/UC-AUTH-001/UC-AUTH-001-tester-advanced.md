@@ -1,7 +1,7 @@
 # Test Specification: User Registration
 
 **Use Case ID:** UC-AUTH-001  
-**Test Status:**   
+**Test Status:** PLANNED  
 **Test Priority:** High  
 **Test Plan Date:** 03/12/2025
 

@@ -1,7 +1,7 @@
 # Technical Specification: User Registration
 
 **Use Case ID:** UC-AUTH-001  
-**Implementation Status:**   
+**Implementation Status:** PLANNED  
 **Development Priority:** High  
 **Specification Date:** 03/12/2025
 

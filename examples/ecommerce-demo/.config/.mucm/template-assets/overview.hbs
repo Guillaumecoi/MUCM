@@ -1,26 +1,41 @@
+<!-- prettier overview with status badges and per-category compact tables -->
 # Use Cases Overview
 
 **Project:** {{project_name}}
 
 ## Summary
+
 - **Total Use Cases:** {{total_use_cases}}
 - **Total Categories:** {{total_categories}}
 
 {{#if status_counts}}
 ## Status Distribution
+
+| Status | Count |
+|---:|:---|
 {{#each status_counts}}
-- **{{@key}}:** {{this}}
+| {{status_emoji @key}} **{{@key}}** | {{this}} |
 {{/each}}
+
 {{/if}}
 
 ## Categories
 
+Below is a compact overview of each category with its use cases (status badges included).
+
 {{#each categories}}
+
 ### [{{category_name}}](./{{category_path}}/README.md)
 
-{{#if use_case_count}}**Use Cases:** {{use_case_count}}{{/if}}
+- **Use Cases:** {{use_case_count}}
 
 {{#if description}}{{description}}{{/if}}
+
+| ID | Title | Status | Priority |
+|---|---|---|---|
+{{#each use_cases}}
+| [{{id}}](./{{id}}/README.md) | {{title}} | {{aggregated_status_emoji}} {{aggregated_status}} | {{priority}} |
+{{/each}}
 
 ---
 

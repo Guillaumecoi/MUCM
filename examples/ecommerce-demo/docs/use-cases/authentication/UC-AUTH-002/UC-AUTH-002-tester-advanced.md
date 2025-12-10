@@ -1,7 +1,7 @@
 # Test Specification: User Login
 
 **Use Case ID:** UC-AUTH-002  
-**Test Status:**   
+**Test Status:** PLANNED  
 **Test Priority:** Critical  
 **Test Plan Date:** 07/12/2025
 

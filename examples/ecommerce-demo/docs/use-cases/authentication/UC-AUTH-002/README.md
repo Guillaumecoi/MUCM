@@ -1,6 +1,6 @@
 # Use Case: UC-AUTH-002: User Login
 
-**Status:**  | **Priority:** Critical
+**Status:** PLANNED | **Priority:** Critical
 
 **Category:** Authentication
 
