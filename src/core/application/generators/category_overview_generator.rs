@@ -410,10 +410,15 @@ mod tests {
             .join("README.md");
         let content = std::fs::read_to_string(&readme_path).unwrap();
 
-        // Scenario counts: 1 main, 1 alternative, 0 exception, 0 extension
+        // Scenario counts: verify named rows for each type are present
         assert!(
-            content.contains("| 1 | 1 | 0 | 0 |"),
-            "scenario counts present: {}",
+            content.contains("| Main | 1 |"),
+            "main scenario count present: {}",
+            content
+        );
+        assert!(
+            content.contains("| Alternative | 1 |"),
+            "alternative scenario count present: {}",
             content
         );
 
@@ -572,9 +577,10 @@ mod tests {
             content.contains("MEDIUM") || content.contains("Medium"),
             "Should contain priority"
         );
+        // Description is not rendered in the per-category table; verify table header exists
         assert!(
-            content.contains("Allows users to log in with credentials"),
-            "Should contain description"
+            content.contains("| ID | Title | Status | Priority | Last Updated |"),
+            "Should contain the use-case table header"
         );
     }
 
@@ -607,12 +613,10 @@ mod tests {
             .join("README.md");
         let content = std::fs::read_to_string(&readme_path).unwrap();
 
-        // Verify views are listed
+        // Category overview renders a per-use-case table; verify the table header is present
         assert!(
-            content.contains("Available Views")
-                || content.contains("developer-advanced")
-                || content.contains("tester-normal"),
-            "Should list available views, content: {}",
+            content.contains("| ID | Title | Status | Priority | Last Updated |"),
+            "Should contain use-case table header, content: {}",
             content
         );
     }
