@@ -129,6 +129,22 @@ impl OverviewGenerator {
                 let use_cases_data: Vec<_> = uc_list
                     .iter()
                     .map(|uc| {
+                        // Build scenarios list for quick-links in overview templates
+                        let scenarios_data: Vec<_> = uc
+                            .scenarios
+                            .iter()
+                            .map(|s| {
+                                json!({
+                                    "id": s.id,
+                                    "title": s.title,
+                                    "status": s.status.display_name(),
+                                    "status_emoji": s.status.emoji(),
+                                    // Link to use case README with fragment to jump to scenario header
+                                    "link": format!("./{}/README.md#{}", uc.id, s.id),
+                                })
+                            })
+                            .collect();
+
                         json!({
                             "id": uc.id,
                             "title": uc.title,
@@ -138,6 +154,7 @@ impl OverviewGenerator {
                             "priority": uc.priority.to_string(),
                             // Provide last_updated as RFC3339 string so templates can format it
                             "last_updated": uc.metadata.updated_at.to_rfc3339(),
+                            "scenarios": scenarios_data,
                         })
                     })
                     .collect();

@@ -34,6 +34,10 @@ This use case has multiple methodology views available:
 - **[{{methodology}} ({{level}})](./{{../id}}-{{methodology}}-{{level}}.md)** - {{#if (eq methodology "developer")}}Detailed technical specifications for developers{{else if (eq methodology "tester")}}Comprehensive testing scenarios and acceptance criteria{{else if (eq methodology "business")}}Business value analysis and stakeholder requirements{{else if (eq methodology "feature")}}User stories and agile workflow details{{else}}{{methodology}} perspective{{/if}}
 {{/each}}
 
+## Scenarios (quick overview)
+
+**Scenarios:** {{#if scenarios}}{{#each scenarios}}[{{this.id}}]({{this.link}}) {{this.status_emoji}} {{this.status}}{{#unless @last}}, {{/unless}}{{/each}}{{else}}No scenarios defined.{{/if}}
+
 {{> scenario}}
 
 ---
