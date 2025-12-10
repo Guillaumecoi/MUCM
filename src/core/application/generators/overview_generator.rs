@@ -65,6 +65,31 @@ impl OverviewGenerator {
         }
         data.insert("status_counts".to_string(), json!(status_counts));
 
+        // Compute scenario totals across all use cases (main/alternative/exception/extension)
+        let mut scen_main = 0usize;
+        let mut scen_alt = 0usize;
+        let mut scen_exc = 0usize;
+        let mut scen_ext = 0usize;
+        for uc in use_cases {
+            for s in &uc.scenarios {
+                match s.scenario_type {
+                    crate::core::domain::ScenarioType::HappyPath => scen_main += 1,
+                    crate::core::domain::ScenarioType::AlternativeFlow => scen_alt += 1,
+                    crate::core::domain::ScenarioType::ExceptionFlow => scen_exc += 1,
+                    crate::core::domain::ScenarioType::Extension => scen_ext += 1,
+                }
+            }
+        }
+        data.insert(
+            "scenario_totals".to_string(),
+            json!({
+                "main": scen_main,
+                "alternative": scen_alt,
+                "exception": scen_exc,
+                "extension": scen_ext
+            }),
+        );
+
         // Compute overall last-updated across all use cases (most recent updated_at)
         let overall_last_updated = use_cases
             .iter()
