@@ -123,6 +123,15 @@ impl CategoryOverviewGenerator {
         data.insert("use_cases".to_string(), json!(use_cases_data));
         data.insert("total_use_cases".to_string(), json!(use_cases.len()));
 
+        // Compute status distribution across use cases in this category
+        let mut status_counts: HashMap<String, usize> = HashMap::new();
+        for uc in use_cases {
+            *status_counts
+                .entry(uc.status().display_name().to_string())
+                .or_default() += 1;
+        }
+        data.insert("status_counts".to_string(), json!(status_counts));
+
         // Category-level last-updated (most recent use case updated_at)
         let category_last_updated = use_cases
             .iter()
@@ -155,6 +164,20 @@ impl CategoryOverviewGenerator {
             "exception": cat_exc,
             "extension": cat_ext
         }));
+
+        // Compute scenario status distribution for this category
+        let mut scenario_status_counts: HashMap<String, usize> = HashMap::new();
+        for uc in use_cases {
+            for s in &uc.scenarios {
+                *scenario_status_counts
+                    .entry(s.status.display_name().to_string())
+                    .or_default() += 1;
+            }
+        }
+        data.insert(
+            "scenario_status_counts".to_string(),
+            json!(scenario_status_counts),
+        );
 
         // Render template
         let content = self.template_engine.render_category_overview(&data)?;
