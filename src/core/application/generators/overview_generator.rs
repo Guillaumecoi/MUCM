@@ -104,7 +104,7 @@ impl OverviewGenerator {
         // Compute overall last-updated across all use cases (most recent updated_at)
         let overall_last_updated = use_cases
             .iter()
-            .map(|uc| uc.metadata.updated_at.clone())
+            .map(|uc| uc.metadata.updated_at)
             .max();
 
         if let Some(dt) = overall_last_updated {
@@ -164,7 +164,7 @@ impl OverviewGenerator {
                 // Category-level last-updated (most recent updated_at among its use cases)
                 let category_last = uc_list
                     .iter()
-                    .map(|uc| uc.metadata.updated_at.clone())
+                    .map(|uc| uc.metadata.updated_at)
                     .max();
                 if let Some(dt) = category_last {
                     cat.insert("last_updated".to_string(), json!(dt.to_rfc3339()));
