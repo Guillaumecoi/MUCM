@@ -11,6 +11,12 @@ This category contains **2** use cases.
 - **Last Updated:** 07/12/2025
 
 ## Use Cases
+## Status Distribution
+
+| Status | Count |
+|---:|:---|
+| 📋 **PLANNED** | 2 |
+
 
 ## Scenarios
 
@@ -23,6 +29,14 @@ Overall scenario counts across this category:
 | Exception | 3 |
 | Extension | 0 |
 
+
+## Scenario Status Distribution
+
+| Status | Count |
+|---:|:---|
+| 🚀 **DEPLOYED** | 2 |
+| ⚡ **IMPLEMENTED** | 2 |
+| 📋 **PLANNED** | 2 |
 
 
 

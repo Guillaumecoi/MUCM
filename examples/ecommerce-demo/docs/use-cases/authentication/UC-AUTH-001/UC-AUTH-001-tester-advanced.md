@@ -37,7 +37,13 @@
 
 ## Scenarios (quick overview)
 
-**Scenarios:** [UC-AUTH-001-S01]()  deployed, [UC-AUTH-001-S02]()  planned, [UC-AUTH-001-S03]()  implemented, [UC-AUTH-001-S04]()  implemented, [UC-AUTH-001-S05]()  planned
+| ID | Title | Status |
+|---|---|---|
+| [UC-AUTH-001-S01]() | Successful User Registration | 📋 deployed |
+| [UC-AUTH-001-S02]() | Registration with Social Login | 📋 planned |
+| [UC-AUTH-001-S03]() | Email Already Registered | 📋 implemented |
+| [UC-AUTH-001-S04]() | Invalid password | 📋 implemented |
+| [UC-AUTH-001-S05]() | Email Service Unavailable | 📋 planned |
 
 ## UC-AUTH-001-S01 - Successful User Registration
 

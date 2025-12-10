@@ -52,7 +52,15 @@
 {{/if}}
 ## Scenarios (quick overview)
 
-**Scenarios:** {{#if scenarios}}{{#each scenarios}}[{{this.id}}]({{this.link}}) {{this.status_emoji}} {{this.status}}{{#unless @last}}, {{/unless}}{{/each}}{{else}}No scenarios defined.{{/if}}
+{{#if scenarios}}
+| ID | Title | Status |
+|---|---|---|
+{{#each scenarios}}
+| [{{id}}]({{link}}) | {{title}} | {{status_emoji}} {{status}} |
+{{/each}}
+{{else}}
+No scenarios defined.
+{{/if}}
 
 {{> scenario}}
 {{#if use_case_references}}

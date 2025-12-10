@@ -33,7 +33,9 @@ This use case has multiple methodology views available:
 
 ## Scenarios (quick overview)
 
-**Scenarios:** [UC-AUTH-002-S01]()  deployed
+| ID | Title | Status |
+|---|---|---|
+| [UC-AUTH-002-S01]() | Successful Login with Email and Password | 📋 deployed |
 
 ## UC-AUTH-002-S01 - Successful Login with Email and Password
 
