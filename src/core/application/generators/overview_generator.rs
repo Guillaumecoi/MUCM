@@ -44,20 +44,31 @@ impl OverviewGenerator {
         // Project name and generated date
         data.insert("project_name".to_string(), json!(self.config.project.name));
 
-        // Group use cases by category to count them
-        let mut categories_map: HashMap<String, usize> = HashMap::new();
+        // Group use cases by category to collect lists and counts
+        let mut categories_map: HashMap<String, Vec<&UseCase>> = HashMap::new();
         for uc in use_cases {
-            *categories_map.entry(uc.category.clone()).or_default() += 1;
+            categories_map
+                .entry(uc.category.clone())
+                .or_default()
+                .push(uc);
         }
 
         // Add total categories count
         data.insert("total_categories".to_string(), json!(categories_map.len()));
 
+        // Compute status distribution across all use cases
+        let mut status_counts: HashMap<String, usize> = HashMap::new();
+        for uc in use_cases {
+            *status_counts
+                .entry(uc.status().display_name().to_string())
+                .or_default() += 1;
+        }
+        data.insert("status_counts".to_string(), json!(status_counts));
+
         // Convert to array format expected by new template
-        // New format: categories with category_name, category_path, and use_case_count
         let categories: Vec<serde_json::Map<String, Value>> = categories_map
             .into_iter()
-            .map(|(category_name, count)| {
+            .map(|(category_name, uc_list)| {
                 let mut cat = serde_json::Map::new();
                 cat.insert("category_name".to_string(), json!(category_name));
                 // Convert category name to snake_case for path
@@ -65,7 +76,23 @@ impl OverviewGenerator {
                     "category_path".to_string(),
                     json!(crate::core::utils::to_snake_case(&category_name)),
                 );
-                cat.insert("use_case_count".to_string(), json!(count));
+                cat.insert("use_case_count".to_string(), json!(uc_list.len()));
+                // Build a small use_cases list for overview display
+                let use_cases_data: Vec<_> = uc_list
+                    .iter()
+                    .map(|uc| {
+                        json!({
+                            "id": uc.id,
+                            "title": uc.title,
+                            "path": crate::core::utils::to_snake_case(&uc.category),
+                            "aggregated_status": uc.status().display_name(),
+                            "aggregated_status_emoji": uc.status().emoji(),
+                            "priority": uc.priority.to_string(),
+                        })
+                    })
+                    .collect();
+
+                cat.insert("use_cases".to_string(), json!(use_cases_data));
                 // Optional: Add description if available (would need category entity)
                 cat.insert("description".to_string(), json!(""));
                 cat

@@ -89,6 +89,7 @@ impl CategoryOverviewGenerator {
                     "id": uc.id,
                     "title": uc.title,
                     "aggregated_status": uc.status().display_name(),
+                    "aggregated_status_emoji": uc.status().emoji(),
                     "priority": uc.priority.to_string(),
                     "description": uc.description,
                     "views": uc.views,
