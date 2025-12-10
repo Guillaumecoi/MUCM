@@ -5,8 +5,8 @@
 
 ## Summary
 
-- **Total Use Cases:** **{{total_use_cases}}**
-- **Total Categories:** **{{total_categories}}**
+- **Total Use Cases:** {{total_use_cases}}
+- **Total Categories:** {{total_categories}}
 
 {{#if status_counts}}
 ## Status Distribution
@@ -24,7 +24,10 @@
 Below is a compact overview of each category with its use cases (status badges included).
 
 {{#each categories}}
-### [{{category_name}}](./{{category_path}}/README.md) — **{{use_case_count}}** use case{{#if (gt use_case_count 1)}}s{{/if}}
+
+### [{{category_name}}](./{{category_path}}/README.md)
+
+- **Use Cases:** {{use_case_count}}
 
 {{#if description}}{{description}}{{/if}}
 
