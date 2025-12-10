@@ -70,6 +70,8 @@ impl OverviewGenerator {
         let mut scen_alt = 0usize;
         let mut scen_exc = 0usize;
         let mut scen_ext = 0usize;
+        // Compute scenario status distribution across all scenarios
+        let mut scenario_status_counts: HashMap<String, usize> = HashMap::new();
         for uc in use_cases {
             for s in &uc.scenarios {
                 match s.scenario_type {
@@ -78,6 +80,9 @@ impl OverviewGenerator {
                     crate::core::domain::ScenarioType::ExceptionFlow => scen_exc += 1,
                     crate::core::domain::ScenarioType::Extension => scen_ext += 1,
                 }
+                *scenario_status_counts
+                    .entry(s.status.display_name().to_string())
+                    .or_default() += 1;
             }
         }
         data.insert(
@@ -88,6 +93,12 @@ impl OverviewGenerator {
                 "exception": scen_exc,
                 "extension": scen_ext
             }),
+        );
+
+        // Insert scenario status distribution map for templates
+        data.insert(
+            "scenario_status_counts".to_string(),
+            json!(scenario_status_counts),
         );
 
         // Compute overall last-updated across all use cases (most recent updated_at)
