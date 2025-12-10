@@ -11,10 +11,10 @@ This category contains **{{total_use_cases}}** use case{{#if (gt total_use_cases
 ## Use Cases
 
 {{#if use_cases}}
-| ID | Title | Status | Priority | Views |
-|---|---|---|---|---|
+| ID | Title | Description | Status | Priority | Views |
+|---|---|---|---|---|---|
 {{#each use_cases}}
-| [{{id}}](./{{id}}/README.md) | {{title}} | {{aggregated_status_emoji}} {{aggregated_status}} | {{priority}} | {{#if views}}{{#each views}}{{methodology}}-{{level}}{{#unless @last}}, {{/unless}}{{/each}}{{/if}} |
+| [{{id}}](./{{id}}/README.md) | {{title}} | {{#if description}}{{description}}{{/if}} | {{aggregated_status_emoji}} {{aggregated_status}} | {{priority}} | {{#if views}}{{#each views}}{{methodology}}-{{level}}{{#unless @last}}, {{/unless}}{{/each}}{{/if}} |
 {{/each}}
 
 ---
