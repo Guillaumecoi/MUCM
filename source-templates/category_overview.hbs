@@ -8,13 +8,15 @@
 
 This category contains **{{total_use_cases}}** use case{{#if (gt total_use_cases 1)}}s{{/if}}.
 
+- **Last Updated:** {{date_format last_updated}}
+
 ## Use Cases
 
 {{#if use_cases}}
-| ID | Title | Description | Status | Priority | Views |
-|---|---|---|---|---|---|
+| ID | Title | Description | Status | Priority | Main | Alternative | Exception | Extension | Last Updated | Views |
+|---|---|---|---|---|---:|---:|---:|---:|---|---|
 {{#each use_cases}}
-| [{{id}}](./{{id}}/README.md) | {{title}} | {{#if description}}{{description}}{{/if}} | {{aggregated_status_emoji}} {{aggregated_status}} | {{priority}} | {{#if views}}{{#each views}}{{methodology}}-{{level}}{{#unless @last}}, {{/unless}}{{/each}}{{/if}} |
+| [{{id}}](./{{id}}/README.md) | {{title}} | {{#if description}}{{description}}{{/if}} | {{aggregated_status_emoji}} {{aggregated_status}} | {{priority}} | {{scenario_counts.main}} | {{scenario_counts.alternative}} | {{scenario_counts.exception}} | {{scenario_counts.extension}} | {{date_format last_updated}} | {{#if views}}{{#each views}}{{methodology}}-{{level}}{{#unless @last}}, {{/unless}}{{/each}}{{/if}} |
 {{/each}}
 
 ---

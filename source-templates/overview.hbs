@@ -7,6 +7,7 @@
 
 - **Total Use Cases:** {{total_use_cases}}
 - **Total Categories:** {{total_categories}}
+ - **Last Updated:** {{date_format last_updated}}
 
 {{#if status_counts}}
 ## Status Distribution
@@ -31,10 +32,10 @@ Below is a compact overview of each category with its use cases (status badges i
 
 {{#if description}}{{description}}{{/if}}
 
-| ID | Title | Status | Priority |
-|---|---|---|---|
+| ID | Title | Status | Priority | Last Updated |
+|---|---|---|---|---|
 {{#each use_cases}}
-| [{{id}}](./{{id}}/README.md) | {{title}} | {{aggregated_status_emoji}} {{aggregated_status}} | {{priority}} |
+| [{{id}}](./{{id}}/README.md) | {{title}} | {{aggregated_status_emoji}} {{aggregated_status}} | {{priority}} | {{date_format last_updated}} |
 {{/each}}
 
 ---

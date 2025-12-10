@@ -85,6 +85,20 @@ impl CategoryOverviewGenerator {
         let use_cases_data: Vec<_> = use_cases
             .iter()
             .map(|uc| {
+                // Compute scenario type counts for this use case
+                let mut main_count = 0usize;
+                let mut alternative_count = 0usize;
+                let mut exception_count = 0usize;
+                let mut extension_count = 0usize;
+                for s in &uc.scenarios {
+                    match s.scenario_type {
+                        crate::core::domain::ScenarioType::HappyPath => main_count += 1,
+                        crate::core::domain::ScenarioType::AlternativeFlow => alternative_count += 1,
+                        crate::core::domain::ScenarioType::ExceptionFlow => exception_count += 1,
+                        crate::core::domain::ScenarioType::Extension => extension_count += 1,
+                    }
+                }
+
                 json!({
                     "id": uc.id,
                     "title": uc.title,
@@ -93,12 +107,54 @@ impl CategoryOverviewGenerator {
                     "priority": uc.priority.to_string(),
                     "description": uc.description,
                     "views": uc.views,
+                    // last_updated for the use case (RFC3339)
+                    "last_updated": uc.metadata.updated_at.to_rfc3339(),
+                    // scenario counts split by type
+                    "scenario_counts": {
+                        "main": main_count,
+                        "alternative": alternative_count,
+                        "exception": exception_count,
+                        "extension": extension_count
+                    }
                 })
             })
             .collect();
 
         data.insert("use_cases".to_string(), json!(use_cases_data));
         data.insert("total_use_cases".to_string(), json!(use_cases.len()));
+
+        // Category-level last-updated (most recent use case updated_at)
+        let category_last_updated = use_cases
+            .iter()
+            .map(|uc| uc.metadata.updated_at.clone())
+            .max();
+        if let Some(dt) = category_last_updated {
+            data.insert("last_updated".to_string(), json!(dt.to_rfc3339()));
+        } else {
+            data.insert("last_updated".to_string(), json!(""));
+        }
+
+        // Category-level scenario aggregates
+        let mut cat_main = 0usize;
+        let mut cat_alt = 0usize;
+        let mut cat_exc = 0usize;
+        let mut cat_ext = 0usize;
+        for uc in use_cases {
+            for s in &uc.scenarios {
+                match s.scenario_type {
+                    crate::core::domain::ScenarioType::HappyPath => cat_main += 1,
+                    crate::core::domain::ScenarioType::AlternativeFlow => cat_alt += 1,
+                    crate::core::domain::ScenarioType::ExceptionFlow => cat_exc += 1,
+                    crate::core::domain::ScenarioType::Extension => cat_ext += 1,
+                }
+            }
+        }
+        data.insert("scenario_totals".to_string(), json!({
+            "main": cat_main,
+            "alternative": cat_alt,
+            "exception": cat_exc,
+            "extension": cat_ext
+        }));
 
         // Render template
         let content = self.template_engine.render_category_overview(&data)?;
@@ -279,6 +335,59 @@ mod tests {
         assert!(content.contains("Process Payment"));
         assert!(content.contains("Refund Payment"));
         assert!(content.contains("Payment History"));
+    }
+
+    #[test]
+    #[serial]
+    fn test_category_overview_scenario_counts_and_last_updated() {
+        use chrono::DateTime;
+
+        let temp_dir = TempDir::new().unwrap();
+        let config = create_test_config(&temp_dir);
+        let generator = CategoryOverviewGenerator::new(config);
+
+        let category = Category::new("AuthX".to_string(), "AXX".to_string()).unwrap();
+
+        // Create a use case with one main and one alternative scenario
+        let mut uc = create_test_use_case("AX-001", "AuthX", "Sample UC");
+        let s1 = crate::core::domain::Scenario::new(
+            "AX-001-S01".to_string(),
+            "Main Flow".to_string(),
+            "Main happy path".to_string(),
+            crate::core::domain::ScenarioType::HappyPath,
+            "user".to_string(),
+        );
+        let s2 = crate::core::domain::Scenario::new(
+            "AX-001-S02".to_string(),
+            "Alt Flow".to_string(),
+            "Alternative path".to_string(),
+            crate::core::domain::ScenarioType::AlternativeFlow,
+            "user".to_string(),
+        );
+        uc.scenarios.push(s1);
+        uc.scenarios.push(s2);
+
+        // Set a fixed updated_at so formatted date is deterministic
+        let dt = DateTime::parse_from_rfc3339("2025-01-02T03:04:05+00:00").unwrap();
+        uc.metadata.updated_at = dt.with_timezone(&chrono::Utc);
+
+        let use_cases: Vec<&UseCase> = vec![&uc];
+
+        // Generate and assert
+        generator.generate_for_category(&category, &use_cases).unwrap();
+
+        let readme_path = temp_dir
+            .path()
+            .join("use-cases")
+            .join("authx")
+            .join("README.md");
+        let content = std::fs::read_to_string(&readme_path).unwrap();
+
+        // Scenario counts: 1 main, 1 alternative, 0 exception, 0 extension
+        assert!(content.contains("| 1 | 1 | 0 | 0 |"), "scenario counts present: {}", content);
+
+        // Date formatted according to default (%d/%m/%Y) -> 02/01/2025
+        assert!(content.contains("02/01/2025"), "last updated formatted in content: {}", content);
     }
 
     #[test]

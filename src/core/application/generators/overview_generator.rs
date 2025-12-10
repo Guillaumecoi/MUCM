@@ -41,7 +41,7 @@ impl OverviewGenerator {
         // Basic counts
         data.insert("total_use_cases".to_string(), json!(use_cases.len()));
 
-        // Project name and generated date
+        // Project name
         data.insert("project_name".to_string(), json!(self.config.project.name));
 
         // Group use cases by category to collect lists and counts
@@ -64,6 +64,18 @@ impl OverviewGenerator {
                 .or_default() += 1;
         }
         data.insert("status_counts".to_string(), json!(status_counts));
+
+        // Compute overall last-updated across all use cases (most recent updated_at)
+        let overall_last_updated = use_cases
+            .iter()
+            .map(|uc| uc.metadata.updated_at.clone())
+            .max();
+
+        if let Some(dt) = overall_last_updated {
+            data.insert("last_updated".to_string(), json!(dt.to_rfc3339()));
+        } else {
+            data.insert("last_updated".to_string(), json!(""));
+        }
 
         // Convert to array format expected by new template
         let categories: Vec<serde_json::Map<String, Value>> = categories_map
@@ -88,12 +100,25 @@ impl OverviewGenerator {
                             "aggregated_status": uc.status().display_name(),
                             "aggregated_status_emoji": uc.status().emoji(),
                             "priority": uc.priority.to_string(),
+                            // Provide last_updated as RFC3339 string so templates can format it
+                            "last_updated": uc.metadata.updated_at.to_rfc3339(),
                         })
                     })
                     .collect();
 
                 cat.insert("use_cases".to_string(), json!(use_cases_data));
                 // Optional: Add description if available (would need category entity)
+                // Category-level last-updated (most recent updated_at among its use cases)
+                let category_last = uc_list
+                    .iter()
+                    .map(|uc| uc.metadata.updated_at.clone())
+                    .max();
+                if let Some(dt) = category_last {
+                    cat.insert("last_updated".to_string(), json!(dt.to_rfc3339()));
+                } else {
+                    cat.insert("last_updated".to_string(), json!(""));
+                }
+
                 cat.insert("description".to_string(), json!(""));
                 cat
             })
@@ -272,5 +297,35 @@ mod tests {
         assert!(content.contains("3"));
         assert!(content.contains("1"));
         assert!(content.contains("Authentication"));
+    }
+
+    #[test]
+    #[serial]
+    fn test_overview_last_updated_is_most_recent() {
+        use chrono::DateTime;
+
+        let temp_dir = TempDir::new().unwrap();
+        let config = create_test_config(&temp_dir);
+        // ensure output directory points to temp dir
+        let generator = OverviewGenerator::new(config);
+
+        // Two use cases with different updated_at
+        let mut uc1 = create_test_use_case("AUT-010", "Authentication", "Old UC");
+        let mut uc2 = create_test_use_case("PAY-020", "Payment", "New UC");
+
+        let dt_old = DateTime::parse_from_rfc3339("2025-01-01T00:00:00+00:00").unwrap();
+        let dt_new = DateTime::parse_from_rfc3339("2025-03-05T12:00:00+00:00").unwrap();
+        uc1.metadata.updated_at = dt_old.with_timezone(&chrono::Utc);
+        uc2.metadata.updated_at = dt_new.with_timezone(&chrono::Utc);
+
+        let use_cases = vec![uc1, uc2];
+
+        generator.generate(&use_cases).unwrap();
+
+        let overview_path = temp_dir.path().join("use-cases").join("README.md");
+        let content = std::fs::read_to_string(&overview_path).unwrap();
+
+        // The overall last_updated should be the newer date formatted (%d/%m/%Y -> 05/03/2025)
+        assert!(content.contains("05/03/2025"), "overview contains overall last updated: {}", content);
     }
 }
