@@ -135,10 +135,7 @@ impl CategoryOverviewGenerator {
         data.insert("status_counts".to_string(), json!(status_counts));
 
         // Category-level last-updated (most recent use case updated_at)
-        let category_last_updated = use_cases
-            .iter()
-            .map(|uc| uc.metadata.updated_at)
-            .max();
+        let category_last_updated = use_cases.iter().map(|uc| uc.metadata.updated_at).max();
         if let Some(dt) = category_last_updated {
             data.insert("last_updated".to_string(), json!(dt.to_rfc3339()));
         } else {
