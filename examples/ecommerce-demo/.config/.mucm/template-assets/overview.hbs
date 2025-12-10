@@ -32,6 +32,18 @@ Overall scenario counts across all use cases:
 | Extension | {{scenario_totals.extension}} |
 
 
+{{#if scenario_status_counts}}
+## Scenario Status Distribution
+
+| Status | Count |
+|---:|:---|
+{{#each scenario_status_counts}}
+| {{status_emoji @key}} **{{@key}}** | {{this}} |
+{{/each}}
+
+{{/if}}
+
+
 ## Categories
 
 Below is a compact overview of each category with its use cases (status badges included).

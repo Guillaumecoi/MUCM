@@ -53,6 +53,10 @@ Allow new users to create an account on the e-commerce platform by providing ema
 - Session created and stored in cache
 - User can access basic platform features (but not checkout until verified)
 
+## Scenarios (quick overview)
+
+**Scenarios:** [UC-AUTH-001-S01]()  deployed, [UC-AUTH-001-S02]()  planned, [UC-AUTH-001-S03]()  implemented, [UC-AUTH-001-S04]()  implemented, [UC-AUTH-001-S05]()  planned
+
 ## UC-AUTH-001-S01 - Successful User Registration
 
 **Primary Actor:** [Guest User](../../../actors/guest-guest-user.md)

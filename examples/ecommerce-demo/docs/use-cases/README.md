@@ -28,6 +28,16 @@ Overall scenario counts across all use cases:
 | Extension | 0 |
 
 
+## Scenario Status Distribution
+
+| Status | Count |
+|---:|:---|
+| 🚀 **DEPLOYED** | 2 |
+| ⚡ **IMPLEMENTED** | 2 |
+| 📋 **PLANNED** | 2 |
+
+
+
 ## Categories
 
 Below is a compact overview of each category with its use cases (status badges included).

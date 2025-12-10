@@ -11,12 +11,46 @@ This category contains **{{total_use_cases}}** use case{{#if (gt total_use_cases
 - **Last Updated:** {{date_format last_updated}}
 
 ## Use Cases
-
 {{#if use_cases}}
-| ID | Title | Description | Status | Priority | Main | Alternative | Exception | Extension | Last Updated | Views |
-|---|---|---|---|---|---:|---:|---:|---:|---|---|
+{{#if status_counts}}
+## Status Distribution
+
+| Status | Count |
+|---:|:---|
+{{#each status_counts}}
+| {{status_emoji @key}} **{{@key}}** | {{this}} |
+{{/each}}
+
+{{/if}}
+
+## Scenarios
+
+Overall scenario counts across this category:
+
+| Type | Count |
+|---:|:---|
+| Main | {{scenario_totals.main}} |
+| Alternative | {{scenario_totals.alternative}} |
+| Exception | {{scenario_totals.exception}} |
+| Extension | {{scenario_totals.extension}} |
+
+
+{{#if scenario_status_counts}}
+## Scenario Status Distribution
+
+| Status | Count |
+|---:|:---|
+{{#each scenario_status_counts}}
+| {{status_emoji @key}} **{{@key}}** | {{this}} |
+{{/each}}
+
+{{/if}}
+
+
+| ID | Title | Status | Priority | Last Updated |
+|---|---|---|---|---|
 {{#each use_cases}}
-| [{{id}}](./{{id}}/README.md) | {{title}} | {{#if description}}{{description}}{{/if}} | {{aggregated_status_emoji}} {{aggregated_status}} | {{priority}} | {{scenario_counts.main}} | {{scenario_counts.alternative}} | {{scenario_counts.exception}} | {{scenario_counts.extension}} | {{date_format last_updated}} | {{#if views}}{{#each views}}{{methodology}}-{{level}}{{#unless @last}}, {{/unless}}{{/each}}{{/if}} |
+| [{{id}}](./{{id}}/README.md) | {{title}} | {{aggregated_status_emoji}} {{aggregated_status}} | {{priority}} | {{date_format last_updated}} |
 {{/each}}
 
 ---

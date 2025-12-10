@@ -30,6 +30,10 @@ This use case has multiple methodology views available:
 - **[developer (advanced)](./UC-AUTH-001-developer-advanced.md)** - Detailed technical specifications for developers
 - **[tester (advanced)](./UC-AUTH-001-tester-advanced.md)** - Comprehensive testing scenarios and acceptance criteria
 
+## Scenarios (quick overview)
+
+**Scenarios:** [UC-AUTH-001-S01]()  deployed, [UC-AUTH-001-S02]()  planned, [UC-AUTH-001-S03]()  implemented, [UC-AUTH-001-S04]()  implemented, [UC-AUTH-001-S05]()  planned
+
 ## UC-AUTH-001-S01 - Successful User Registration
 
 **Primary Actor:** [Guest User](../../../actors/guest-guest-user.md)

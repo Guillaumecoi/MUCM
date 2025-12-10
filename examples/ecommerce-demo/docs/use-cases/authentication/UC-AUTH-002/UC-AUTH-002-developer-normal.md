@@ -27,6 +27,10 @@ Allow registered users to authenticate and access their accounts by providing em
 - User redirected to dashboard or previous page
 - Last login timestamp updated in database
 
+## Scenarios (quick overview)
+
+**Scenarios:** [UC-AUTH-002-S01]()  deployed
+
 ## UC-AUTH-002-S01 - Successful Login with Email and Password
 
 **Primary Actor:** [Maria Garcia](../../../actors/customer-support-agent-maria-garcia.md)
