@@ -403,6 +403,47 @@ mod priority_tests {
         }
     }
 
+    /// Test aggregated use case status derived from scenario statuses
+    #[test]
+    fn test_use_case_aggregated_status_from_scenarios() {
+        use crate::core::domain::Scenario;
+        use crate::core::domain::ScenarioType;
+        use crate::core::domain::Status;
+
+        let mut uc = UseCase::new(
+            "UC-AGG-001".to_string(),
+            "Aggregated Status UC".to_string(),
+            "TestCategory".to_string(),
+            "TST".to_string(),
+            "Description".to_string(),
+            "Medium".to_string(),
+        )
+        .unwrap();
+
+        let mut s1 = Scenario::new(
+            "UC-AGG-001-S01".to_string(),
+            "Scenario 1".to_string(),
+            "First scenario".to_string(),
+            ScenarioType::HappyPath,
+            "user".to_string(),
+        );
+        s1.set_status(Status::Implemented);
+
+        let mut s2 = Scenario::new(
+            "UC-AGG-001-S02".to_string(),
+            "Scenario 2".to_string(),
+            "Second scenario".to_string(),
+            ScenarioType::HappyPath,
+            "user".to_string(),
+        );
+        s2.set_status(Status::Implemented);
+
+        uc.add_scenario(s1);
+        uc.add_scenario(s2);
+
+        assert_eq!(uc.status(), Status::Implemented);
+    }
+
     /// Test Priority in collections (Hash trait)
     #[test]
     fn test_priority_in_collections() {
