@@ -98,6 +98,7 @@ mod tests {
             category_abbreviation: "TES".to_string(),
             description: "Test description".to_string(),
             priority: "Medium".parse().unwrap(),
+            status: crate::core::domain::Status::Planned,
             metadata: Metadata::default(),
             views: vec![],
             preconditions: vec![],

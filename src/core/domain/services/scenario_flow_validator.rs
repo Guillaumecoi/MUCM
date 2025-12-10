@@ -249,7 +249,7 @@ impl ScenarioFlowValidator {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::core::domain::{Metadata, Priority, ScenarioStep, ScenarioType};
+    use crate::core::domain::{Metadata, Priority, ScenarioStep, ScenarioType, Status};
 
     fn create_test_use_case() -> UseCase {
         UseCase {
@@ -259,6 +259,7 @@ mod tests {
             category_abbreviation: "TES".to_string(),
             description: "Test".to_string(),
             priority: Priority::Medium,
+            status: Status::Planned,
             metadata: Metadata::new(),
             views: vec![],
             preconditions: vec![],

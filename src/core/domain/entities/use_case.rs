@@ -2,6 +2,10 @@ use super::{Condition, Metadata, MethodologyView, Scenario, Status, UseCaseRefer
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
 
+fn default_status() -> Status {
+    Status::Planned
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
 pub enum Priority {
     Low,
@@ -44,6 +48,9 @@ pub struct UseCase {
     pub category_abbreviation: String,
     pub description: String,
     pub priority: Priority,
+    /// Manual status for the use case (set independently from scenarios)
+    #[serde(default = "default_status")]
+    pub status: Status,
     pub metadata: Metadata,
 
     // NEW: Multi-view support - defines which methodology/level combinations are active
@@ -98,6 +105,7 @@ impl UseCase {
             category_abbreviation,
             description,
             priority,
+            status: Status::Planned,
             metadata: Metadata::new(),
             views: Vec::new(),
             preconditions: Vec::new(),
@@ -110,15 +118,8 @@ impl UseCase {
     }
 
     pub fn status(&self) -> Status {
-        if self.scenarios.is_empty() {
-            return Status::Planned;
-        }
-
-        self.scenarios
-            .iter()
-            .map(|s| s.status)
-            .min() // Status implements Ord
-            .unwrap_or(Status::Planned)
+        // Manual status on the use case (set independently from scenarios)
+        self.status
     }
 
     /// Add a precondition to this use case
@@ -403,46 +404,7 @@ mod priority_tests {
         }
     }
 
-    /// Test aggregated use case status derived from scenario statuses
-    #[test]
-    fn test_use_case_aggregated_status_from_scenarios() {
-        use crate::core::domain::Scenario;
-        use crate::core::domain::ScenarioType;
-        use crate::core::domain::Status;
-
-        let mut uc = UseCase::new(
-            "UC-AGG-001".to_string(),
-            "Aggregated Status UC".to_string(),
-            "TestCategory".to_string(),
-            "TST".to_string(),
-            "Description".to_string(),
-            "Medium".to_string(),
-        )
-        .unwrap();
-
-        let mut s1 = Scenario::new(
-            "UC-AGG-001-S01".to_string(),
-            "Scenario 1".to_string(),
-            "First scenario".to_string(),
-            ScenarioType::HappyPath,
-            "user".to_string(),
-        );
-        s1.set_status(Status::Implemented);
-
-        let mut s2 = Scenario::new(
-            "UC-AGG-001-S02".to_string(),
-            "Scenario 2".to_string(),
-            "Second scenario".to_string(),
-            ScenarioType::HappyPath,
-            "user".to_string(),
-        );
-        s2.set_status(Status::Implemented);
-
-        uc.add_scenario(s1);
-        uc.add_scenario(s2);
-
-        assert_eq!(uc.status(), Status::Implemented);
-    }
+    
 
     /// Test Priority in collections (Hash trait)
     #[test]
@@ -904,7 +866,7 @@ mod use_case_tests {
         assert_eq!(deserialized.extra["is_critical"], json!(true));
     }
 
-    /// Test UseCase status calculation from scenarios
+    /// Test UseCase status is manual and independent from scenarios
     #[test]
     fn test_use_case_status_from_scenarios() {
         let mut use_case = UseCase::new(
@@ -917,10 +879,10 @@ mod use_case_tests {
         )
         .unwrap();
 
-        // No scenarios - should be Planned
+        // No scenarios - should be Planned by default
         assert_eq!(use_case.status(), Status::Planned);
 
-        // Add scenarios with different statuses
+        // Add scenarios with different statuses (should NOT affect use case status)
         let scenario1 = Scenario::new(
             "UC-TEST-001-S01".to_string(),
             "Happy Path".to_string(),
@@ -942,13 +904,17 @@ mod use_case_tests {
         use_case.add_scenario(scenario1);
         use_case.add_scenario(scenario2);
 
-        // Status should be the minimum (earliest) status: Planned
+        // Use case status remains manual and unchanged by scenario statuses
         assert_eq!(use_case.status(), Status::Planned);
 
-        // Update all scenarios to Implemented
+        // Update all scenarios to Implemented (still should not change use case)
         for scenario in &mut use_case.scenarios {
             scenario.set_status(Status::Implemented);
         }
+        assert_eq!(use_case.status(), Status::Planned);
+
+        // Now set the use case status manually
+        use_case.status = Status::Implemented;
         assert_eq!(use_case.status(), Status::Implemented);
     }
 
