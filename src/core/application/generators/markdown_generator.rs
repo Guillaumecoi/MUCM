@@ -91,6 +91,12 @@ impl MarkdownGenerator {
                         .or_insert(field_value.clone());
                 }
             }
+
+                // Inject aggregated status for templates (computed from domain use_case)
+                // This provides `{{aggregated_status}}` to templates that want an overview
+                // of the use-case status (derived from its scenarios).
+                let aggregated_status = use_case.status().display_name().to_string();
+                data.insert("aggregated_status".to_string(), Value::String(aggregated_status));
         }
 
         // Render based on what parameters were provided
@@ -133,6 +139,11 @@ impl MarkdownGenerator {
 
         // Add merged_steps to each scenario
         Self::add_merged_steps_to_scenarios(&mut data);
+
+        // Inject aggregated status for templates (computed from domain use_case)
+        // This provides `{{aggregated_status}}` for the README overview template.
+        let aggregated_status = use_case.status().display_name().to_string();
+        data.insert("aggregated_status".to_string(), Value::String(aggregated_status));
 
         // Render using the use_case_overview template
         self.template_engine.render_use_case_overview(&data)
