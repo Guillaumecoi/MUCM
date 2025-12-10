@@ -404,8 +404,6 @@ mod priority_tests {
         }
     }
 
-    
-
     /// Test Priority in collections (Hash trait)
     #[test]
     fn test_priority_in_collections() {

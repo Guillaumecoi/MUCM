@@ -22,7 +22,10 @@ fn status_emoji_helper(
     out: &mut dyn Output,
 ) -> HelperResult {
     // Try parameter first
-    let param_opt = h.param(0).and_then(|v| v.value().as_str()).map(|s| s.to_string());
+    let param_opt = h
+        .param(0)
+        .and_then(|v| v.value().as_str())
+        .map(|s| s.to_string());
 
     let status_str = match param_opt {
         Some(s) if !s.is_empty() => s,

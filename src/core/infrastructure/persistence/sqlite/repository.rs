@@ -457,7 +457,7 @@ impl SqliteUseCaseRepository {
                         .collect::<String>()
                         .to_uppercase();
 
-                        Ok(UseCase {
+                    Ok(UseCase {
                         id: row.get(0)?,
                         title: row.get(1)?,
                         category,

@@ -407,13 +407,14 @@ fn test_templates_render_with_aggregated_status_injected() {
     let mut data = create_full_test_data();
 
     // Inject aggregated_status as the generator would
-    data.insert(
-        "aggregated_status".to_string(),
-        json!("Implemented"),
-    );
+    data.insert("aggregated_status".to_string(), json!("Implemented"));
 
     let result = engine.render_use_case_with_methodology_and_level(&data, "business", "normal");
-    assert!(result.is_ok(), "Rendering should succeed: {:?}", result.err());
+    assert!(
+        result.is_ok(),
+        "Rendering should succeed: {:?}",
+        result.err()
+    );
     let rendered = result.unwrap();
 
     // The header should now contain the aggregated status text

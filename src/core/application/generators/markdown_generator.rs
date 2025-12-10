@@ -92,17 +92,20 @@ impl MarkdownGenerator {
                 }
             }
 
-                // Inject aggregated status for templates (computed from domain use_case)
-                // This provides `{{aggregated_status}}` to templates that want an overview
-                // of the use-case status (derived from its scenarios).
-                let aggregated_status = use_case.status().display_name().to_string();
-                data.insert("aggregated_status".to_string(), Value::String(aggregated_status.clone()));
-                // Also provide an emoji-only field for simple status badges
-                let aggregated_status_emoji = use_case.status().emoji().to_string();
-                data.insert(
-                    "aggregated_status_emoji".to_string(),
-                    Value::String(aggregated_status_emoji),
-                );
+            // Inject aggregated status for templates (computed from domain use_case)
+            // This provides `{{aggregated_status}}` to templates that want an overview
+            // of the use-case status (derived from its scenarios).
+            let aggregated_status = use_case.status().display_name().to_string();
+            data.insert(
+                "aggregated_status".to_string(),
+                Value::String(aggregated_status.clone()),
+            );
+            // Also provide an emoji-only field for simple status badges
+            let aggregated_status_emoji = use_case.status().emoji().to_string();
+            data.insert(
+                "aggregated_status_emoji".to_string(),
+                Value::String(aggregated_status_emoji),
+            );
         }
 
         // Render based on what parameters were provided
@@ -149,7 +152,10 @@ impl MarkdownGenerator {
         // Inject aggregated status for templates (computed from domain use_case)
         // This provides `{{aggregated_status}}` for the README overview template.
         let aggregated_status = use_case.status().display_name().to_string();
-        data.insert("aggregated_status".to_string(), Value::String(aggregated_status.clone()));
+        data.insert(
+            "aggregated_status".to_string(),
+            Value::String(aggregated_status.clone()),
+        );
         // Provide emoji variant for templates that want only the emoji badge
         let aggregated_status_emoji = use_case.status().emoji().to_string();
         data.insert(

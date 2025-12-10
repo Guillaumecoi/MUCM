@@ -93,7 +93,9 @@ impl CategoryOverviewGenerator {
                 for s in &uc.scenarios {
                     match s.scenario_type {
                         crate::core::domain::ScenarioType::HappyPath => main_count += 1,
-                        crate::core::domain::ScenarioType::AlternativeFlow => alternative_count += 1,
+                        crate::core::domain::ScenarioType::AlternativeFlow => {
+                            alternative_count += 1
+                        }
                         crate::core::domain::ScenarioType::ExceptionFlow => exception_count += 1,
                         crate::core::domain::ScenarioType::Extension => extension_count += 1,
                     }
@@ -158,12 +160,15 @@ impl CategoryOverviewGenerator {
                 }
             }
         }
-        data.insert("scenario_totals".to_string(), json!({
-            "main": cat_main,
-            "alternative": cat_alt,
-            "exception": cat_exc,
-            "extension": cat_ext
-        }));
+        data.insert(
+            "scenario_totals".to_string(),
+            json!({
+                "main": cat_main,
+                "alternative": cat_alt,
+                "exception": cat_exc,
+                "extension": cat_ext
+            }),
+        );
 
         // Compute scenario status distribution for this category
         let mut scenario_status_counts: HashMap<String, usize> = HashMap::new();
@@ -397,7 +402,9 @@ mod tests {
         let use_cases: Vec<&UseCase> = vec![&uc];
 
         // Generate and assert
-        generator.generate_for_category(&category, &use_cases).unwrap();
+        generator
+            .generate_for_category(&category, &use_cases)
+            .unwrap();
 
         let readme_path = temp_dir
             .path()
@@ -407,10 +414,18 @@ mod tests {
         let content = std::fs::read_to_string(&readme_path).unwrap();
 
         // Scenario counts: 1 main, 1 alternative, 0 exception, 0 extension
-        assert!(content.contains("| 1 | 1 | 0 | 0 |"), "scenario counts present: {}", content);
+        assert!(
+            content.contains("| 1 | 1 | 0 | 0 |"),
+            "scenario counts present: {}",
+            content
+        );
 
         // Date formatted according to default (%d/%m/%Y) -> 02/01/2025
-        assert!(content.contains("02/01/2025"), "last updated formatted in content: {}", content);
+        assert!(
+            content.contains("02/01/2025"),
+            "last updated formatted in content: {}",
+            content
+        );
     }
 
     #[test]

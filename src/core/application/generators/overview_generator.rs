@@ -379,6 +379,10 @@ mod tests {
         let content = std::fs::read_to_string(&overview_path).unwrap();
 
         // The overall last_updated should be the newer date formatted (%d/%m/%Y -> 05/03/2025)
-        assert!(content.contains("05/03/2025"), "overview contains overall last updated: {}", content);
+        assert!(
+            content.contains("05/03/2025"),
+            "overview contains overall last updated: {}",
+            content
+        );
     }
 }
