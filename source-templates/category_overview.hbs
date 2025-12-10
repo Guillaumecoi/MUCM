@@ -8,23 +8,53 @@
 
 This category contains **{{total_use_cases}}** use case{{#if (gt total_use_cases 1)}}s{{/if}}.
 
+- **Last Updated:** {{date_format last_updated}}
+
 ## Use Cases
+{{#if use_cases}}
+{{#if status_counts}}
+## Status Distribution
 
-{{#each use_cases}}
-### [{{id}}: {{title}}](./{{id}}/README.md)
+| Status | Count |
+|---:|:---|
+{{#each status_counts}}
+| {{status_emoji @key}} **{{@key}}** | {{this}} |
+{{/each}}
 
-**Status:** {{aggregated_status}} | **Priority:** {{priority}}
-
-{{#if description}}{{description}}{{/if}}
-
-{{#if views}}
-**Available Views:** {{#each views}}{{methodology}}-{{level}}{{#unless @last}}, {{/unless}}{{/each}}
 {{/if}}
+
+## Scenarios
+
+Overall scenario counts across this category:
+
+| Type | Count |
+|---:|:---|
+| Main | {{scenario_totals.main}} |
+| Alternative | {{scenario_totals.alternative}} |
+| Exception | {{scenario_totals.exception}} |
+| Extension | {{scenario_totals.extension}} |
+
+
+{{#if scenario_status_counts}}
+## Scenario Status Distribution
+
+| Status | Count |
+|---:|:---|
+{{#each scenario_status_counts}}
+| {{status_emoji @key}} **{{@key}}** | {{this}} |
+{{/each}}
+
+{{/if}}
+
+
+| ID | Title | Status | Priority | Last Updated |
+|---|---|---|---|---|
+{{#each use_cases}}
+| [{{id}}](./{{id}}/README.md) | {{title}} | {{aggregated_status_emoji}} {{aggregated_status}} | {{priority}} | {{date_format last_updated}} |
+{{/each}}
 
 ---
 
-{{/each}}
-
-{{#unless use_cases}}
+{{else}}
 *No use cases in this category yet.*
-{{/unless}}
+{{/if}}

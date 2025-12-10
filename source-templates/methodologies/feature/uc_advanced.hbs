@@ -1,7 +1,7 @@
 # Feature Proposal: {{title}}
 
 **ID:** {{id}}  
-**Status:** {{status}}  
+**Status:** {{aggregated_status}}  
 **Priority:** {{priority}}  
 **Created:** {{date_format metadata.created_at}}
 
@@ -57,6 +57,18 @@
 {{/each}}
 
 {{/if}}
+## Scenarios (quick overview)
+
+{{#if scenarios}}
+| ID | Title | Status |
+|---|---|---|
+{{#each scenarios}}
+| [{{id}}]({{link}}) | {{title}} | {{status_emoji}} {{status}} |
+{{/each}}
+{{else}}
+No scenarios defined.
+{{/if}}
+
 {{> scenario}}
 
 {{#if use_case_references}}

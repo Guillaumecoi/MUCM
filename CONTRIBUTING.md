@@ -18,8 +18,8 @@ By participating in this project, you agree to maintain a respectful and inclusi
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/Guillaumecoi/MD-usecase-manager.git
-   cd MD-usecase-manager
+   git clone https://github.com/Guillaumecoi/MUCM.git
+   cd MUCM
    ```
 
 2. **Build the project**

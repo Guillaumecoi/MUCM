@@ -1,6 +1,6 @@
 # Use Case: UC-AUTH-001: User Registration
 
-**Status:**  | **Priority:** High
+**Status:** PLANNED | **Priority:** High
 
 **Category:** Authentication
 
@@ -29,6 +29,16 @@ This use case has multiple methodology views available:
 
 - **[developer (advanced)](./UC-AUTH-001-developer-advanced.md)** - Detailed technical specifications for developers
 - **[tester (advanced)](./UC-AUTH-001-tester-advanced.md)** - Comprehensive testing scenarios and acceptance criteria
+
+## Scenarios (quick overview)
+
+| ID | Title | Status |
+|---|---|---|
+| [UC-AUTH-001-S01]() | Successful User Registration | 📋 deployed |
+| [UC-AUTH-001-S02]() | Registration with Social Login | 📋 planned |
+| [UC-AUTH-001-S03]() | Email Already Registered | 📋 implemented |
+| [UC-AUTH-001-S04]() | Invalid password | 📋 implemented |
+| [UC-AUTH-001-S05]() | Email Service Unavailable | 📋 planned |
 
 ## UC-AUTH-001-S01 - Successful User Registration
 

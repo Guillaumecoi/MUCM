@@ -1,6 +1,6 @@
 # Use Case: UC-AUTH-002: User Login
 
-**Status:**  | **Priority:** Critical
+**Status:** PLANNED | **Priority:** Critical
 
 **Category:** Authentication
 
@@ -30,6 +30,12 @@ This use case has multiple methodology views available:
 
 - **[developer (normal)](./UC-AUTH-002-developer-normal.md)** - Detailed technical specifications for developers
 - **[tester (advanced)](./UC-AUTH-002-tester-advanced.md)** - Comprehensive testing scenarios and acceptance criteria
+
+## Scenarios (quick overview)
+
+| ID | Title | Status |
+|---|---|---|
+| [UC-AUTH-002-S01]() | Successful Login with Email and Password | 📋 deployed |
 
 ## UC-AUTH-002-S01 - Successful Login with Email and Password
 

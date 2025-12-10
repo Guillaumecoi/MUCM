@@ -12,12 +12,14 @@ mod comparison;
 mod formatting;
 mod mermaid;
 mod scenario;
+mod status;
 
 use handlebars::Handlebars;
 
 /// Register all custom Handlebars helpers for template rendering
 pub fn register_helpers(handlebars: &mut Handlebars) {
     actor::register(handlebars);
+    status::register(handlebars);
     scenario::register(handlebars);
     formatting::register(handlebars);
     comparison::register(handlebars);

@@ -8,26 +8,42 @@
 
 This category contains **2** use cases.
 
+- **Last Updated:** 07/12/2025
+
 ## Use Cases
+## Status Distribution
 
-### [UC-AUTH-002: User Login](./UC-AUTH-002/README.md)
+| Status | Count |
+|---:|:---|
+| 📋 **PLANNED** | 2 |
 
-**Status:** DEPLOYED | **Priority:** CRITICAL
 
-Allow registered users to authenticate and access their accounts by providing email and password. The system validates credentials, creates a session, and redirects users to their personalized dashboard or previous page.
+## Scenarios
 
-**Available Views:** developer-normal, tester-advanced
+Overall scenario counts across this category:
+
+| Type | Count |
+|---:|:---|
+| Main | 2 |
+| Alternative | 1 |
+| Exception | 3 |
+| Extension | 0 |
+
+
+## Scenario Status Distribution
+
+| Status | Count |
+|---:|:---|
+| 🚀 **DEPLOYED** | 2 |
+| ⚡ **IMPLEMENTED** | 2 |
+| 📋 **PLANNED** | 2 |
+
+
+
+| ID | Title | Status | Priority | Last Updated |
+|---|---|---|---|---|
+| [UC-AUTH-002](./UC-AUTH-002/README.md) | User Login | 📋 PLANNED | CRITICAL | 07/12/2025 |
+| [UC-AUTH-001](./UC-AUTH-001/README.md) | User Registration | 📋 PLANNED | HIGH | 07/12/2025 |
 
 ---
-
-### [UC-AUTH-001: User Registration](./UC-AUTH-001/README.md)
-
-**Status:** PLANNED | **Priority:** HIGH
-
-Allow new users to create an account on the e-commerce platform by providing email, password, and basic profile information. The system validates input, checks for existing accounts, creates the user record, and sends a verification email.
-
-**Available Views:** developer-advanced, tester-advanced
-
----
-
 

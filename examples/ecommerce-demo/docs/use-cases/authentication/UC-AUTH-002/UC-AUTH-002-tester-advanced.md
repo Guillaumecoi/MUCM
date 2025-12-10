@@ -1,7 +1,7 @@
 # Test Specification: User Login
 
 **Use Case ID:** UC-AUTH-002  
-**Test Status:**   
+**Test Status:** PLANNED  
 **Test Priority:** Critical  
 **Test Plan Date:** 07/12/2025
 
@@ -34,6 +34,12 @@
 - Session cookie set in browser
 - User redirected to dashboard or previous page
 - Last login timestamp updated in database
+
+## Scenarios (quick overview)
+
+| ID | Title | Status |
+|---|---|---|
+| [UC-AUTH-002-S01]() | Successful Login with Email and Password | 📋 deployed |
 
 ## UC-AUTH-002-S01 - Successful Login with Email and Password
 

@@ -177,6 +177,48 @@ If parent has steps 1-5, and exception extends at step 4 returning to step 2:
 
 ---
 
+## Use-case Fields & Helpers
+
+Fields and small helpers exposed to use-case templates.
+
+### `aggregated_status` (Field)
+
+**Usage:** `{{aggregated_status}}`
+**Description:** The human-friendly display name of the use-case status (derived from the `UseCase` object). Note: `UseCase.status` was made manual; this field simply reflects that value for templates.
+**Returns:** Uppercase status string (e.g., `PLANNED`, `IN_PROGRESS`, `IMPLEMENTED`).
+
+**Example:**
+```handlebars
+Status: {{aggregated_status}}
+```
+
+### `aggregated_status_emoji` (Field)
+
+**Usage:** `{{aggregated_status_emoji}}`
+**Description:** Emoji-only representation of the use-case status injected into the template data. Useful for compact badges.
+**Returns:** A short emoji (e.g., `📋`, `🔄`, `⚡`, `✅`, `🚀`, `⚠️`).
+
+**Example:**
+```handlebars
+Status: {{aggregated_status_emoji}} {{aggregated_status}}
+```
+
+### `status_emoji` (Helper)
+
+**Usage:** `{{status_emoji status_string}}` or `{{status_emoji}}` (reads `aggregated_status` from context when no param provided)
+**Description:** Handlebars helper that converts a status string (or the context `aggregated_status`) into its emoji. Useful when you only have a status string and want the emoji mapping inside templates.
+**Returns:** Emoji string for the given status.
+
+**Example:**
+```handlebars
+{{status_emoji aggregated_status}}
+{{status_emoji "implemented"}}
+```
+
+**Notes:** The helper accepts display names or common status strings (case-insensitive). If the helper is called without a parameter it will use the `aggregated_status` field from the template context.
+
+---
+
 ## Formatting Helpers
 
 Helpers for text transformation and formatting.

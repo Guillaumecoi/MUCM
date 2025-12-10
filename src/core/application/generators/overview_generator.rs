@@ -41,23 +41,79 @@ impl OverviewGenerator {
         // Basic counts
         data.insert("total_use_cases".to_string(), json!(use_cases.len()));
 
-        // Project name and generated date
+        // Project name
         data.insert("project_name".to_string(), json!(self.config.project.name));
 
-        // Group use cases by category to count them
-        let mut categories_map: HashMap<String, usize> = HashMap::new();
+        // Group use cases by category to collect lists and counts
+        let mut categories_map: HashMap<String, Vec<&UseCase>> = HashMap::new();
         for uc in use_cases {
-            *categories_map.entry(uc.category.clone()).or_default() += 1;
+            categories_map
+                .entry(uc.category.clone())
+                .or_default()
+                .push(uc);
         }
 
         // Add total categories count
         data.insert("total_categories".to_string(), json!(categories_map.len()));
 
+        // Compute status distribution across all use cases
+        let mut status_counts: HashMap<String, usize> = HashMap::new();
+        for uc in use_cases {
+            *status_counts
+                .entry(uc.status().display_name().to_string())
+                .or_default() += 1;
+        }
+        data.insert("status_counts".to_string(), json!(status_counts));
+
+        // Compute scenario totals across all use cases (main/alternative/exception/extension)
+        let mut scen_main = 0usize;
+        let mut scen_alt = 0usize;
+        let mut scen_exc = 0usize;
+        let mut scen_ext = 0usize;
+        // Compute scenario status distribution across all scenarios
+        let mut scenario_status_counts: HashMap<String, usize> = HashMap::new();
+        for uc in use_cases {
+            for s in &uc.scenarios {
+                match s.scenario_type {
+                    crate::core::domain::ScenarioType::HappyPath => scen_main += 1,
+                    crate::core::domain::ScenarioType::AlternativeFlow => scen_alt += 1,
+                    crate::core::domain::ScenarioType::ExceptionFlow => scen_exc += 1,
+                    crate::core::domain::ScenarioType::Extension => scen_ext += 1,
+                }
+                *scenario_status_counts
+                    .entry(s.status.display_name().to_string())
+                    .or_default() += 1;
+            }
+        }
+        data.insert(
+            "scenario_totals".to_string(),
+            json!({
+                "main": scen_main,
+                "alternative": scen_alt,
+                "exception": scen_exc,
+                "extension": scen_ext
+            }),
+        );
+
+        // Insert scenario status distribution map for templates
+        data.insert(
+            "scenario_status_counts".to_string(),
+            json!(scenario_status_counts),
+        );
+
+        // Compute overall last-updated across all use cases (most recent updated_at)
+        let overall_last_updated = use_cases.iter().map(|uc| uc.metadata.updated_at).max();
+
+        if let Some(dt) = overall_last_updated {
+            data.insert("last_updated".to_string(), json!(dt.to_rfc3339()));
+        } else {
+            data.insert("last_updated".to_string(), json!(""));
+        }
+
         // Convert to array format expected by new template
-        // New format: categories with category_name, category_path, and use_case_count
         let categories: Vec<serde_json::Map<String, Value>> = categories_map
             .into_iter()
-            .map(|(category_name, count)| {
+            .map(|(category_name, uc_list)| {
                 let mut cat = serde_json::Map::new();
                 cat.insert("category_name".to_string(), json!(category_name));
                 // Convert category name to snake_case for path
@@ -65,8 +121,51 @@ impl OverviewGenerator {
                     "category_path".to_string(),
                     json!(crate::core::utils::to_snake_case(&category_name)),
                 );
-                cat.insert("use_case_count".to_string(), json!(count));
+                cat.insert("use_case_count".to_string(), json!(uc_list.len()));
+                // Build a small use_cases list for overview display
+                let use_cases_data: Vec<_> = uc_list
+                    .iter()
+                    .map(|uc| {
+                        // Build scenarios list for quick-links in overview templates
+                        let scenarios_data: Vec<_> = uc
+                            .scenarios
+                            .iter()
+                            .map(|s| {
+                                json!({
+                                    "id": s.id,
+                                    "title": s.title,
+                                    "status": s.status.display_name(),
+                                    "status_emoji": s.status.emoji(),
+                                    // Link to use case README with fragment to jump to scenario header
+                                    "link": format!("./{}/README.md#{}", uc.id, s.id),
+                                })
+                            })
+                            .collect();
+
+                        json!({
+                            "id": uc.id,
+                            "title": uc.title,
+                            "path": crate::core::utils::to_snake_case(&uc.category),
+                            "aggregated_status": uc.status().display_name(),
+                            "aggregated_status_emoji": uc.status().emoji(),
+                            "priority": uc.priority.to_string(),
+                            // Provide last_updated as RFC3339 string so templates can format it
+                            "last_updated": uc.metadata.updated_at.to_rfc3339(),
+                            "scenarios": scenarios_data,
+                        })
+                    })
+                    .collect();
+
+                cat.insert("use_cases".to_string(), json!(use_cases_data));
                 // Optional: Add description if available (would need category entity)
+                // Category-level last-updated (most recent updated_at among its use cases)
+                let category_last = uc_list.iter().map(|uc| uc.metadata.updated_at).max();
+                if let Some(dt) = category_last {
+                    cat.insert("last_updated".to_string(), json!(dt.to_rfc3339()));
+                } else {
+                    cat.insert("last_updated".to_string(), json!(""));
+                }
+
                 cat.insert("description".to_string(), json!(""));
                 cat
             })
@@ -245,5 +344,39 @@ mod tests {
         assert!(content.contains("3"));
         assert!(content.contains("1"));
         assert!(content.contains("Authentication"));
+    }
+
+    #[test]
+    #[serial]
+    fn test_overview_last_updated_is_most_recent() {
+        use chrono::DateTime;
+
+        let temp_dir = TempDir::new().unwrap();
+        let config = create_test_config(&temp_dir);
+        // ensure output directory points to temp dir
+        let generator = OverviewGenerator::new(config);
+
+        // Two use cases with different updated_at
+        let mut uc1 = create_test_use_case("AUT-010", "Authentication", "Old UC");
+        let mut uc2 = create_test_use_case("PAY-020", "Payment", "New UC");
+
+        let dt_old = DateTime::parse_from_rfc3339("2025-01-01T00:00:00+00:00").unwrap();
+        let dt_new = DateTime::parse_from_rfc3339("2025-03-05T12:00:00+00:00").unwrap();
+        uc1.metadata.updated_at = dt_old.with_timezone(&chrono::Utc);
+        uc2.metadata.updated_at = dt_new.with_timezone(&chrono::Utc);
+
+        let use_cases = vec![uc1, uc2];
+
+        generator.generate(&use_cases).unwrap();
+
+        let overview_path = temp_dir.path().join("use-cases").join("README.md");
+        let content = std::fs::read_to_string(&overview_path).unwrap();
+
+        // The overall last_updated should be the newer date formatted (%d/%m/%Y -> 05/03/2025)
+        assert!(
+            content.contains("05/03/2025"),
+            "overview contains overall last updated: {}",
+            content
+        );
     }
 }

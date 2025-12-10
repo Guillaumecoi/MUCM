@@ -260,6 +260,6 @@ Want to see more? Check out:
 - [CLI Reference](../../docs/guides/cli/cli-reference.md) — All commands
 - [Template Customization](../../docs/guides/customization/template-customization.md) — Make it yours
 
-**Questions?** Join the [discussions](https://github.com/Guillaumecoi/MD-usecase-manager/discussions) · **Found a bug?** [Open an issue](https://github.com/Guillaumecoi/MD-usecase-manager/issues) · **Want to contribute?** PRs welcome!
+**Questions?** Join the [discussions](https://github.com/Guillaumecoi/MUCM/discussions) · **Found a bug?** [Open an issue](https://github.com/Guillaumecoi/MUCM/issues) · **Want to contribute?** PRs welcome!
 
 **Now go automate your documentation. You'll never go back.**

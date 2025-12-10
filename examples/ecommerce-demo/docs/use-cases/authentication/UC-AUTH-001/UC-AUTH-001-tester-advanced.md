@@ -1,7 +1,7 @@
 # Test Specification: User Registration
 
 **Use Case ID:** UC-AUTH-001  
-**Test Status:**   
+**Test Status:** PLANNED  
 **Test Priority:** High  
 **Test Plan Date:** 03/12/2025
 
@@ -34,6 +34,16 @@
 - User logged in with unverified status
 - Session created and stored in cache
 - User can access basic platform features (but not checkout until verified)
+
+## Scenarios (quick overview)
+
+| ID | Title | Status |
+|---|---|---|
+| [UC-AUTH-001-S01]() | Successful User Registration | 📋 deployed |
+| [UC-AUTH-001-S02]() | Registration with Social Login | 📋 planned |
+| [UC-AUTH-001-S03]() | Email Already Registered | 📋 implemented |
+| [UC-AUTH-001-S04]() | Invalid password | 📋 implemented |
+| [UC-AUTH-001-S05]() | Email Service Unavailable | 📋 planned |
 
 ## UC-AUTH-001-S01 - Successful User Registration
 

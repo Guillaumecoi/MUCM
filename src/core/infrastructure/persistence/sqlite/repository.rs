@@ -470,6 +470,7 @@ impl SqliteUseCaseRepository {
                                 Box::new(std::io::Error::new(std::io::ErrorKind::InvalidData, e)),
                             )
                         })?,
+                        status: crate::core::domain::Status::Planned,
                         metadata: crate::core::domain::Metadata {
                             created_at: row.get::<_, String>(5)?.parse().map_err(|e| {
                                 rusqlite::Error::FromSqlConversionFailure(
